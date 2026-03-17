@@ -74,11 +74,12 @@ Default local endpoints:
 ### SVCS (Service) List
 
 <!-- TARS:SVCS_TABLE_START -->
-Total Services Running: 3
+Total Services Running: 4
 
 | Service Name | Template |
 | --- | --- |
 | cooper | python-fastapi |
 | miller | python-fastapi |
 | sample | python-fastapi |
+| test1 | python-fastapi |
 <!-- TARS:SVCS_TABLE_END -->
