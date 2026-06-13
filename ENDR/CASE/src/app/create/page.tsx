@@ -2,14 +2,14 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { PortalFrame } from "../components/portal-frame";
-import { loadUniverse } from "../lib/plex";
+import { loadSnapshot } from "../lib/plex";
 import { CreateServicePanel } from "./service-create-panel";
 
 export default async function CreatePage() {
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main create-main">
         <section className="hero-row create-hero">
           <div>

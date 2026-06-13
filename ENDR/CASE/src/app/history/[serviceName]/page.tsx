@@ -4,7 +4,7 @@ export const revalidate = 0;
 import Link from "next/link";
 
 import { PortalFrame } from "../../components/portal-frame";
-import { loadUniverse } from "../../lib/plex";
+import { loadSnapshot } from "../../lib/plex";
 import { ServiceHistoryPanel } from "./service-history-panel";
 
 interface ServiceHistoryPageProps {
@@ -16,10 +16,10 @@ interface ServiceHistoryPageProps {
 export default async function ServiceHistoryPage({ params }: ServiceHistoryPageProps) {
   const { serviceName } = await params;
   const decodedServiceName = decodeURIComponent(serviceName);
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
         <section className="hero-row">
           <div>

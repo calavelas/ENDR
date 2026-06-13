@@ -7,7 +7,7 @@ import { ArgoEmbedPanel } from "./components/argo-embed-panel";
 import { PortalFrame } from "./components/portal-frame";
 import {
   healthTone,
-  loadUniverse,
+  loadSnapshot,
   resolveArgoEmbedUrl,
   resolveGithubRepoUrl,
   sortByName,
@@ -15,16 +15,16 @@ import {
 } from "./lib/plex";
 
 export default async function HomePage() {
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
   const embedUrl = resolveArgoEmbedUrl();
   const githubRepoUrl = resolveGithubRepoUrl();
 
-  const coreApps = sortByName(universe.coreApps);
-  const serviceApps = sortByName(universe.services);
-  const platformApps = sortByName(coreApps);
+  const platformServices = sortByName(snapshot.platformServices);
+  const serviceApps = sortByName(snapshot.services);
+  const platformApps = sortByName(platformServices);
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
         <section className="hero-row platform-home-hero">
           <div className="platform-home-main">
@@ -52,11 +52,11 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {universe.warnings.length > 0 && (
+        {snapshot.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">
             <h2>Warnings</h2>
             <ul>
-              {universe.warnings.map((warning) => (
+              {snapshot.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
             </ul>

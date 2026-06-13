@@ -20,7 +20,7 @@ export async function GET() {
   } catch (error) {
     const detail = error instanceof Error ? error.message : "unknown error";
     return NextResponse.json(
-      { detail: `unable to load universe from ${endpoint}: ${detail}` },
+      { detail: `unable to load snapshot from ${endpoint}: ${detail}` },
       { status: 502 }
     );
   }

@@ -2,7 +2,7 @@ type NodeKind = "core" | "service";
 
 export type NodeTone = "good" | "warn" | "bad" | "neutral";
 
-export interface PlexNode {
+export interface ServiceNode {
   name: string;
   kind: NodeKind;
   namespace: string;
@@ -15,18 +15,17 @@ export interface PlexNode {
   templateName?: string | null;
   gatewayEnabled?: boolean | null;
   serviceUrl?: string | null;
-  orbitBand: number;
 }
 
-export interface PlexUniverse {
+export interface PlatformSnapshot {
   generatedAt: string;
   dataSource: string;
-  galaxyName: string;
+  clusterName: string;
   clusterPath: string;
   servicesPath: string;
   warnings: string[];
-  coreApps: PlexNode[];
-  services: PlexNode[];
+  platformServices: ServiceNode[];
+  services: ServiceNode[];
 }
 
 const FALLBACK_API = "http://127.0.0.1:8000";
@@ -208,15 +207,15 @@ export function shortRevision(revision: string): string {
   return value;
 }
 
-function buildFallbackUniverse(reason: string): PlexUniverse {
+function buildFallbackSnapshot(reason: string): PlatformSnapshot {
   return {
     generatedAt: new Date().toISOString(),
     dataSource: "fallback",
-    galaxyName: "lab",
+    clusterName: "lab",
     clusterPath: "KUBE/clusters/mac/lab/core",
     servicesPath: "KUBE/clusters/mac/lab/services",
     warnings: [reason],
-    coreApps: [
+    platformServices: [
       {
         name: "lab",
         kind: "core",
@@ -230,51 +229,50 @@ function buildFallbackUniverse(reason: string): PlexUniverse {
         templateName: "Platform",
         gatewayEnabled: false,
         serviceUrl: null,
-        orbitBand: 0
       }
     ],
     services: []
   };
 }
 
-const UNIVERSE_FETCH_TIMEOUT_MS = 8000;
+const SNAPSHOT_FETCH_TIMEOUT_MS = 8000;
 
-export async function loadUniverse(): Promise<PlexUniverse> {
+export async function loadSnapshot(): Promise<PlatformSnapshot> {
   const apiBase = resolveApiBase();
   const endpoint = `${apiBase}/api/plex`;
 
   // Bound the request so a slow/hung backend can never stall a server render.
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), UNIVERSE_FETCH_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), SNAPSHOT_FETCH_TIMEOUT_MS);
   try {
     const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    return (await response.json()) as PlexUniverse;
+    return (await response.json()) as PlatformSnapshot;
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown error";
-    return buildFallbackUniverse(`Unable to reach ENDR API at ${endpoint}: ${reason}`);
+    return buildFallbackSnapshot(`Unable to reach ENDR API at ${endpoint}: ${reason}`);
   } finally {
     clearTimeout(timer);
   }
 }
 
-export function sortByName(nodes: PlexNode[]): PlexNode[] {
+export function sortByName(nodes: ServiceNode[]): ServiceNode[] {
   return [...nodes].sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export function hasAttention(node: PlexNode): boolean {
+export function hasAttention(node: ServiceNode): boolean {
   return syncTone(node.syncStatus) === "bad" || healthTone(node.healthStatus) === "bad";
 }
 
-export function findServiceByName(services: PlexNode[], name: string): PlexNode | undefined {
+export function findServiceByName(services: ServiceNode[], name: string): ServiceNode | undefined {
   const expected = normalize(name);
   return services.find((service) => normalize(service.name) === expected);
 }
 
-export function findCoreAppByName(coreApps: PlexNode[], name: string): PlexNode | undefined {
+export function findPlatformServiceByName(platformServices: ServiceNode[], name: string): ServiceNode | undefined {
   const expected = normalize(name);
-  return coreApps.find((app) => normalize(app.name) === expected);
+  return platformServices.find((app) => normalize(app.name) === expected);
 }

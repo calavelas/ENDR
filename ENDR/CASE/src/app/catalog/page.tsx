@@ -9,7 +9,7 @@ import {
   buildGithubFolderUrl,
   buildServiceFolderPath,
   healthTone,
-  loadUniverse,
+  loadSnapshot,
   optionalTimestamp,
   resolveArgoEmbedUrl,
   resolveGithubBranch,
@@ -20,15 +20,15 @@ import {
 } from "../lib/plex";
 
 export default async function CatalogPage() {
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
   const embedUrl = resolveArgoEmbedUrl();
   const githubRepoUrl = resolveGithubRepoUrl();
   const githubBranch = resolveGithubBranch();
-  const applicationServices = sortByName(universe.services);
-  const platformServices = sortByName(universe.coreApps);
+  const applicationServices = sortByName(snapshot.services);
+  const platformServices = sortByName(snapshot.platformServices);
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
         <section className="hero-row">
           <div>
@@ -46,11 +46,11 @@ export default async function CatalogPage() {
           </div>
         </section>
 
-        {universe.warnings.length > 0 && (
+        {snapshot.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">
             <h2>Warnings</h2>
             <ul>
-              {universe.warnings.map((warning) => (
+              {snapshot.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
             </ul>

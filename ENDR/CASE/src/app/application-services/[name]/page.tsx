@@ -16,7 +16,7 @@ import {
   buildServiceFolderPath,
   findServiceByName,
   healthTone,
-  loadUniverse,
+  loadSnapshot,
   optionalTimestamp,
   resolveArgoEmbedUrl,
   resolveGithubBranch,
@@ -34,9 +34,9 @@ interface ServiceDetailPageProps {
 export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   const { name } = await params;
 
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
   const serviceName = decodeURIComponent(name);
-  const service = findServiceByName(universe.services, serviceName);
+  const service = findServiceByName(snapshot.services, serviceName);
 
   if (!service) {
     notFound();
@@ -71,7 +71,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   }
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
         <section className="hero-row">
           <div>
@@ -188,11 +188,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
           )}
         </section>
 
-        {universe.warnings.length > 0 && (
+        {snapshot.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">
             <h2>Warnings</h2>
             <ul>
-              {universe.warnings.map((warning) => (
+              {snapshot.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
             </ul>

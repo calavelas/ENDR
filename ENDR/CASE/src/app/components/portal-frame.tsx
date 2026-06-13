@@ -4,7 +4,7 @@ import {
   dataSourceTone,
   formatTimestamp,
   hasAttention,
-  PlexUniverse
+  PlatformSnapshot
 } from "../lib/plex";
 import { AutoRefresh } from "./auto-refresh";
 import { CollapsibleSidebar } from "./collapsible-sidebar";
@@ -13,11 +13,11 @@ import { SidebarNav } from "./sidebar-nav";
 
 interface PortalFrameProps {
   children: ReactNode;
-  universe: PlexUniverse;
+  snapshot: PlatformSnapshot;
 }
 
-export function PortalFrame({ children, universe }: PortalFrameProps) {
-  const deploymentApps = [...universe.coreApps, ...universe.services];
+export function PortalFrame({ children, snapshot }: PortalFrameProps) {
+  const deploymentApps = [...snapshot.platformServices, ...snapshot.services];
   const syncedDeployments = deploymentApps.filter((app) => app.syncStatus.trim().toLowerCase() === "synced").length;
   const attentionCount = deploymentApps.filter(hasAttention).length;
 
@@ -36,11 +36,11 @@ export function PortalFrame({ children, universe }: PortalFrameProps) {
         <dl className="sidebar-summary-list">
           <div>
             <dt>Application Services</dt>
-            <dd>{universe.services.length}</dd>
+            <dd>{snapshot.services.length}</dd>
           </div>
           <div>
             <dt>Platform Services</dt>
-            <dd>{universe.coreApps.length}</dd>
+            <dd>{snapshot.platformServices.length}</dd>
           </div>
           <div>
             <dt>Synced</dt>
@@ -67,8 +67,8 @@ export function PortalFrame({ children, universe }: PortalFrameProps) {
         </div>
 
         <div className="topbar-status">
-          <span className={`chip tone-${dataSourceTone(universe.dataSource)}`}>{universe.dataSource}</span>
-          <span className="chip muted">Updated {formatTimestamp(universe.generatedAt)}</span>
+          <span className={`chip tone-${dataSourceTone(snapshot.dataSource)}`}>{snapshot.dataSource}</span>
+          <span className="chip muted">Updated {formatTimestamp(snapshot.generatedAt)}</span>
         </div>
       </header>
 

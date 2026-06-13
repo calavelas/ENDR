@@ -89,7 +89,7 @@ interface TransactionStatusResult {
   };
 }
 
-interface PlexUniverseSnapshot {
+interface PlatformSnapshot {
   generatedAt: string;
   warnings: string[];
   services: Array<{
@@ -313,12 +313,12 @@ function isSvcsBuildSuccessful(status: TransactionStatusResult | null): boolean 
   return run.status === "completed" && run.conclusion === "success";
 }
 
-function hasServiceInUniverse(universe: PlexUniverseSnapshot, serviceName: string): boolean {
+function hasService(snapshot: PlatformSnapshot, serviceName: string): boolean {
   const expected = serviceName.trim().toLowerCase();
   if (!expected) {
     return false;
   }
-  return universe.services.some((service) => service.name.trim().toLowerCase() === expected);
+  return snapshot.services.some((service) => service.name.trim().toLowerCase() === expected);
 }
 
 function buildPreviewSignature(payload: CreateServicePayload): string {
@@ -466,7 +466,7 @@ export function CreateServicePanel() {
     const maxAttempts = 10;
     const intervalMs = 5_000;
 
-    const refreshUniverseUntilVisible = async () => {
+    const refreshSnapshotUntilVisible = async () => {
       setCatalogRefreshStatus("refreshing");
       setCatalogRefreshError("");
 
@@ -484,13 +484,13 @@ export function CreateServicePanel() {
             throw new Error(readErrorMessage(body));
           }
 
-          const universe = body as PlexUniverseSnapshot;
-          if (hasServiceInUniverse(universe, service)) {
+          const snapshot = body as PlatformSnapshot;
+          if (hasService(snapshot, service)) {
             if (!cancelled) {
               setServiceVisibleInCatalog(true);
               setCatalogRefreshStatus("success");
               setCatalogRefreshError("");
-              setCatalogRefreshNote(`Service visible in catalog (${new Date(universe.generatedAt).toLocaleString()}).`);
+              setCatalogRefreshNote(`Service visible in catalog (${new Date(snapshot.generatedAt).toLocaleString()}).`);
             }
             return;
           }
@@ -512,7 +512,7 @@ export function CreateServicePanel() {
       }
     };
 
-    void refreshUniverseUntilVisible();
+    void refreshSnapshotUntilVisible();
     return () => {
       cancelled = true;
     };

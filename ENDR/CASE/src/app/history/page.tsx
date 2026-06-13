@@ -4,14 +4,14 @@ export const revalidate = 0;
 import Link from "next/link";
 
 import { PortalFrame } from "../components/portal-frame";
-import { loadUniverse } from "../lib/plex";
+import { loadSnapshot } from "../lib/plex";
 import { HistoryPanel } from "./history-panel";
 
 export default async function HistoryPage() {
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
         <section className="hero-row">
           <div>
