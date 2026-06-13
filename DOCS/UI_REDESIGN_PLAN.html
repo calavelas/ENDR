@@ -164,7 +164,30 @@
     <li><b>Phase 3b ✅</b> — Catalog rebuilt interactive: <code>Toolbar</code> (search) + Health/Sync filters + a <b>cards/table view toggle</b> (persisted to localStorage). Cards reuse ServiceCard; table keeps the full ops detail (revision/updated/ArgoCD/GitHub). New <code>components/catalog-explorer.tsx</code> (client) + <code>components/ui/toolbar.tsx</code>. Verified tsc + live (200).</li>
     <li><b>Phase 4 ✅</b> — Service detail pages (application + platform) reorganized into <code>Tabs</code> (Overview / README / ArgoCD; platform omits README). PageHeader + a status strip (health/sync/namespace/image) up top; graceful empty state when ArgoCD is unavailable. New <code>components/ui/tabs.tsx</code>. Verified tsc + live (200).</li>
     <li><b>Phase 5 ✅</b> — Create + History pages now use the shared <code>PageHeader</code> (consistent chrome); the form, file viewer, pipeline, and timeline inside the existing client panels inherit the new tokens/shadows/pills automatically. Backend + transaction logic untouched. (Deeper per-field FormField hints noted as an optional follow-up.) Verified tsc + live (200).</li>
-    <li><b>Next:</b> Phase 6 polish (dead sidebar CSS cleanup, responsive, a11y)<b>toggle</b> + Toolbar search/filter/sort) → Phase 4 detail tabs → Phase 5 create/history → Phase 6 polish (incl. dead-CSS cleanup) — all carrying the finc-style depth + top-nav.</li>
+    <li><b>Phase 7 ✅ — pivot to "mission-control" dual-narrative shell.</b> The finc-style top-nav was
+      superseded by a left-sidebar app shell (<code>components/app-shell.tsx</code>) + a scoped <code>.mc-*</code>
+      palette in <code>globals.css</code>. New: a live <b>IDP ⇄ Interstellar</b> narrative toggle
+      (<code>lib/narrative.tsx</code>; persisted + <code>?mode=</code>) that relabels the whole UI (Dashboard→Mission
+      Control, Service→Robot, Namespace→Planet, platform services → Bridge/Autopilot/…). Dashboard rebuilt as
+      <code>components/dashboard-view.tsx</code> (hero, compact KPIs, services table, Platform/Station status cards,
+      activity). Verified tsc + build + live.</li>
+    <li><b>Phase 8 ✅ — TARS/CASE guidance assistant.</b> A floating, narrative-aware guide
+      (<code>components/assistant/*</code>) mounted globally, backed by <b>real cluster microservices</b> — the robot
+      image gained <code>apps/robot/journey.py</code> + <code>/api/guide</code>; <b>tars</b> and <b>case</b> are two
+      env-differentiated deployments. The portal proxies via <code>/api/assistant</code> (always 200; lean cached
+      fallback so it works cluster-free). Switching persona switches pod. Default persona tracks the narrative
+      (CASE in IDP, TARS in Interstellar).</li>
+    <li><b>Phase 9 ✅ — inner pages into mission-control + mockup narrative.</b> Catalog, service detail,
+      history, ArgoCD and create restyled into <code>.mc-*</code>, narrative-aware, each carrying the mockup's
+      <b>SDLC stage rail</b> (<code>components/stage-rail.tsx</code> — Declare→…→Retire, relabelled per mode) and
+      per-step <b>explain</b> boxes (<code>components/explain.tsx</code>). Detail pages share a new
+      <code>ServiceDetailView</code> (status strip + tabs + ArgoCD sync pipeline). The big stateful client panels
+      (create/history) were harmonized to the mc darks via a <code>:root</code> token retune rather than rewritten.
+      Redundant in-page PageHeaders dropped (the shell shows the route title). Verified tsc + build (19 routes) +
+      screenshots in both narratives.</li>
+    <li><b>Next:</b> Phase 6 polish — remove the now-dead finc-style CSS (<code>.portal-*</code>, <code>.service-card</code>,
+      <code>.top-nav</code>, unused <code>components/ui/*</code>), responsive + a11y sweep, and (optional) deeper
+      per-field FormField hints on create.</li>
   </ul>
 
   <div class="callout"><b>Visual reference — finc dashboard</b> (<code>finc.calavelas.net/?demo=1</code>):

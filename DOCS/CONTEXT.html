@@ -128,13 +128,19 @@
   </div>
 
   <div class="note good" style="margin-bottom:30px">
-    <b>Updated 2026-06-14.</b> Three big changes landed since the first version of this map:
+    <b>Updated 2026-06-14.</b> Changes since the first version of this map:
     <b>(1)</b> the codename modules were renamed to functional names
     (<code>CASE→portal</code>, <code>PLEX+TARS/api→api</code>, <code>TARS→engine</code>, <code>SCPT→scripts</code>,
     <code>SVCS→services</code>; <code>ENDR.yaml→platform.yaml</code>, <code>SVCS.yaml→services.yaml</code>;
-    routes <code>/api/plex/*→/api/platform/*</code>); <b>(2)</b> the portal got a full UI/UX redesign
-    (top-nav, soft-shadow cards, status pills, cards/table catalog, tabbed detail); <b>(3)</b> the
-    "build-a-robot" demo is being wired in as a real service lifecycle. See §13–14.
+    routes <code>/api/plex/*→/api/platform/*</code>); <b>(2)</b> the portal was rebuilt into a
+    <b>"mission-control" dual-narrative UI</b> — a left-sidebar app shell, a live <b>IDP ⇄ Interstellar</b>
+    narrative toggle (plain "Service / Namespace" vs "Robot / Planet"), and every page carrying the
+    mockup's <b>SDLC stage rail</b> (Declare→Commit→Validate→Deliver→Operate→Retire) + per-step
+    narrative <b>explain</b> boxes; <b>(3)</b> a floating <b>TARS / CASE guidance assistant</b> backed by
+    two real cluster microservices (one image, two env-differentiated deployments); <b>(4)</b> the
+    "build-a-robot" demo wired in as a real service lifecycle. See §10, §13–14.
+    <span style="color:#7f8db0">(The earlier interim "finc-style top-nav" redesign was superseded by the
+    mission-control shell.)</span>
   </div>
 
   <!-- 1 -->
@@ -365,17 +371,29 @@
     <h2><span class="num">10</span> portal — the developer UI</h2>
     <p class="lead">Next.js 15 (App Router) + React 19 + Tailwind. The browser never calls the backend directly —
       Next.js routes under <code>/api/platform/*</code> proxy to the <b>api</b> service (base from
-      <code>ENDR_API_URL</code>, default <code>http://127.0.0.1:8000</code>). Redesigned 2026-06-14 (top-nav shell,
-      soft-shadow cards, icon+colour status pills, shared component kit under <code>components/ui/</code>).</p>
+      <code>ENDR_API_URL</code>, default <code>http://127.0.0.1:8000</code>). Rebuilt 2026-06-14 into a
+      <b>mission-control shell</b>: a left sidebar + top header (<code>components/app-shell.tsx</code>), a live
+      <b>narrative toggle</b> (<code>lib/narrative.tsx</code> — IDP plain vs Interstellar; persisted, also
+      <code>?mode=</code>), the scoped <code>.mc-*</code> palette in <code>globals.css</code>, and a reusable
+      <b>stage rail</b> + <b>explain</b> kit (<code>components/stage-rail.tsx</code>, <code>explain.tsx</code>) that
+      gives every page the mockup's IDP-flow framing.</p>
     <table>
       <tr><th>Route</th><th>Shows</th></tr>
-      <tr><td><code>/</code></td><td>Dashboard — page header, StatCards (total / healthy / needs-attention / data source), application + platform service cards, embedded ArgoCD.</td></tr>
-      <tr><td><code>/catalog</code></td><td>Catalog with a toolbar (search + health/sync filters) and a <b>cards/table</b> view toggle. (<code>/services</code> &amp; <code>/platform-services</code> redirect here.)</td></tr>
-      <tr><td><code>/create</code></td><td>Guided single-column create form (field hints, Advanced disclosure), dry-run preview, submit→PR, live pipeline polling.</td></tr>
-      <tr><td><code>/argocd</code></td><td>Embedded read-only ArgoCD view (load-on-demand iframe via <code>ArgoEmbedPanel</code>).</td></tr>
-      <tr><td><code>/history</code></td><td>Audit list of portal-created PRs; <code>/history/[serviceName]</code> drills into one service's lifecycle.</td></tr>
-      <tr><td><code>/application-services/[name]</code><br><code>/platform-services/[name]</code></td><td>Tabbed service detail (Overview / README / ArgoCD) with a status strip.</td></tr>
+      <tr><td><code>/</code></td><td>Dashboard ("Portal" / "Mission Control") — hero, compact KPIs, services table, Platform/Station status cards, recent activity.</td></tr>
+      <tr><td><code>/catalog</code></td><td>Catalog ("Service Catalog" / "Robot Fleet") — search + health/sync filters + cards/table toggle, narrative section labels (Services/Robots, Platform Services/Subsystems). (<code>/services</code> &amp; <code>/platform-services</code> redirect here.)</td></tr>
+      <tr><td><code>/create</code></td><td>Create — stage rail (Declare) + explain; guided form, dry-run preview, submit→PR, live pipeline polling.</td></tr>
+      <tr><td><code>/argocd</code></td><td>Observability — stage rail (Operate) + explain; embedded read-only ArgoCD (load-on-demand iframe).</td></tr>
+      <tr><td><code>/history</code></td><td>Delivery / Mission Log — stage rail (Deliver); portal-created PRs + pipeline; <code>/history/[serviceName]</code> drills into one service.</td></tr>
+      <tr><td><code>/application-services/[name]</code><br><code>/platform-services/[name]</code></td><td>Service/Robot detail (shared <code>ServiceDetailView</code>) — status strip, tabs (Overview / README / ArgoCD), live ArgoCD sync pipeline.</td></tr>
     </table>
+    <h3>TARS / CASE guidance assistant</h3>
+    <p>A floating launcher (bottom-right; bottom-sheet on mobile) mounted globally in the app shell
+      (<code>components/assistant/*</code>). It walks the user through the journey
+      (dashboard → create → deploy → catalog → history) with personality. It is <b>not</b> hardcoded — it
+      proxies (<code>/api/assistant</code>) to one of two real cluster microservices (<b>tars</b>, <b>case</b>),
+      and switching persona in the widget talks to a different pod (same image, two deployments). Default
+      persona tracks the narrative (CASE in IDP, TARS in Interstellar). Degrades gracefully to baked-in
+      cached guidance when no robot is reachable (the cluster-free demo). See §13.</p>
     <h3>The backend proxy endpoints</h3>
     <div class="kvs">
       <code>GET /api/platform</code><span><b>platform snapshot</b> — platformServices + services + metadata</span>
@@ -384,6 +402,7 @@
       <code>GET /api/platform/history</code><span>portal-tracked PRs</span>
       <code>GET /api/platform/transactions/{pr#}</code><span>poll PR + pipeline stage status</span>
       <code>GET /api/platform/template-file</code><span>fetch one template file's contents for the viewer</span>
+      <code>POST /api/assistant</code><span>guidance turn — proxies to the tars/case pod (always 200; cached-guidance fallback)</span>
     </div>
   </section>
 
@@ -465,14 +484,26 @@ make -f ENDR/scripts/Makefile tunnel-status</pre>
       (sum&gt;0) and it boots <span class="tag-good">ONLINE</span>; leave them empty and it boots
       <span class="tag-bad">MALFUNCTION</span>. Calibration lives in <code>services.yaml</code> <code>overrides.env</code>, so
       both create and fix are <code>services.yaml</code>-only PRs.</p>
+    <div class="note good"><b>TARS &amp; CASE guidance assistant — done.</b> The robot image gained a scripted
+      guidance endpoint (<code>apps/robot/journey.py</code> + <code>GET/POST /api/guide</code>): a context-aware
+      tour whose vocabulary follows the request's narrative <code>mode</code> and whose voice follows the pod's
+      <code>HUMOR/HONESTY/TRUST</code>. Two deployments — <b>tars</b> (humor 90) and <b>case</b> (humor 30, honesty 95) —
+      are added to <code>services.yaml</code> with charts under <code>services/{tars,case}/chart</code> and ArgoCD apps
+      at <code>KUBE/clusters/mac/lab/services/{tars,case}.yaml</code>. The portal widget proxies to them; switching
+      persona switches pod (the live "one image, two deployments" showcase).</div>
     <table>
       <tr><th>Phase</th><th>Status</th></tr>
       <tr><td><b>A · endr-robot service template</b> — registered in <code>platform.yaml</code>; renders chart + ArgoCD app with calibration env in the deployment</td><td class="tag-good">done</td></tr>
+      <tr><td><b>Assistant · TARS/CASE guidance microservices + portal widget</b> — <code>/api/guide</code>, two deployments, floating narrative-aware guide with cluster-free fallback</td><td class="tag-good">done</td></tr>
       <tr><td><b>C · portal create with personality</b> — ROBOT_NAME/CATCHPHRASE/HUMOR/HONESTY/TRUST fields when the robot template is selected</td><td class="tag-warn">next</td></tr>
       <tr><td><b>D · portal values-edit flow</b> — PR a robot's calibration env (the "fix")</td><td class="tag-warn">todo</td></tr>
       <tr><td><b>B · robot-validate CI</b> — required check: calibration keys present + values 0–100</td><td class="tag-warn">todo</td></tr>
       <tr><td><b>E · end-to-end + narrative</b> — create→MALFUNCTION→fix→ONLINE→destroy; robot image-tag handling</td><td class="tag-warn">todo</td></tr>
     </table>
+    <div class="note warn"><b>Live-demo prerequisite:</b> rebuild &amp; push <code>calavelas/endr-robot</code> so the tars/case
+      pods pick up <code>/api/guide</code>, and (optionally) set <code>ASSISTANT_TARS_URL</code> /
+      <code>ASSISTANT_CASE_URL</code> on the portal deployment to the in-cluster service DNS. Until then the widget
+      runs on its built-in cached guidance.</div>
   </section>
 
   <!-- 14 -->
@@ -480,28 +511,33 @@ make -f ENDR/scripts/Makefile tunnel-status</pre>
     <h2><span class="num">14</span> Current state of the repo</h2>
     <div class="grid g2">
       <div class="card">
-        <h3 style="margin-top:0">Application services <span class="badge">5</span></h3>
+        <h3 style="margin-top:0">Application services <span class="badge">7</span></h3>
         <table>
-          <tr><th>Service</th><th>Namespace</th></tr>
-          <tr><td><code>sample</code></td><td>demo</td></tr>
-          <tr><td><code>cooper</code></td><td>demo</td></tr>
-          <tr><td><code>finc</code></td><td>demo</td></tr>
-          <tr><td><code>miller</code></td><td>demo</td></tr>
-          <tr><td><code>test1</code></td><td>demo</td></tr>
+          <tr><th>Service</th><th>Namespace</th><th>Template</th></tr>
+          <tr><td><code>sample</code></td><td>demo</td><td>python-fastapi</td></tr>
+          <tr><td><code>cooper</code></td><td>demo</td><td>python-fastapi</td></tr>
+          <tr><td><code>finc</code></td><td>demo</td><td>python-fastapi</td></tr>
+          <tr><td><code>miller</code></td><td>demo</td><td>python-fastapi</td></tr>
+          <tr><td><code>test1</code></td><td>demo</td><td>python-fastapi</td></tr>
+          <tr><td><code>tars</code></td><td>demo</td><td>endr-robot</td></tr>
+          <tr><td><code>case</code></td><td>demo</td><td>endr-robot</td></tr>
         </table>
-        <p style="color:#7f8db0;font-size:12.5px;margin-bottom:0">All on the <code>python-fastapi</code> + <code>helm-service</code>
-          golden path, gateway enabled. Plus ~9 platform services (argocd, traefik, portal, api, gateway, …).</p>
+        <p style="color:#7f8db0;font-size:12.5px;margin-bottom:0"><code>tars</code>/<code>case</code> are the guidance
+          assistant pods (shared <code>endr-robot</code> image, env-differentiated). Plus ~9 platform services
+          (argocd, traefik, portal, api, gateway, …).</p>
       </div>
       <div class="card">
         <h3 style="margin-top:0">Recent work (2026-06-14)</h3>
         <div class="kvs" style="font-size:12.5px">
           <b>Rename</b><span>codenames → functional names, on main</span>
-          <b>UI redesign</b><span>top-nav, finc-style cards, catalog toggle, tabbed detail, friendlier create</span>
-          <b>Robot</b><span>endr-robot template (phase A) — lifecycle in progress</span>
+          <b>Mission-control UI</b><span>dual-narrative shell, dashboard, all inner pages restyled with stage rail + explain</span>
+          <b>Assistant</b><span>TARS/CASE guidance microservices + floating widget (cluster-free fallback)</span>
+          <b>Robot</b><span>endr-robot template (phase A) — create/fix lifecycle still in progress</span>
         </div>
         <p style="color:#7f8db0;font-size:12px;margin-bottom:0">Working on <code>main</code> directly during the refactor;
-          UI + robot commits are local pending push. Live-cluster follow-ups: recreate the <code>api-github-token</code>
-          secret + a post-rename <code>render.yaml</code> image tag before the demo serves again.</p>
+          verified with <code>tsc</code> + <code>next build</code> + live dev. Live-cluster follow-ups: rebuild/push
+          <code>endr-robot</code> (for <code>/api/guide</code>), recreate the <code>api-github-token</code> secret, and set
+          the post-rename image tag before the public demo serves again.</p>
       </div>
     </div>
     <div class="note good">If you remember nothing else: <b>edit <code>services.yaml</code> → PR → the engine generates everything
