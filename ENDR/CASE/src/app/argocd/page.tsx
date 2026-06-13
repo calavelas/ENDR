@@ -34,7 +34,7 @@ export default async function ArgoCdPage() {
           </section>
         )}
 
-        <ArgoEmbedPanel embedUrl={embedUrl} />
+        <ArgoEmbedPanel embedUrl={embedUrl} linkOnly />
       </section>
     </PortalFrame>
   );
