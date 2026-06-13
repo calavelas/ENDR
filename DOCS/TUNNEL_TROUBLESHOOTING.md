@@ -20,7 +20,7 @@ Fix (frontend): make the embed **load on demand**. `ArgoEmbedPanel`
 **"Load embedded ArgoCD"** button + **"Open in new tab"** link, and only mounts the `<iframe>`
 after an explicit click (with an "Unload" button to stop it). Live sync/health per service is
 already shown natively in the catalog (`dataSource: argocd`), so the iframe is optional. Also
-restored a bounded fetch timeout in `loadUniverse` (`lib/plex.ts`) so a slow backend can't hang a
+restored a bounded fetch timeout in `loadSnapshot` (`lib/plex.ts`) so a slow backend can't hang a
 render. Verified: new image renders 0 `<iframe>` on `/argocd` vs 1 on the old image.
 
 Deploy via GitOps (commit → `endr-build.yml` builds `case` image + bumps `ENDR/CASE/chart/values.yaml`

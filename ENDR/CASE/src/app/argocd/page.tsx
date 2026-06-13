@@ -3,14 +3,14 @@ export const revalidate = 0;
 
 import { ArgoEmbedPanel } from "../components/argo-embed-panel";
 import { PortalFrame } from "../components/portal-frame";
-import { loadUniverse, resolveArgoEmbedUrl } from "../lib/plex";
+import { loadSnapshot, resolveArgoEmbedUrl } from "../lib/plex";
 
 export default async function ArgoCdPage() {
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
   const embedUrl = resolveArgoEmbedUrl();
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
         <section className="hero-row">
           <div>
@@ -23,11 +23,11 @@ export default async function ArgoCdPage() {
           </a>
         </section>
 
-        {universe.warnings.length > 0 && (
+        {snapshot.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">
             <h2>Warnings</h2>
             <ul>
-              {universe.warnings.map((warning) => (
+              {snapshot.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
             </ul>

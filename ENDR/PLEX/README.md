@@ -3,7 +3,7 @@
 `PLEX` contains portal-focused domain logic that is intentionally separate from `TARS`.
 
 Current responsibility:
-- build the ArgoCD "universe" model used by CASE (`/api/plex`)
+- build the ArgoCD platform-snapshot model used by CASE (`/api/plex`)
 - own the PLEX API router for portal endpoints
 
 Primary module:
@@ -17,7 +17,7 @@ Notes:
   - `https://github.com/calavelas/ENDR/blob/main/SVCS.yaml`
 
 ## ArgoCD Integration
-`build_plex_universe()` supports two data modes:
+`build_platform_snapshot()` supports two data modes:
 - `argocd`: pulls live app status from ArgoCD API.
 - `config`: fallback snapshot derived from `ENDR.yaml` and `SVCS.yaml`.
 

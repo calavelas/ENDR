@@ -9,9 +9,9 @@ import { PortalFrame } from "../../components/portal-frame";
 import {
   buildArgoApplicationUrl,
   buildGithubFolderUrl,
-  findCoreAppByName,
+  findPlatformServiceByName,
   healthTone,
-  loadUniverse,
+  loadSnapshot,
   optionalTimestamp,
   resolveArgoEmbedUrl,
   resolveGithubBranch,
@@ -29,9 +29,9 @@ interface PlatformServiceDetailPageProps {
 export default async function PlatformServiceDetailPage({ params }: PlatformServiceDetailPageProps) {
   const { name } = await params;
 
-  const universe = await loadUniverse();
+  const snapshot = await loadSnapshot();
   const appName = decodeURIComponent(name);
-  const platformService = findCoreAppByName(universe.coreApps, appName);
+  const platformService = findPlatformServiceByName(snapshot.platformServices, appName);
 
   if (!platformService) {
     notFound();
@@ -46,7 +46,7 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
     : null;
 
   return (
-    <PortalFrame universe={universe}>
+    <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
         <section className="hero-row">
           <div>
@@ -149,11 +149,11 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
           </section>
         ) : null}
 
-        {universe.warnings.length > 0 && (
+        {snapshot.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">
             <h2>Warnings</h2>
             <ul>
-              {universe.warnings.map((warning) => (
+              {snapshot.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
             </ul>

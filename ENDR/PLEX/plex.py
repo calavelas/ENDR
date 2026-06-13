@@ -32,7 +32,7 @@ MISSING_SERVICE_WARNING_PREFIX = "Service app '"
 MISSING_SERVICE_WARNING_SUFFIX = "' not found in ArgoCD response."
 
 
-class PlexNode(BaseModel):
+class ServiceNode(BaseModel):
     name: str
     kind: str
     namespace: str
@@ -45,18 +45,17 @@ class PlexNode(BaseModel):
     templateName: str | None = None
     gatewayEnabled: bool | None = None
     serviceUrl: str | None = None
-    orbitBand: int
 
 
-class PlexUniverse(BaseModel):
+class PlatformSnapshot(BaseModel):
     generatedAt: str
     dataSource: str
-    galaxyName: str
+    clusterName: str
     clusterPath: str
     servicesPath: str
     warnings: list[str]
-    coreApps: list[PlexNode]
-    services: list[PlexNode]
+    platformServices: list[ServiceNode]
+    services: list[ServiceNode]
 
 
 def _normalize_svcs_config_url(url: str) -> str:
@@ -84,8 +83,6 @@ def _resolve_svcs_config_url() -> str:
 def _fetch_remote_services_config(url: str) -> ServicesConfig:
     req = request.Request(url, method="GET")
     req.add_header("Accept", "text/plain")
-    req.add_header("Cache-Control", "no-cache")
-    req.add_header("Pragma", "no-cache")
 
     context: ssl.SSLContext | None = None
     parsed = parse.urlparse(url)
@@ -219,17 +216,17 @@ def _core_source_path(name: str, root_repo_dir: str, bootstrap_app_name: str | N
     return root_repo_dir
 
 
-def _build_config_universe() -> PlexUniverse:
+def _build_config_snapshot() -> PlatformSnapshot:
     idp_config, services_config, paths, svcs_url = load_plex_configs()
     apps_repo_dir = cluster_apps_repo_dir(idp_config)
     root_repo_dir = cluster_root_app_repo_dir(idp_config)
     core_names = _discover_core_app_names(paths.repoRoot, root_repo_dir)
     bootstrap_app_name = _read_application_name(Path(paths.repoRoot) / Path(_bootstrap_source_path(root_repo_dir)))
 
-    core_apps: list[PlexNode] = []
+    core_apps: list[ServiceNode] = []
     for index, name in enumerate(core_names, start=1):
         core_apps.append(
-            PlexNode(
+            ServiceNode(
                 name=name,
                 kind="core",
                 namespace=DEFAULT_ARGOCD_NAMESPACE,
@@ -242,14 +239,13 @@ def _build_config_universe() -> PlexUniverse:
                 templateName="Platform",
                 gatewayEnabled=False,
                 serviceUrl=None,
-                orbitBand=index,
             )
         )
 
-    services: list[PlexNode] = []
+    services: list[ServiceNode] = []
     for index, service in enumerate(sorted(services_config.services, key=lambda item: item.name), start=1):
         services.append(
-            PlexNode(
+            ServiceNode(
                 name=service.name,
                 kind="service",
                 namespace=service.namespace,
@@ -262,21 +258,20 @@ def _build_config_universe() -> PlexUniverse:
                 templateName=service.generator.service.template,
                 gatewayEnabled=service.overrides.gateway.enabled,
                 serviceUrl=_build_service_url(service.name) if service.overrides.gateway.enabled else None,
-                orbitBand=(index % 4) + 1,
             )
         )
 
-    return PlexUniverse(
+    return PlatformSnapshot(
         generatedAt=datetime.now(tz=UTC).isoformat(),
         dataSource="config",
-        galaxyName=active_cluster_name(idp_config),
+        clusterName=active_cluster_name(idp_config),
         clusterPath=root_repo_dir,
         servicesPath=apps_repo_dir,
         warnings=[
-            "ArgoCD credentials are not configured; showing config-derived universe snapshot.",
+            "ArgoCD credentials are not configured; showing config-derived snapshot.",
             f"Service catalog source: {svcs_url}",
         ],
-        coreApps=core_apps,
+        platformServices=core_apps,
         services=services,
     )
 
@@ -307,12 +302,11 @@ def _node_from_argocd_app(
     app: dict[str, Any],
     *,
     kind: str,
-    orbit_band: int,
     fallback_namespace: str,
     template_name: str | None = None,
     gateway_enabled: bool | None = None,
     service_url: str | None = None,
-) -> PlexNode:
+) -> ServiceNode:
     metadata = app.get("metadata", {}) if isinstance(app, dict) else {}
     spec = app.get("spec", {}) if isinstance(app, dict) else {}
     status = app.get("status", {}) if isinstance(app, dict) else {}
@@ -331,7 +325,7 @@ def _node_from_argocd_app(
     if isinstance(images, list) and images:
         image_tag = _safe_tag(str(images[0]))
 
-    return PlexNode(
+    return ServiceNode(
         name=str(metadata.get("name", "unknown")),
         kind=kind,
         namespace=namespace,
@@ -344,7 +338,6 @@ def _node_from_argocd_app(
         templateName=template_name,
         gatewayEnabled=gateway_enabled,
         serviceUrl=service_url,
-        orbitBand=orbit_band,
     )
 
 
@@ -352,8 +345,8 @@ def _build_service_nodes(
     services_config: ServicesConfig,
     app_by_name: dict[str, dict[str, Any]],
     managed_service_names: set[str] | None = None,
-) -> tuple[list[PlexNode], list[str], bool]:
-    services: list[PlexNode] = []
+) -> tuple[list[ServiceNode], list[str], bool]:
+    services: list[ServiceNode] = []
     warnings: list[str] = []
     has_missing_service = False
 
@@ -363,7 +356,6 @@ def _build_service_nodes(
             node = _node_from_argocd_app(
                 app,
                 kind="service",
-                orbit_band=(index % 4) + 1,
                 fallback_namespace=service.namespace,
                 template_name=service.generator.service.template,
                 gateway_enabled=service.overrides.gateway.enabled,
@@ -382,7 +374,7 @@ def _build_service_nodes(
         has_missing_service = True
         warnings.append(f"{MISSING_SERVICE_WARNING_PREFIX}{service.name}{MISSING_SERVICE_WARNING_SUFFIX}")
         services.append(
-            PlexNode(
+            ServiceNode(
                 name=service.name,
                 kind="service",
                 namespace=service.namespace,
@@ -395,7 +387,6 @@ def _build_service_nodes(
                 templateName=service.generator.service.template,
                 gatewayEnabled=service.overrides.gateway.enabled,
                 serviceUrl=_build_service_url(service.name) if service.overrides.gateway.enabled else None,
-                orbitBand=(index % 4) + 1,
             )
         )
 
@@ -435,7 +426,7 @@ def _managed_service_names_from_services_app(app_by_name: dict[str, dict[str, An
     return names
 
 
-def build_plex_universe() -> PlexUniverse:
+def build_platform_snapshot() -> PlatformSnapshot:
     idp_config, services_config, paths, svcs_url = load_plex_configs()
     apps_repo_dir = cluster_apps_repo_dir(idp_config)
     root_repo_dir = cluster_root_app_repo_dir(idp_config)
@@ -446,12 +437,12 @@ def build_plex_universe() -> PlexUniverse:
     verify_tls = os.getenv("PLEX_ARGOCD_VERIFY_TLS", "true").strip().lower() not in {"0", "false", "no"}
 
     if not argocd_server:
-        return _build_config_universe()
+        return _build_config_snapshot()
 
     try:
         payload = _fetch_argocd_apps(argocd_server, argocd_token, verify_tls)
     except (error.URLError, error.HTTPError, TimeoutError, ValueError) as exc:
-        fallback = _build_config_universe()
+        fallback = _build_config_snapshot()
         fallback.warnings.append(f"ArgoCD API request failed: {exc}")
         return fallback
 
@@ -472,7 +463,7 @@ def build_plex_universe() -> PlexUniverse:
 
     service_names = _service_names(services_config)
     platform_app_names = sorted(name for name in app_by_name if name not in service_names)
-    core_apps: list[PlexNode] = []
+    core_apps: list[ServiceNode] = []
     for name in platform_app_names:
         app = app_by_name.get(name)
         if not app:
@@ -481,7 +472,6 @@ def build_plex_universe() -> PlexUniverse:
             _node_from_argocd_app(
                 app,
                 kind="core",
-                orbit_band=0,
                 fallback_namespace=DEFAULT_ARGOCD_NAMESPACE,
                 template_name="Platform",
                 gateway_enabled=False,
@@ -514,13 +504,13 @@ def build_plex_universe() -> PlexUniverse:
             )
             warnings.extend(service_warnings)
 
-    return PlexUniverse(
+    return PlatformSnapshot(
         generatedAt=datetime.now(tz=UTC).isoformat(),
         dataSource="argocd",
-        galaxyName=active_cluster_name(idp_config),
+        clusterName=active_cluster_name(idp_config),
         clusterPath=root_repo_dir,
         servicesPath=apps_repo_dir,
         warnings=warnings,
-        coreApps=core_apps,
+        platformServices=core_apps,
         services=services,
     )

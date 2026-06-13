@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from pathlib import Path
 
 from TARS.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
-from PLEX.plex import PlexUniverse, build_plex_universe, load_plex_configs
+from PLEX.plex import PlatformSnapshot, build_platform_snapshot, load_plex_configs
 from PLEX.transactions import (
     CaseHistoryResponse,
     TransactionStatusResponse,
@@ -138,14 +138,14 @@ def _read_template_file(files_root: Path, file_path: str) -> tuple[int, str, boo
     return len(raw), text, truncated
 
 
-@router.get("/api/plex", response_model=PlexUniverse)
-def get_plex_universe() -> PlexUniverse:
+@router.get("/api/plex", response_model=PlatformSnapshot)
+def get_platform_snapshot() -> PlatformSnapshot:
     try:
-        return build_plex_universe()
+        return build_platform_snapshot()
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=502, detail=f"unable to build PLEX universe: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"unable to build PLEX snapshot: {exc}") from exc
 
 
 @router.get("/api/plex/templates", response_model=CreateOptionsResponse)
