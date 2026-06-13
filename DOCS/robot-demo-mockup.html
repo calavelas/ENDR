@@ -96,6 +96,15 @@
   .modehint{font-size:11.5px;color:var(--muted)}
   .explain.idp{background:rgba(124,156,255,.07);border-color:#7c9cff44;border-left-color:#7c9cff;color:#cdd9ff}
   .explain.idp b{color:#9db4ff} .explain.idp code{color:#bcccff}
+  /* SDLC / IDP stage rail */
+  .rail{display:flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--panel);margin-bottom:11px}
+  .rstage{flex:1;padding:8px 5px 9px;text-align:center;border-right:1px solid var(--line);position:relative;transition:background .25s}
+  .rstage:last-child{border-right:0}
+  .rstage .rl{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.2px}
+  .rstage .rs{font-size:9px;color:#5e6c86;text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+  .rstage.done{background:rgba(62,207,142,.05)} .rstage.done .rl{color:var(--good)}
+  .rstage.active{background:rgba(55,211,195,.13)} .rstage.active .rl{color:var(--teal)} .rstage.active .rs{color:var(--accent)}
+  .rail.idpmode .rstage.active{background:rgba(124,156,255,.13)} .rail.idpmode .rstage.active .rl{color:#9db4ff} .rail.idpmode .rstage.active .rs{color:#9db4ff}
 </style>
 </head>
 <body>
@@ -108,6 +117,7 @@
     </div>
     <span class="modehint" id="modehint">Story mode — same flow, told as a robot build.</span>
   </div>
+  <div class="rail" id="rail"></div>
   <div class="surface" data-surface="endr">
     <div class="browser"><div class="dots"><i></i><i></i><i></i></div>
       <div class="urlbar"><span class="lock">🔒</span><span id="url">endr.calavelas.net</span></div>
@@ -336,6 +346,26 @@ const surfaces={endr:{tag:'ENDR PORTAL',cls:'surface-endr'},gh:{tag:'GITHUB',cls
 const urls={0:'endr.calavelas.net',1:'endr.calavelas.net/create',2:'github.com/calavelas/ENDR/pull/128',3:'endr.calavelas.net/services/tars-9',
   4:'tars-9.calavelas.net','4b':'tars-9.calavelas.net',5:'endr.calavelas.net/services/tars-9/edit',6:'github.com/calavelas/ENDR/pull/129',
   7:'github.com/calavelas/ENDR/pull/129',8:'endr.calavelas.net/services/tars-9',9:'tars-9.calavelas.net',10:'tars-9.calavelas.net',11:'github.com/calavelas/ENDR/pull/130'};
+// ---- SDLC / IDP stage rail: one GitOps loop, relabelled per narrative mode ----
+const STAGES=[
+  {idp:'Declare',  factory:'Design',       sdlc:'Plan / Code'},
+  {idp:'Commit',   factory:'File spec',    sdlc:'Code'},
+  {idp:'Validate', factory:'Inspect',      sdlc:'Test · CI'},
+  {idp:'Deliver',  factory:'Assemble',     sdlc:'Build · Deploy'},
+  {idp:'Operate',  factory:'Power on',     sdlc:'Operate · Monitor'},
+  {idp:'Retire',   factory:'Decommission', sdlc:'Decommission'},
+];
+// screen → stage index. Create AND edit both restart the loop at Declare(0).
+const SCREEN_STAGE={0:0,1:0,2:2,3:3,4:4,'4b':4,5:0,6:2,7:2,8:3,9:4,10:5,11:5};
+function buildRail(){document.getElementById('rail').innerHTML=
+  STAGES.map(()=>`<div class="rstage"><div class="rl"></div><div class="rs"></div></div>`).join('');labelRail();}
+function labelRail(){[...document.querySelectorAll('#rail .rstage')].forEach((el,i)=>{
+  el.querySelector('.rl').textContent=MODE==='factory'?STAGES[i].factory:STAGES[i].idp;
+  el.querySelector('.rs').textContent=STAGES[i].sdlc;});
+  document.getElementById('rail').classList.toggle('idpmode',MODE==='idp');}
+function railTo(n){const idx=SCREEN_STAGE[n];if(idx==null)return;
+  [...document.querySelectorAll('#rail .rstage')].forEach((el,i)=>{
+    el.classList.toggle('active',i===idx);el.classList.toggle('done',i<idx);});}
 function go(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById('s'+n); el.classList.add('active');
@@ -343,6 +373,7 @@ function go(n){
   w.className='surface'; vp.className='viewport'; if(sf==='gh'){vp.classList.add('gh');w.classList.add('gh');}
   document.getElementById('url').textContent=urls[n]||'';
   const t=document.getElementById('stag'); t.textContent=surfaces[sf].tag; t.className='surface-tag '+surfaces[sf].cls;
+  railTo(n);
   if(n===3) runPipe('pipe3','visitBtn'); if(n===8) runPipe('pipe8','visit2Btn'); if(n===10) destruct();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -489,9 +520,9 @@ function applyMode(){
   Object.keys(EXPLAIN).forEach(id=>{const el=document.querySelector('#'+id+' .explain');if(el){el.innerHTML=EXPLAIN[id][MODE];el.classList.toggle('idp',MODE==='idp');}});
   const h=document.getElementById('modehint'); if(h)h.textContent=MODEHINT[MODE];
 }
-function setMode(m){MODE=m;document.querySelectorAll('.modeswitch .mode').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));applyMode();}
+function setMode(m){MODE=m;document.querySelectorAll('.modeswitch .mode').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));applyMode();labelRail();}
 
-syncYaml(); syncEdit(); setMode('factory');
+buildRail(); syncYaml(); syncEdit(); setMode('factory'); railTo(0);
 </script>
 </body>
 </html>
