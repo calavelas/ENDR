@@ -6,24 +6,24 @@ import { notFound } from "next/navigation";
 
 import { ArgoEmbedPanel } from "../../components/argo-embed-panel";
 import { PortalFrame } from "../../components/portal-frame";
+import { LinkButton } from "../../components/ui/button";
+import { PageHeader } from "../../components/ui/page-header";
+import { StatusPill } from "../../components/ui/status-pill";
+import { Tabs } from "../../components/ui/tabs";
 import {
   buildArgoApplicationUrl,
   buildGithubFolderUrl,
   findPlatformServiceByName,
-  healthTone,
   loadSnapshot,
   optionalTimestamp,
   resolveArgoEmbedUrl,
   resolveGithubBranch,
   resolveGithubRepoUrl,
-  shortRevision,
-  syncTone
+  shortRevision
 } from "../../lib/platform";
 
 interface PlatformServiceDetailPageProps {
-  params: Promise<{
-    name: string;
-  }>;
+  params: Promise<{ name: string }>;
 }
 
 export default async function PlatformServiceDetailPage({ params }: PlatformServiceDetailPageProps) {
@@ -45,109 +45,103 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
     ? buildGithubFolderUrl(githubRepoUrl, githubBranch, platformService.sourcePath)
     : null;
 
+  const overview = (
+    <div className="detail-grid">
+      <article className="panel detail-panel">
+        <h2 className="panel-title">Identity</h2>
+        <dl className="kv-list">
+          <div>
+            <dt>Kind</dt>
+            <dd>platform service</dd>
+          </div>
+          <div>
+            <dt>Namespace</dt>
+            <dd>{platformService.namespace}</dd>
+          </div>
+          <div>
+            <dt>Source Path</dt>
+            <dd>
+              <code>{platformService.sourcePath || "n/a"}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>GitHub</dt>
+            <dd>
+              {appGithubUrl ? (
+                <a className="entity-link" href={appGithubUrl} target="_blank" rel="noreferrer">
+                  Open folder
+                </a>
+              ) : (
+                "n/a"
+              )}
+            </dd>
+          </div>
+        </dl>
+      </article>
+
+      <article className="panel detail-panel">
+        <h2 className="panel-title">Deployment</h2>
+        <dl className="kv-list">
+          <div>
+            <dt>Health</dt>
+            <dd>
+              <StatusPill status={platformService.healthStatus} kind="health" />
+            </dd>
+          </div>
+          <div>
+            <dt>Sync</dt>
+            <dd>
+              <StatusPill status={platformService.syncStatus} kind="sync" />
+            </dd>
+          </div>
+          <div>
+            <dt>Image</dt>
+            <dd>
+              <code>{platformService.imageTag ?? "n/a"}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>Revision</dt>
+            <dd>
+              <code>{shortRevision(platformService.revision)}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>Deployed</dt>
+            <dd>{optionalTimestamp(platformService.deployedAt)}</dd>
+          </div>
+        </dl>
+      </article>
+    </div>
+  );
+
+  const argocd = appArgoUrl ? (
+    <ArgoEmbedPanel embedUrl={appArgoUrl} />
+  ) : (
+    <p className="empty-cell">Live ArgoCD is not available in this environment.</p>
+  );
+
   return (
     <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
-        <section className="hero-row">
-          <div>
-            <p className="eyebrow">Platform Service Details</p>
-            <h1>{platformService.name}</h1>
-            <p className="hero-subtitle">Detailed platform service metadata and deployment posture.</p>
-          </div>
-          {appArgoUrl ? (
-            <a className="open-link" href={appArgoUrl} target="_blank" rel="noreferrer">
-              Open In ArgoCD
-            </a>
-          ) : null}
-        </section>
+        <PageHeader
+          title={platformService.name}
+          subtitle="Platform service"
+          actions={
+            appArgoUrl ? (
+              <LinkButton href={appArgoUrl} external>
+                Open in ArgoCD
+              </LinkButton>
+            ) : undefined
+          }
+        />
 
-        <section className="detail-grid" aria-label="platform-service-details">
-          <article className="panel detail-panel">
-            <h2>Identity</h2>
-            <dl className="kv-list">
-              <div>
-                <dt>Kind</dt>
-                <dd>platform service</dd>
-              </div>
-              <div>
-                <dt>Name</dt>
-                <dd>{platformService.name}</dd>
-              </div>
-              <div>
-                <dt>Namespace</dt>
-                <dd>{platformService.namespace}</dd>
-              </div>
-              <div>
-                <dt>Source Path</dt>
-                <dd>
-                  <code>{platformService.sourcePath || "n/a"}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>GitHub</dt>
-                <dd>
-                  {appGithubUrl ? (
-                    <a className="entity-link" href={appGithubUrl} target="_blank" rel="noreferrer">
-                      Open folder
-                    </a>
-                  ) : (
-                    "n/a"
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </article>
-
-          <article className="panel detail-panel">
-            <h2>Deployment</h2>
-            <dl className="kv-list">
-              <div>
-                <dt>Health</dt>
-                <dd>
-                  <span className={`status-pill tone-${healthTone(platformService.healthStatus)}`}>
-                    {platformService.healthStatus}
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt>Sync</dt>
-                <dd>
-                  <span className={`status-pill tone-${syncTone(platformService.syncStatus)}`}>{platformService.syncStatus}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Image</dt>
-                <dd>
-                  <code>{platformService.imageTag ?? "n/a"}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>Revision</dt>
-                <dd>
-                  <code>{shortRevision(platformService.revision)}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>Deployed</dt>
-                <dd>{optionalTimestamp(platformService.deployedAt)}</dd>
-              </div>
-            </dl>
-          </article>
-        </section>
-
-        {appArgoUrl ? (
-          <section className="panel">
-            <h2>ArgoCD Application</h2>
-            <p className="embed-note">
-              Embedded page for <strong>{platformService.name}</strong>. If embedding is blocked, use the direct link.
-            </p>
-            <p>
-              <a className="entity-link" href={appArgoUrl} target="_blank" rel="noreferrer">
-                {appArgoUrl}
-              </a>
-            </p>
-          </section>
-        ) : null}
+        <div className="detail-status-strip">
+          <StatusPill status={platformService.healthStatus} kind="health" />
+          <StatusPill status={platformService.syncStatus} kind="sync" />
+          <span className="chip muted">{platformService.namespace}</span>
+          <span className="chip muted">image {platformService.imageTag ?? "n/a"}</span>
+        </div>
 
         {snapshot.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">
@@ -160,11 +154,16 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
           </section>
         )}
 
-        <ArgoEmbedPanel embedUrl={appArgoUrl} />
+        <Tabs
+          tabs={[
+            { id: "overview", label: "Overview", content: overview },
+            { id: "argocd", label: "ArgoCD", content: argocd }
+          ]}
+        />
 
         <p>
           <Link className="entity-link" href="/catalog">
-            Back to Catalog
+            ← Back to Catalog
           </Link>
         </p>
       </section>

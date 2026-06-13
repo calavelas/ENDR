@@ -2456,3 +2456,10 @@ code {
 .view-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
 .view-toggle button { background: transparent; border: 0; color: var(--muted); padding: 0.4rem 0.72rem; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; transition: color 0.15s, background 0.15s; }
 .view-toggle button.active { background: var(--accent-soft); color: var(--accent); }
+
+/* ===== Tabs + detail status strip — Phase 4 ===== */
+.tabbar { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line); margin: 0 0 1.1rem; flex-wrap: wrap; }
+.tab-btn { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 0.5rem 0.85rem; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.detail-status-strip { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
