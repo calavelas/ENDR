@@ -11,17 +11,16 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home" },
-  { href: "/argocd", label: "ArgoCD" },
   { href: "/catalog", label: "Catalog", aliases: ["/services", "/application-services", "/platform-services"] },
-  { href: "/create", label: "Create Service" },
-  { href: "/history", label: "History" }
+  { href: "/create", label: "Create" },
+  { href: "/history", label: "History" },
+  { href: "/argocd", label: "ArgoCD" }
 ];
 
 function matchesRoute(pathname: string, href: string): boolean {
   if (href === "/") {
     return pathname === "/";
   }
-
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -32,21 +31,20 @@ function isActive(pathname: string, item: NavItem): boolean {
   return (item.aliases ?? []).some((alias) => matchesRoute(pathname, alias));
 }
 
-export function SidebarNav() {
+export function TopNav() {
   const pathname = usePathname();
 
   return (
-    <ul>
-      {NAV_ITEMS.map((item) => {
-        const active = isActive(pathname, item);
-        return (
-          <li key={item.href} className={active ? "active" : undefined}>
-            <Link className="sidebar-link" href={item.href}>
-              {item.label}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <nav className="topbar-nav" aria-label="Primary">
+      {NAV_ITEMS.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`topnav-link${isActive(pathname, item) ? " active" : ""}`}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
   );
 }

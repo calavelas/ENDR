@@ -1,15 +1,8 @@
 import { ReactNode } from "react";
 
-import {
-  dataSourceTone,
-  formatTimestamp,
-  hasAttention,
-  PlatformSnapshot
-} from "../lib/platform";
+import { dataSourceTone, formatTimestamp, PlatformSnapshot } from "../lib/platform";
 import { AutoRefresh } from "./auto-refresh";
-import { CollapsibleSidebar } from "./collapsible-sidebar";
-import { SidebarToggleButton } from "./sidebar-context";
-import { SidebarNav } from "./sidebar-nav";
+import { TopNav } from "./ui/top-nav";
 
 interface PortalFrameProps {
   children: ReactNode;
@@ -17,44 +10,6 @@ interface PortalFrameProps {
 }
 
 export function PortalFrame({ children, snapshot }: PortalFrameProps) {
-  const deploymentApps = [...snapshot.platformServices, ...snapshot.services];
-  const syncedDeployments = deploymentApps.filter((app) => app.syncStatus.trim().toLowerCase() === "synced").length;
-  const attentionCount = deploymentApps.filter(hasAttention).length;
-
-  const sidebarContent = (
-    <>
-      <section className="sidebar-block">
-        <div className="sidebar-block-header">
-          <h2 className="section-header-brand">Navigation</h2>
-          <SidebarToggleButton />
-        </div>
-        <SidebarNav />
-      </section>
-
-      <section className="sidebar-block">
-        <h2 className="section-header-brand">Overview</h2>
-        <dl className="sidebar-summary-list">
-          <div>
-            <dt>Application Services</dt>
-            <dd>{snapshot.services.length}</dd>
-          </div>
-          <div>
-            <dt>Platform Services</dt>
-            <dd>{snapshot.platformServices.length}</dd>
-          </div>
-          <div>
-            <dt>Synced</dt>
-            <dd>{syncedDeployments}</dd>
-          </div>
-          <div>
-            <dt>Needs Attention</dt>
-            <dd className={attentionCount > 0 ? "tone-bad" : "tone-good"}>{attentionCount}</dd>
-          </div>
-        </dl>
-      </section>
-    </>
-  );
-
   return (
     <main className="portal-shell">
       <AutoRefresh />
@@ -63,8 +18,10 @@ export function PortalFrame({ children, snapshot }: PortalFrameProps) {
         <div className="topbar-brand">
           <span className="brand-dot" />
           <strong>ENDR</strong>
-          <span className="topbar-purpose">Internal Developer Platform</span>
+          <span className="topbar-purpose">IDP</span>
         </div>
+
+        <TopNav />
 
         <div className="topbar-status">
           <span className={`chip tone-${dataSourceTone(snapshot.dataSource)}`}>{snapshot.dataSource}</span>
@@ -72,9 +29,7 @@ export function PortalFrame({ children, snapshot }: PortalFrameProps) {
         </div>
       </header>
 
-      <CollapsibleSidebar sidebar={sidebarContent}>
-        {children}
-      </CollapsibleSidebar>
+      {children}
     </main>
   );
 }

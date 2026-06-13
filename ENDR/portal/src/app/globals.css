@@ -2417,3 +2417,20 @@ code {
 .chip.chip-warn { color: var(--warn-text); background: rgba(245, 207, 132, 0.12); border-color: transparent; }
 .chip.chip-bad { color: var(--bad-text); background: rgba(245, 161, 170, 0.12); border-color: transparent; }
 .chip.chip-accent { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+
+/* ===== Top navigation (finc-style; replaces the left sidebar) ===== */
+.topbar-nav { display: flex; align-items: center; gap: 0.25rem; flex: 1; min-width: 0; overflow-x: auto; }
+.topnav-link {
+  padding: 0.4rem 0.72rem;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s;
+}
+.topnav-link:hover { color: var(--text); background: var(--bg-soft); }
+.topnav-link.active { color: var(--accent); background: var(--accent-soft); }
+/* Full-width main now that the sidebar is gone — centered for readability. */
+.portal-main { max-width: 1280px; margin: 0 auto; width: 100%; }
