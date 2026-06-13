@@ -54,9 +54,11 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
             <h1>{platformService.name}</h1>
             <p className="hero-subtitle">Detailed platform service metadata and deployment posture.</p>
           </div>
-          <a className="open-link" href={appArgoUrl} target="_blank" rel="noreferrer">
-            Open In ArgoCD
-          </a>
+          {appArgoUrl ? (
+            <a className="open-link" href={appArgoUrl} target="_blank" rel="noreferrer">
+              Open In ArgoCD
+            </a>
+          ) : null}
         </section>
 
         <section className="detail-grid" aria-label="platform-service-details">
@@ -133,17 +135,19 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
           </article>
         </section>
 
-        <section className="panel">
-          <h2>ArgoCD Application</h2>
-          <p className="embed-note">
-            Embedded page for <strong>{platformService.name}</strong>. If embedding is blocked, use the direct link.
-          </p>
-          <p>
-            <a className="entity-link" href={appArgoUrl} target="_blank" rel="noreferrer">
-              {appArgoUrl}
-            </a>
-          </p>
-        </section>
+        {appArgoUrl ? (
+          <section className="panel">
+            <h2>ArgoCD Application</h2>
+            <p className="embed-note">
+              Embedded page for <strong>{platformService.name}</strong>. If embedding is blocked, use the direct link.
+            </p>
+            <p>
+              <a className="entity-link" href={appArgoUrl} target="_blank" rel="noreferrer">
+                {appArgoUrl}
+              </a>
+            </p>
+          </section>
+        ) : null}
 
         {universe.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">

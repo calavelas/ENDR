@@ -1179,6 +1179,46 @@ code {
   background: #0e0e12;
 }
 
+.argocd-embed-empty {
+  height: auto;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: #0e0e12;
+}
+
+.embed-empty-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text, #e8edf7);
+}
+
+.embed-empty-sub {
+  margin: 0;
+  max-width: 48ch;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.embed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.embed-actions .open-link {
+  cursor: pointer;
+}
+
 .embed-note {
   margin: 0;
   color: var(--muted);

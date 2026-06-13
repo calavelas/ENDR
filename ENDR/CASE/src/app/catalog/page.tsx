@@ -103,14 +103,18 @@ export default async function CatalogPage() {
                   </td>
                   <td>{optionalTimestamp(service.deployedAt)}</td>
                   <td>
-                    <a
-                      className="open-link compact"
-                      href={buildArgoApplicationUrl(embedUrl, service.name)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open
-                    </a>
+                    {embedUrl ? (
+                      <a
+                        className="open-link compact"
+                        href={buildArgoApplicationUrl(embedUrl, service.name)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open
+                      </a>
+                    ) : (
+                      <span className="empty-cell">n/a</span>
+                    )}
                   </td>
                   <td>
                     <a
@@ -181,14 +185,18 @@ export default async function CatalogPage() {
                   </td>
                   <td>{optionalTimestamp(app.deployedAt)}</td>
                   <td>
-                    <a
-                      className="open-link compact"
-                      href={buildArgoApplicationUrl(embedUrl, app.name)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open
-                    </a>
+                    {embedUrl ? (
+                      <a
+                        className="open-link compact"
+                        href={buildArgoApplicationUrl(embedUrl, app.name)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open
+                      </a>
+                    ) : (
+                      <span className="empty-cell">n/a</span>
+                    )}
                   </td>
                   <td>
                     {app.sourcePath ? (
