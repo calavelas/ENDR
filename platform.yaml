@@ -1,0 +1,32 @@
+projectName: endr
+owners:
+  - calavelas
+config:
+  git:
+    provider: github
+    owner: calavelas
+    repo: ENDR
+    defaultBranch: main
+  environments:
+    kubernetes:
+    - name: mac-lab
+      description: Testing K8s cluster on Mac
+  namespace:
+    - name: demo
+    - name: demo2
+templates:
+  extends: []
+  service:
+    - name: python-fastapi
+      type: service
+      description: FastAPI service template
+      path: ENDR/engine/templates/service/python-fastapi
+  gitops:
+    - name: helm-service
+      type: gitops
+      description: Helm chart and ArgoCD app template
+      path: ENDR/engine/templates/gitops/helm-service
+    - name: helm-service2
+      type: gitops
+      description: Helm chart and ArgoCD app template
+      path: ENDR/engine/templates/gitops/helm-service

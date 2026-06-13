@@ -2,42 +2,43 @@
 # Deploy: Render Dashboard → New → Blueprint → point at this repo.
 # Docs: DOCS/DEMO_DEPLOY.md
 #
-# Both services run prebuilt public Docker Hub images. PLEX runs in config mode and reads
-# SVCS.yaml from GitHub raw (so adding a service via the normal PR flow updates the demo with
-# no redeploy). CASE proxies to PLEX server-side; the browser stays same-origin.
+# Both services run prebuilt public Docker Hub images. The api runs in config mode and reads
+# services.yaml from GitHub raw (so adding a service via the normal PR flow updates the demo with
+# no redeploy). The portal proxies to the api server-side; the browser stays same-origin.
 
 services:
   - type: web
-    name: endr-plex
+    name: endr-api
     runtime: image
     plan: free
     image:
-      # Use a tag built from main. PLEX is unaffected by the frontend embed change.
-      url: docker.io/calavelas/plex:606b7ec
+      # Use a tag built from main AFTER the naming refactor (the build that publishes
+      # calavelas/api). Older tags only exist under the old image name (calavelas/plex).
+      url: docker.io/calavelas/api:606b7ec
     # Bind Render's injected $PORT (the image hardcodes 8000 otherwise).
-    dockerCommand: python -m uvicorn TARS.api.main:app --host 0.0.0.0 --port $PORT --app-dir ENDR
+    dockerCommand: python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT --app-dir ENDR
     healthCheckPath: /api/health
     envVars:
-      - key: PLEX_ARGOCD_SERVER
+      - key: API_ARGOCD_SERVER
         value: ""          # config mode — no cluster contacted
       - key: IDP_REPO_ROOT
         value: /workspace
 
   - type: web
-    name: endr-case
+    name: endr-portal
     runtime: image
     plan: free
     image:
-      # Use a CASE tag built from main AT/AFTER the graceful-embed change so /argocd
-      # degrades cleanly (leave CASE_ARGOCD_EMBED_URL unset below).
-      url: docker.io/calavelas/case:606b7ec
+      # Use a portal tag built from main at/after the graceful-embed change so /argocd
+      # degrades cleanly (leave PORTAL_ARGOCD_EMBED_URL unset below).
+      url: docker.io/calavelas/portal:606b7ec
     dockerCommand: npm run start -- -p $PORT -H 0.0.0.0
     envVars:
-      # Server-side proxy target. After the PLEX service is live, set this to its URL
-      # (e.g. https://endr-plex.onrender.com). Render prompts because sync is false.
+      # Server-side proxy target. After the api service is live, set this to its URL
+      # (e.g. https://endr-api.onrender.com). Render prompts because sync is false.
       - key: ENDR_API_URL
         sync: false
       # Do NOT set NEXT_PUBLIC_ENDR_API_URL (browser stays same-origin).
-      # Do NOT set CASE_ARGOCD_EMBED_URL (renders the graceful "no live ArgoCD" placeholder).
+      # Do NOT set PORTAL_ARGOCD_EMBED_URL (renders the graceful "no live ArgoCD" placeholder).
       # Do NOT set GITHUB_TOKEN — keeps the public demo read-only (create shows dry-run preview
       # but cannot open PRs).

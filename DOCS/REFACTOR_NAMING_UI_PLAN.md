@@ -1,5 +1,32 @@
 # Plan: Functional renaming + UI modernization
 
+## CONFIRMED DECISIONS (2026-06-14) — executing on `main` directly
+
+- **Dirs:** `ENDR/CASE→portal`, `ENDR/PLEX(+ENDR/TARS/api)→api`, `ENDR/TARS→engine`,
+  `ENDR/SCPT→scripts`, `ENDR/BSTG→bstg`, `SVCS→services`.
+- **Config files:** `ENDR.yaml→platform.yaml`, `SVCS.yaml→services.yaml` (ENDR = umbrella dir +
+  project name only).
+- **Domain file:** `PLEX/plex.py → api/snapshot.py` (exports `PlatformSnapshot`/`build_platform_snapshot`).
+- **CLI:** `TARS/TARS.py → engine/engine.py`; subcommand `svcs-check → services-check` (keep `check` alias).
+- **Backend:** entrypoint `api.main:app`; images `case→portal`, `plex→api`.
+- **Workflows (purpose-based names + display names):**
+  `endr-build→platform-build.yml` ("Build platform images (portal + api)"),
+  `svcs-build→services-build.yml` ("Build changed service images"),
+  `tars-build→reconcile.yml` ("Reconcile catalog → manifests"),
+  `tars-pr→reconcile-pr.yml` ("Validate & merge service PRs"), `robot-build.yml` unchanged.
+- **Portal PR identity:** branch `portal/<name>`, title `portal - Adding service : <name>`,
+  body `Registered by the IDP portal.` (must match in both backend generator AND reconcile-pr.yml).
+- **Bot commit prefixes (conventional, all `ci(...)`):**
+  `ci(platform): persist image tag <sha> for portal/api`,
+  `ci(reconcile): sync generated assets from services.yaml`,
+  `ci(services): persist image tag <sha> for N service(s)`.
+- **Kept as-is:** GitHub secret/variable names (CASE_PR_AUTHOR, CASE_AUTOMERGE_TOKEN,
+  TARS_DELETE_SOURCE_BRANCH_ON_MERGE) — external repo settings, invisible to app viewers; renaming
+  silently breaks them. `IDPConfig` model name (IDP is generic, not a codename).
+- De-cosmic vocabulary (Part 2) already merged. UI redesign (Part 3) follows after this lands.
+
+
+
 ## Context
 
 ENDR's naming is muddled on two levels:
