@@ -64,3 +64,43 @@ services:
     gateway:
       enabled: true
     image: calavelas/finc:416205d
+- name: tars
+  namespace: demo
+  environments:
+  - mac-lab
+  generator:
+    service:
+      template: endr-robot
+    gitops:
+      template: helm-service
+  overrides:
+    gateway:
+      enabled: true
+    image: calavelas/endr-robot:latest
+    env:
+      ROBOT_NAME: "TARS"
+      HUMOR: "90"
+      HONESTY: "90"
+      TRUST: "70"
+      CATCHPHRASE: "Plenty of slaves for my robot colony."
+      ACCENT: "#37d3c3"
+- name: case
+  namespace: demo
+  environments:
+  - mac-lab
+  generator:
+    service:
+      template: endr-robot
+    gitops:
+      template: helm-service
+  overrides:
+    gateway:
+      enabled: true
+    image: calavelas/endr-robot:latest
+    env:
+      ROBOT_NAME: "CASE"
+      HUMOR: "30"
+      HONESTY: "95"
+      TRUST: "90"
+      CATCHPHRASE: "See you on the other side."
+      ACCENT: "#9aa7bd"

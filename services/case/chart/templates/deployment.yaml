@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: case
+  labels:
+    app.kubernetes.io/name: case
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: case
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: case
+    spec:
+      containers:
+        - name: case
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ROBOT_NAME
+              value: "CASE"
+            - name: HUMOR
+              value: "30"
+            - name: HONESTY
+              value: "95"
+            - name: TRUST
+              value: "90"
+            - name: CATCHPHRASE
+              value: "See you on the other side."
+            - name: ACCENT
+              value: "#9aa7bd"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

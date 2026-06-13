@@ -2,9 +2,22 @@
 its own environment variables (no Kubernetes API, no RBAC). Uncalibrated = malfunction;
 set HUMOR / HONESTY / TRUST and it comes online."""
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+
+from journey import guide
 
 app = Flask(__name__)
+
+
+@app.after_request
+def _cors(resp):
+    # Permissive CORS so the guide endpoint can be hit directly during debugging
+    # (curl / another origin). In production the portal calls it server-to-server
+    # via its own proxy, so this is only a convenience — no flask-cors dependency.
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return resp
 
 
 def _num(key: str, default: int = 0) -> int:
@@ -120,6 +133,25 @@ def healthz():
 def status():
     c = config()
     return jsonify({**c, "calibrated": is_calibrated(c), "state": "online" if is_calibrated(c) else "malfunction"})
+
+
+@app.route("/api/guide", methods=["GET", "POST", "OPTIONS"])
+def api_guide():
+    """Scripted, context-aware guidance turn. POST with a JSON body; GET with
+    query params is supported for quick manual checks (curl/browser)."""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or {}
+    else:
+        payload = {
+            "mode": request.args.get("mode"),
+            "route": request.args.get("route"),
+            "step": request.args.get("step"),
+            "intent": request.args.get("intent"),
+            "replyId": request.args.get("replyId"),
+        }
+    return jsonify(guide(payload, config()))
 
 
 if __name__ == "__main__":
