@@ -19,6 +19,13 @@ spec:
           image: "{{ '{{' }} .Values.image.repository {{ '}}' }}:{{ '{{' }} .Values.image.tag {{ '}}' }}"
           ports:
             - containerPort: {{ port }}
+{%- if env %}
+          env:
+{%- for key, value in env.items() %}
+            - name: {{ key }}
+              value: "{{ value }}"
+{%- endfor %}
+{%- endif %}
           readinessProbe:
             httpGet:
               path: /healthz

@@ -10,6 +10,10 @@ const DEFAULT_ZOOM = 100;
 interface ArgoEmbedPanelProps {
   embedUrl: string;
   showHeader?: boolean;
+  // When true, never mount the iframe in-page — only offer an "Open ArgoCD ↗" link.
+  // Used for the ArgoCD applications LIST view (heavy: renders + streams every app),
+  // which overwhelms the tab when embedded. Per-service DETAIL embeds stay interactive.
+  linkOnly?: boolean;
 }
 
 function clampZoom(value: number): number {
@@ -34,7 +38,7 @@ function EmbedHeader({ showHeader }: { showHeader: boolean }) {
   );
 }
 
-export function ArgoEmbedPanel({ embedUrl, showHeader = true }: ArgoEmbedPanelProps) {
+export function ArgoEmbedPanel({ embedUrl, showHeader = true, linkOnly = false }: ArgoEmbedPanelProps) {
   const [zoomPercent, setZoomPercent] = useState<number>(DEFAULT_ZOOM);
   const [loaded, setLoaded] = useState<boolean>(false);
 
@@ -61,6 +65,29 @@ export function ArgoEmbedPanel({ embedUrl, showHeader = true }: ArgoEmbedPanelPr
             This portal is running in config mode (no connected cluster). Service status is derived
             from <code>SVCS.yaml</code>. Connect an ArgoCD instance to enable the live dashboard.
           </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Link-only: the ArgoCD applications LIST view is too heavy to embed in-page (it renders
+  // and streams every app at once and bogs down the tab). Open it in its own tab instead —
+  // per-service sync/health is already shown natively in the catalog.
+  if (linkOnly) {
+    return (
+      <section className="embed-panel">
+        <EmbedHeader showHeader={showHeader} />
+        <div className="argocd-frame-viewport argocd-embed-empty">
+          <p className="embed-empty-title">ArgoCD dashboard</p>
+          <p className="embed-empty-sub">
+            The full applications view runs best in its own tab. Live sync &amp; health for each
+            service are already shown in the catalog; open ArgoCD for the deep operational view.
+          </p>
+          <div className="embed-actions">
+            <a className="open-link" href={embedUrl} target="_blank" rel="noreferrer">
+              Open ArgoCD ↗
+            </a>
+          </div>
         </div>
       </section>
     );
