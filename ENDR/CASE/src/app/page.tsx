@@ -191,7 +191,7 @@ export default async function HomePage() {
           <h2 className="section-header-brand">ArgoCD Dashboard</h2>
         </section>
 
-        <ArgoEmbedPanel embedUrl={embedUrl} showHeader={false} />
+        <ArgoEmbedPanel embedUrl={embedUrl} showHeader={false} linkOnly />
       </section>
     </PortalFrame>
   );
