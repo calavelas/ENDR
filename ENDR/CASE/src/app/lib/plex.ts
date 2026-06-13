@@ -30,10 +30,8 @@ export interface PlexUniverse {
 }
 
 const FALLBACK_API = "http://127.0.0.1:8000";
-const FALLBACK_EMBED_URL = "https://argocd.calavelas.net/applications";
 const FALLBACK_GITHUB_REPO_URL = "https://github.com/calavelas/ENDR";
 const FALLBACK_GITHUB_BRANCH = "main";
-const FALLBACK_API_TIMEOUT_MS = 5000;
 
 function encodePathSegments(value: string): string {
   return value
@@ -52,42 +50,16 @@ export function resolveApiBase(): string {
   return normalizeApiBase(base);
 }
 
-function resolveApiTimeoutMs(): number {
-  const configured = Number(process.env.CASE_PLEX_FETCH_TIMEOUT_MS || process.env.NEXT_PUBLIC_CASE_PLEX_FETCH_TIMEOUT_MS);
-  if (Number.isFinite(configured) && configured >= 500) {
-    return Math.round(configured);
-  }
-  return FALLBACK_API_TIMEOUT_MS;
-}
-
-async function fetchJsonWithTimeout<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timeoutMs = resolveApiTimeoutMs();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`timed out after ${timeoutMs}ms`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
+// Returns "" when no embed URL is configured (e.g. the cluster-free demo, where
+// there is no live ArgoCD). Consumers must treat an empty value as "no embed":
+// the panel renders a placeholder and per-app links are hidden.
 export function resolveArgoEmbedUrl(): string {
   const value =
     process.env.CASE_ARGOCD_EMBED_URL ||
     process.env.NEXT_PUBLIC_CASE_ARGOCD_EMBED_URL ||
     process.env.NEXT_PUBLIC_ARGOCD_EMBED_URL ||
-    FALLBACK_EMBED_URL;
-  return value.trim() || FALLBACK_EMBED_URL;
+    "";
+  return value.trim();
 }
 
 export function resolveGithubRepoUrl(): string {
@@ -102,6 +74,9 @@ export function resolveGithubBranch(): string {
 }
 
 export function buildArgoApplicationUrl(embedUrl: string, appName: string): string {
+  if (!embedUrl.trim()) {
+    return "";
+  }
   const name = appName.trim();
   if (!name) {
     return embedUrl;
@@ -262,15 +237,27 @@ function buildFallbackUniverse(reason: string): PlexUniverse {
   };
 }
 
+const UNIVERSE_FETCH_TIMEOUT_MS = 8000;
+
 export async function loadUniverse(): Promise<PlexUniverse> {
   const apiBase = resolveApiBase();
   const endpoint = `${apiBase}/api/plex`;
 
+  // Bound the request so a slow/hung backend can never stall a server render.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UNIVERSE_FETCH_TIMEOUT_MS);
   try {
-    return await fetchJsonWithTimeout<PlexUniverse>(endpoint);
+    const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return (await response.json()) as PlexUniverse;
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown error";
     return buildFallbackUniverse(`Unable to reach ENDR API at ${endpoint}: ${reason}`);
+  } finally {
+    clearTimeout(timer);
   }
 }
 

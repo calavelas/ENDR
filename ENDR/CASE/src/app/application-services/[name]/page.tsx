@@ -79,9 +79,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             <h1>{service.name}</h1>
             <p className="hero-subtitle">Detailed service metadata and deployment posture.</p>
           </div>
-          <a className="open-link" href={serviceArgoUrl} target="_blank" rel="noreferrer">
-            Open In ArgoCD
-          </a>
+          {serviceArgoUrl ? (
+            <a className="open-link" href={serviceArgoUrl} target="_blank" rel="noreferrer">
+              Open In ArgoCD
+            </a>
+          ) : null}
         </section>
 
         <section className="detail-grid" aria-label="service-details">

@@ -134,10 +134,6 @@ function buildServicePagePath(serviceName: string): string {
   return `/application-services/${encodeURIComponent(serviceName.trim())}`;
 }
 
-function buildLocalServicePageUrl(serviceName: string): string {
-  return `http://localhost:3000${buildServicePagePath(serviceName)}`;
-}
-
 function buildServicePublicUrl(serviceName: string): string {
   return `https://${encodeURIComponent(serviceName.trim())}.calavelas.net`;
 }
@@ -522,6 +518,10 @@ export function CreateServicePanel() {
     };
   }, [catalogRefreshStatus, result?.serviceName, serviceVisibleInCatalog, transactionStatus]);
 
+  const existingServices = useMemo(() => {
+    return new Set((options?.existingServices ?? []).map((name) => name.toLowerCase()));
+  }, [options]);
+
   const selectedServiceTemplate = useMemo(
     () => options?.serviceTemplates.find((template) => template.name === serviceTemplate) ?? null,
     [options, serviceTemplate]
@@ -556,6 +556,10 @@ export function CreateServicePanel() {
     }
     if (normalizedServiceName.length > 48 || !DNS_LABEL_RE.test(normalizedServiceName)) {
       setFormError("Service name must match Kubernetes DNS label format.");
+      return null;
+    }
+    if (existingServices.has(normalizedServiceName.toLowerCase())) {
+      setFormError(`Service '${normalizedServiceName}' already exists.`);
       return null;
     }
     if (!serviceTemplate) {
@@ -1097,11 +1101,11 @@ export function CreateServicePanel() {
                   {serviceVisibleInCatalog ? (
                     <a
                       className="entity-link"
-                      href={buildLocalServicePageUrl(result.serviceName)}
+                      href={buildServicePagePath(result.serviceName)}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {buildLocalServicePageUrl(result.serviceName)}
+                      {buildServicePagePath(result.serviceName)}
                     </a>
                   ) : isSvcsBuildSuccessful(transactionStatus) ? (
                     <>waiting for catalog refresh...</>
