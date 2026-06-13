@@ -1,0 +1,46 @@
+name: Robot - Build and Push
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/robot/**'
+      - '.github/workflows/robot-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and push endr-robot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute tag
+        id: tag
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/robot
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/endr-robot:${{ steps.tag.outputs.tag }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/endr-robot:latest
+
+      - name: Summary
+        run: echo "Pushed endr-robot:${{ steps.tag.outputs.tag }} (+ :latest)" >> "$GITHUB_STEP_SUMMARY"
