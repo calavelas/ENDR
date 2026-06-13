@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENDR · Robot lifecycle (mockup flow → real IDP)</title>
+<style>
+  :root{--bg:#0c0c0e;--panel:#18181b;--ink:#f4f4f6;--muted:#8b8b96;--line:#25252a;--teal:#37d3c3;--good:#6ee7a0;--warn:#f5cf84;--bad:#f5a1aa;--idp:#7c9cff}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 100px}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  h1{font-size:28px;margin:0 0 6px} .lede{color:var(--muted);font-size:16px;margin:0 0 6px;max-width:72ch}
+  .meta{color:#5e6c86;font-size:12px;margin:0 0 26px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:16px;border-top:1px solid var(--line)}
+  h3{font-size:15px;margin:18px 0 6px;color:var(--teal)}
+  code{font-family:ui-monospace,monospace;background:#0a0e18;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:#bfeede}
+  ul,ol{max-width:78ch} li{margin:5px 0}
+  .flow{background:#0a0e14;border:1px solid var(--line);border-radius:11px;padding:14px 16px;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.85;white-space:pre;overflow:auto;color:#cfe0ff;margin:12px 0}
+  .phase{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+  .st{flex:none;font-size:10px;font-weight:700;border-radius:5px;padding:2px 8px;margin-top:2px}
+  .done{background:rgba(110,231,160,.14);color:var(--good)} .wip{background:rgba(245,207,132,.14);color:var(--warn)} .todo{background:rgba(124,156,255,.14);color:var(--idp)}
+  .callout{border-left:3px solid var(--accent,#37d3c3);border-left-color:var(--teal);background:rgba(55,211,195,.06);border-radius:0 10px 10px 0;padding:11px 15px;margin:14px 0;font-size:14px}
+  b{color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Robot lifecycle — the mockup flow as real GitOps</h1>
+  <p class="lede">Wire the robot-demo mockup (<code>DOCS/robot-demo-mockup.html</code>) into the real IDP so
+  create → break → fix → destroy is genuine GitOps, not a simulation.</p>
+  <p class="meta mono">Living doc · updated per phase · companion to robot-demo-redesign.html + UI_REDESIGN_PLAN.html</p>
+
+  <h2>Architecture (how a robot maps to the real platform)</h2>
+  <p>A robot is just a normal ENDR service whose behaviour is 100% env-driven, running a shared prebuilt image:</p>
+  <div class="flow">portal /create (robot)            edit calibration (fix)
+        │ image=endr-robot               │  overrides.env { HUMOR… }
+        │ env={ROBOT_NAME,HUMOR,…}        ▼
+        ▼                          services.yaml  (single source of truth)
+  services.yaml entry  ──PR──▶  reconcile (engine services-check)
+                                      │ renders services/&lt;name&gt;/chart + KUBE ArgoCD app
+                                      │ env → deployment.yaml container env
+                                      ▼
+                                ArgoCD ──▶ pod runs calavelas/endr-robot
+                                              reads HUMOR/HONESTY/TRUST →
+                                              ONLINE (sum&gt;0) | MALFUNCTION (all 0)</div>
+  <ul>
+    <li><b>The robot app</b> (<code>apps/robot/app.py</code>, image <code>calavelas/endr-robot</code> via <code>robot-build.yml</code>) already renders ONLINE/MALFUNCTION from env + exposes <code>/healthz</code> and <code>/api/status</code>. ✅ exists.</li>
+    <li><b>Calibration lives in <code>services.yaml</code> <code>overrides.env</code></b> (not Helm values.yaml — the gitops template injects env straight into the generated <code>deployment.yaml</code>). So both create and fix are <b>services.yaml-only PRs</b>, reusing the existing auto-merge policy in <code>reconcile-pr.yml</code>.</li>
+    <li><b>Break</b> = create with empty/zero calibration → MALFUNCTION. <b>Fix</b> = edit env via PR → ONLINE. <b>Destroy</b> = remove the entry → ArgoCD prunes.</li>
+    <li>Backend <code>CreateServiceRequest</code> already accepts <code>image</code> + <code>env</code> — no API change needed for create.</li>
+  </ul>
+
+  <h2>Phases</h2>
+  <div class="phase"><span class="st done">DONE</span><div><b>A · endr-robot service template.</b> New <code>ENDR/engine/templates/service/endr-robot</code> (README-only scaffold; app is the shared image), registered in <code>platform.yaml</code>. Verified via dry-run <code>create_service</code>: renders the entry, ArgoCD app, README, chart — calibration env lands in <code>deployment.yaml</code>, probes hit <code>/healthz</code>.</div></div>
+  <div class="phase"><span class="st todo">NEXT</span><div><b>C · Portal create: personality fields.</b> When the <code>endr-robot</code> template is selected in <code>/create</code>, show ROBOT_NAME / CATCHPHRASE / HUMOR / HONESTY / TRUST inputs and submit them as <code>env</code> with <code>image=calavelas/endr-robot:&lt;tag&gt;</code>. (Leaving calibration at 0 = a robot that boots MALFUNCTION — the "break".)</div></div>
+  <div class="phase"><span class="st todo">TODO</span><div><b>D · Portal values-edit flow (fix).</b> New edit page + backend endpoint that opens a services.yaml-only PR changing a robot's <code>overrides.env</code> calibration. Closes the break→fix loop through real PRs.</div></div>
+  <div class="phase"><span class="st todo">TODO</span><div><b>B · robot-validate CI policy.</b> <code>engine</code> subcommand + a required check in <code>reconcile-pr.yml</code>: for robot service PRs, enforce calibration keys present and values 0–100; block merge otherwise (the CI gate in the mockup).</div></div>
+  <div class="phase"><span class="st todo">TODO</span><div><b>E · End-to-end + narrative.</b> Local end-to-end (create→MALFUNCTION→edit→ONLINE→delete), optional guided narrative/stage-rail overlay, image-tag handling for the shared robot image, docs.</div></div>
+
+  <div class="callout"><b>Open detail — robot image tag.</b> The robot image is shared (built by <code>robot-build.yml</code> as <code>endr-robot:latest</code> + <code>:&lt;sha&gt;</code>), and <code>services.yaml</code> forbids the <code>latest</code> tag. So robot entries pin a specific built tag (the portal sends a default tag on create); it is <i>not</i> auto-bumped by <code>services-build</code> (there is no per-service source). Pick/pin a known-good <code>endr-robot</code> tag before the live demo.</div>
+</div>
+</body>
+</html>

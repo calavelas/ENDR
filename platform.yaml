@@ -21,6 +21,10 @@ templates:
       type: service
       description: FastAPI service template
       path: ENDR/engine/templates/service/python-fastapi
+    - name: endr-robot
+      type: service
+      description: Demo robot — personality via env, runs the shared endr-robot image
+      path: ENDR/engine/templates/service/endr-robot
   gitops:
     - name: helm-service
       type: gitops
