@@ -159,8 +159,18 @@
     <li><b>Phase 1 ✅</b> (commit <code>aa1eb32</code>) — accent + <code>--fs-*</code> type-scale tokens in <code>globals.css</code>; status pills now render icon + colour (✓ / ⚠ / ✕ / •) via CSS scoped to <code>.status-pill::before</code> — every existing pill upgraded, no JSX change.</li>
     <li><b>Phase 2 ✅</b> — component kit under <code>ENDR/portal/src/app/components/ui/</code>: <code>StatusPill</code>, <code>PageHeader</code>, <code>StatCard</code>, <code>ServiceCard</code>, <code>LinkButton</code> (+ CSS in globals.css). <code>Toolbar</code>, <code>FormField</code>, <code>Alert</code>, <code>Tabs</code> still to come for later phases.</li>
     <li><b>Phase 3a ✅</b> — dashboard (<code>app/page.tsx</code>) rebuilt summary-first: <code>PageHeader</code> + StatCards (total / healthy / needs-attention / data-source) + ServiceCard grids for application &amp; platform services. Data flow unchanged. Verified live (localhost:3000, 200) + <code>tsc</code> clean.</li>
-    <li><b>Next:</b> Phase 3b catalog (cards/table <b>toggle</b> + Toolbar search/filter/sort) → Phase 4 detail tabs → Phase 5 create/history → Phase 6 polish.</li>
+    <li><b>Phase 3a.5 ✅</b> — <b>finc-style depth pass.</b> Reference: <code>finc.calavelas.net/?demo=1</code> (a clean Inter dashboard the user likes). Adopted its <i>structure/feel</i> while keeping the portal's dark theme + Inter: soft-shadow tokens (<code>--shadow</code>/<code>--shadow-sm</code>) on panels/stat-cards/service-cards, card hover-lift, a <code>.panel-header</code>/<code>.panel-title</code> pattern, and semantic tinted chips (<code>.chip-good/warn/bad/accent</code>). Verified tsc + live (200).</li>
+    <li><b>Next:</b> Phase 3b catalog (cards/table <b>toggle</b> + Toolbar search/filter/sort) → Phase 4 detail tabs → Phase 5 create/history → Phase 6 polish — all carrying the finc-style depth.</li>
   </ul>
+
+  <div class="callout"><b>Visual reference — finc dashboard</b> (<code>finc.calavelas.net/?demo=1</code>):
+  Inter font (same as portal); tokenized system (surface/panel/panel-soft, soft shadow
+  <code>0 18px 40px</code>, radius 6/8/12/pill, spacing 4/8/12/16/24, fs 11–14 with strong weight
+  hierarchy); KPI tiles (big bold value + uppercase muted label + delta); sticky blurred topbar with
+  horizontal nav; segmented tab controls; pill chips with tinted semantic backgrounds; multi-hue
+  accents (teal/blue/violet/coral/gold/green/risk). We keep the portal's <b>dark</b> palette + Inter
+  and borrow the <b>depth, KPI styling, panel headers, and chips</b>. (Its horizontal top-nav vs the
+  portal's left sidebar is an open option — not changed yet.)</div>
 
   <p class="note mono">On approval I start at Phase 1 (tokens + StatusPill) and ship phase-by-phase, verifying each with tsc + the local dev stack. Companion docs: DOCS/robot-demo-redesign.html, DOCS/REFACTOR_NAMING_UI_PLAN.md.</p>
 

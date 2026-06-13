@@ -36,6 +36,9 @@
   --fs-base: 0.95rem;
   --fs-lg: 1.1rem;
   --fs-xl: 1.4rem;
+  /* Depth — finc-style soft shadows give panels a calm, lifted feel (dark theme kept). */
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -1253,6 +1256,7 @@ code {
   border-radius: var(--radius-md);
   background: var(--bg-panel);
   padding: 0.82rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .service-table-wrap {
@@ -2370,7 +2374,7 @@ code {
 .ui-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.9rem; margin: 0 0 1.6rem; }
-.stat-card { display: flex; flex-direction: column; gap: 0.15rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0.95rem 1.05rem; }
+.stat-card { display: flex; flex-direction: column; gap: 0.15rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0.95rem 1.05rem; box-shadow: var(--shadow-sm); }
 .stat-card-value { font-size: 1.65rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
 .stat-card-label { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
 .stat-card-hint { font-size: var(--fs-xs); color: var(--muted); }
@@ -2383,8 +2387,8 @@ code {
 .section-head h2 { font-size: var(--fs-lg); font-weight: 700; margin: 0; }
 
 .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 0.9rem; }
-.service-card { display: flex; flex-direction: column; gap: 0.7rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0.95rem 1.05rem; transition: border-color 0.15s; }
-.service-card:hover { border-color: var(--accent); }
+.service-card { display: flex; flex-direction: column; gap: 0.7rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0.95rem 1.05rem; box-shadow: var(--shadow-sm); transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+.service-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
 .service-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .service-card-name { font-size: var(--fs-base); font-weight: 700; color: var(--text); text-decoration: none; }
 .service-card-name:hover { color: var(--accent); }
@@ -2393,3 +2397,23 @@ code {
 .service-card-meta-item { display: inline-flex; align-items: center; gap: 0.35rem; }
 .service-card-meta .k { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
 .service-card-meta code { font-size: 0.78rem; }
+
+/* ===== finc-style refinements (depth, panel headers, semantic chips) ===== */
+.stat-card { transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+/* Panel header: title left, actions/meta right (finc .panel-header pattern). */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0 0 0.9rem;
+}
+.panel-title { font-size: var(--fs-base); font-weight: 700; margin: 0; }
+
+/* Semantic tinted chips (finc .chip-success/.chip-* style) using portal tones. */
+.chip.chip-good { color: var(--good-text); background: rgba(110, 231, 160, 0.12); border-color: transparent; }
+.chip.chip-warn { color: var(--warn-text); background: rgba(245, 207, 132, 0.12); border-color: transparent; }
+.chip.chip-bad { color: var(--bad-text); background: rgba(245, 161, 170, 0.12); border-color: transparent; }
+.chip.chip-accent { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
