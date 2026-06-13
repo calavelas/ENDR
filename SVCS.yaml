@@ -63,3 +63,4 @@ services:
   overrides:
     gateway:
       enabled: true
+    image: calavelas/finc:416205d

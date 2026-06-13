@@ -1,6 +1,6 @@
 image:
   repository: calavelas/finc
-  tag: 0.1.0
+  tag: 416205d
   pullPolicy: IfNotPresent
 
 service:
