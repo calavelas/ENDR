@@ -51,3 +51,15 @@ services:
     gateway:
       enabled: true
     image: calavelas/test1:0d39140
+- name: finc
+  namespace: demo
+  environments:
+  - mac-lab
+  generator:
+    service:
+      template: python-fastapi
+    gitops:
+      template: helm-service
+  overrides:
+    gateway:
+      enabled: true
