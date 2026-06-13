@@ -1,0 +1,44 @@
+# Cluster-free ENDR demo — CASE portal + PLEX backend, no Kubernetes, no ArgoCD.
+#
+# PLEX runs in "config mode" (PLEX_ARGOCD_SERVER="") and renders the service catalog by
+# reading SVCS.yaml directly from GitHub raw, so the demo always reflects the live repo
+# with no redeploy. CASE proxies to PLEX server-side; the browser only ever calls
+# same-origin /api/plex/*.
+#
+# Usage:
+#   IMAGE_TAG=<tag-built-from-main> docker compose -f DOCS/demo/docker-compose.yml up
+#   open http://localhost:3000
+#
+# Note: the graceful "no live ArgoCD" placeholder requires a CASE image built AFTER the
+# embed-degradation change lands on main. Older tags will still try the configured embed URL.
+
+services:
+  plex:
+    image: docker.io/calavelas/plex:${IMAGE_TAG:-606b7ec}
+    environment:
+      PLEX_ARGOCD_SERVER: ""        # config mode — never contacts a cluster
+      IDP_REPO_ROOT: /workspace     # baked into the image; ENDR.yaml + templates live here
+      # PLEX_SVCS_CONFIG_URL defaults to the GitHub blob URL for calavelas/ENDR/SVCS.yaml
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health').status==200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  case:
+    image: docker.io/calavelas/case:${IMAGE_TAG:-606b7ec}
+    environment:
+      ENDR_API_URL: http://plex:8000   # server-side proxy target via compose DNS
+      # NEXT_PUBLIC_ENDR_API_URL intentionally UNSET — browser stays same-origin (/api/plex/*)
+      # CASE_ARGOCD_EMBED_URL intentionally UNSET — renders the graceful placeholder
+    ports:
+      - "3000:3000"
+    depends_on:
+      plex:
+        condition: service_healthy
+    restart: unless-stopped
