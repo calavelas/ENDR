@@ -154,7 +154,13 @@
     <li><b>Accent colour</b> → <b>teal <code>#37d3c3</code></b> (matches the mockup). Tokenized as <code>--accent</code>.</li>
     <li><b>Light mode</b> → <b>out of scope</b> (dark-only for now).</li>
   </ul>
-  <p><b>Phase 1 status:</b> ✅ accent + type-scale tokens added to <code>globals.css</code>; status pills now render icon + colour (✓ / ⚠ / ✕ / •) for accessibility, via CSS scoped to <code>.status-pill</code> — every existing pill upgraded with no JSX change.</p>
+  <h3>Build log (living)</h3>
+  <ul>
+    <li><b>Phase 1 ✅</b> (commit <code>aa1eb32</code>) — accent + <code>--fs-*</code> type-scale tokens in <code>globals.css</code>; status pills now render icon + colour (✓ / ⚠ / ✕ / •) via CSS scoped to <code>.status-pill::before</code> — every existing pill upgraded, no JSX change.</li>
+    <li><b>Phase 2 ✅</b> — component kit under <code>ENDR/portal/src/app/components/ui/</code>: <code>StatusPill</code>, <code>PageHeader</code>, <code>StatCard</code>, <code>ServiceCard</code>, <code>LinkButton</code> (+ CSS in globals.css). <code>Toolbar</code>, <code>FormField</code>, <code>Alert</code>, <code>Tabs</code> still to come for later phases.</li>
+    <li><b>Phase 3a ✅</b> — dashboard (<code>app/page.tsx</code>) rebuilt summary-first: <code>PageHeader</code> + StatCards (total / healthy / needs-attention / data-source) + ServiceCard grids for application &amp; platform services. Data flow unchanged. Verified live (localhost:3000, 200) + <code>tsc</code> clean.</li>
+    <li><b>Next:</b> Phase 3b catalog (cards/table <b>toggle</b> + Toolbar search/filter/sort) → Phase 4 detail tabs → Phase 5 create/history → Phase 6 polish.</li>
+  </ul>
 
   <p class="note mono">On approval I start at Phase 1 (tokens + StatusPill) and ship phase-by-phase, verifying each with tsc + the local dev stack. Companion docs: DOCS/robot-demo-redesign.html, DOCS/REFACTOR_NAMING_UI_PLAN.md.</p>
 

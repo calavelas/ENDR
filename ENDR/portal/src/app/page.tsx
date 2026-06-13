@@ -1,11 +1,15 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import Link from "next/link";
-
 import { ArgoEmbedPanel } from "./components/argo-embed-panel";
 import { PortalFrame } from "./components/portal-frame";
+import { LinkButton } from "./components/ui/button";
+import { PageHeader } from "./components/ui/page-header";
+import { ServiceCard } from "./components/ui/service-card";
+import { StatCard } from "./components/ui/stat-card";
 import {
+  dataSourceTone,
+  hasAttention,
   healthTone,
   loadSnapshot,
   resolveArgoEmbedUrl,
@@ -19,38 +23,45 @@ export default async function HomePage() {
   const embedUrl = resolveArgoEmbedUrl();
   const githubRepoUrl = resolveGithubRepoUrl();
 
-  const platformServices = sortByName(snapshot.platformServices);
   const serviceApps = sortByName(snapshot.services);
-  const platformApps = sortByName(platformServices);
+  const platformApps = sortByName(snapshot.platformServices);
+
+  const healthy = serviceApps.filter(
+    (service) => healthTone(service.healthStatus) === "good" && syncTone(service.syncStatus) === "good"
+  ).length;
+  const attention = serviceApps.filter(hasAttention).length;
 
   return (
     <PortalFrame snapshot={snapshot}>
       <section className="portal-main">
-        <section className="hero-row platform-home-hero">
-          <div className="platform-home-main">
-            <h1 className="hero-landing-title">
-              <span className="hero-landing-brand">ENDR</span>
-              <span className="hero-landing-divider">|</span>
-              <span className="hero-landing-purpose">Internal Developer Platform</span>
-            </h1>
-            <p className="hero-landing-tagline">&ldquo;Damn&hellip; I should have used Backstage&rdquo;</p>
-            <p className="hero-landing-copy">
-              ENDR is an Internal Developer Platform demo built with OpenAI Codex. Powered by Next.js, GitHub, and ArgoCD, it provides a service catalog, application management, and platform insights.
-            </p>
-            <figure className="hero-landing-quote">
-              <blockquote>&ldquo;Because manually deploying YAML at 2&nbsp;a.m. shouldn&rsquo;t be part of the developer experience.&rdquo;</blockquote>
-              <figcaption>&mdash; ChatGPT, 2026</figcaption>
-            </figure>
-            <div className="hero-actions hero-actions-landing">
-              <Link className="open-link hero-cta-primary" href="/create">
-                Try Create Service!
-              </Link>
-              <a className="open-link hero-cta-secondary" href={githubRepoUrl} target="_blank" rel="noreferrer">
-                View Source on GitHub
-              </a>
-            </div>
-          </div>
-        </section>
+        <PageHeader
+          title="Internal Developer Platform"
+          subtitle="Create, deploy, and observe services through GitHub and ArgoCD — no kubectl required."
+          actions={
+            <>
+              <LinkButton href="/create">Create service</LinkButton>
+              <LinkButton href={githubRepoUrl} variant="ghost" external>
+                View source
+              </LinkButton>
+            </>
+          }
+        />
+
+        <div className="stat-grid">
+          <StatCard label="Application services" value={serviceApps.length} />
+          <StatCard
+            label="Healthy"
+            value={healthy}
+            tone={serviceApps.length > 0 && healthy === serviceApps.length ? "good" : "neutral"}
+          />
+          <StatCard label="Need attention" value={attention} tone={attention > 0 ? "bad" : "good"} />
+          <StatCard
+            label="Data source"
+            value={snapshot.dataSource}
+            tone={dataSourceTone(snapshot.dataSource)}
+            hint={`cluster ${snapshot.clusterName}`}
+          />
+        </div>
 
         {snapshot.warnings.length > 0 && (
           <section className="warning-box" aria-live="polite">
@@ -63,135 +74,53 @@ export default async function HomePage() {
           </section>
         )}
 
-        <section className="home-tables-grid" aria-label="service-catalog-track">
-          <article className="home-table-column">
-            <section className="panel section-header-panel" aria-label="application-services-header">
-              <div className="service-lane-header">
-                <h2 className="section-header-brand">Application Services</h2>
-                <span className="chip muted">{serviceApps.length}</span>
-              </div>
-            </section>
-
-            <section className="panel service-table-wrap home-service-table-wrap" aria-label="application-services-table">
-              <table className="service-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Namespace</th>
-                    <th>Kind</th>
-                    <th>Health</th>
-                    <th>Sync</th>
-                    <th>Gateway</th>
-                    <th>Image</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {serviceApps.map((service) => {
-                    const gatewayEnabled = service.gatewayEnabled === true;
-                    const serviceUrl = service.serviceUrl?.trim() || `https://${service.name}.calavelas.net`;
-                    return (
-                      <tr key={service.name}>
-                        <td>
-                          <Link className="entity-link" href={`/application-services/${encodeURIComponent(service.name)}`}>
-                            {service.name}
-                          </Link>
-                        </td>
-                        <td>{service.namespace}</td>
-                        <td>{service.templateName?.trim() || "n/a"}</td>
-                        <td>
-                          <span className={`status-pill tone-${healthTone(service.healthStatus)}`}>{service.healthStatus}</span>
-                        </td>
-                        <td>
-                          <span className={`status-pill tone-${syncTone(service.syncStatus)}`}>{service.syncStatus}</span>
-                        </td>
-                        <td>
-                          {gatewayEnabled ? (
-                            <a className="entity-link" href={serviceUrl} target="_blank" rel="noreferrer">
-                              True
-                            </a>
-                          ) : (
-                            "False"
-                          )}
-                        </td>
-                        <td>
-                          <code>{service.imageTag ?? "n/a"}</code>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {serviceApps.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="empty-cell">
-                        No application services found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </section>
-          </article>
-
-          <article className="home-table-column">
-            <section className="panel section-header-panel" aria-label="platform-services-header">
-              <div className="service-lane-header">
-                <h2 className="section-header-brand">Platform Services</h2>
-                <span className="chip muted">{platformApps.length}</span>
-              </div>
-            </section>
-
-            <section className="panel service-table-wrap home-service-table-wrap" aria-label="platform-services-table">
-              <table className="service-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Namespace</th>
-                    <th>Kind</th>
-                    <th>Health</th>
-                    <th>Sync</th>
-                    <th>Gateway</th>
-                    <th>Image</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {platformApps.map((app) => (
-                    <tr key={app.name}>
-                      <td>
-                        <Link className="entity-link" href={`/platform-services/${encodeURIComponent(app.name)}`}>
-                          {app.name}
-                        </Link>
-                      </td>
-                      <td>{app.namespace}</td>
-                      <td>Platform</td>
-                      <td>
-                        <span className={`status-pill tone-${healthTone(app.healthStatus)}`}>{app.healthStatus}</span>
-                      </td>
-                      <td>
-                        <span className={`status-pill tone-${syncTone(app.syncStatus)}`}>{app.syncStatus}</span>
-                      </td>
-                      <td>False</td>
-                      <td>
-                        <code>{app.imageTag ?? "n/a"}</code>
-                      </td>
-                    </tr>
-                  ))}
-                  {platformApps.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="empty-cell">
-                        No platform services found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </section>
-          </article>
+        <section className="section-block">
+          <div className="section-head">
+            <h2>Application Services</h2>
+            <span className="chip muted">{serviceApps.length}</span>
+          </div>
+          {serviceApps.length === 0 ? (
+            <p className="empty-cell">No application services yet. Create one to get started.</p>
+          ) : (
+            <div className="service-grid">
+              {serviceApps.map((service) => (
+                <ServiceCard
+                  key={service.name}
+                  service={service}
+                  href={`/application-services/${encodeURIComponent(service.name)}`}
+                  showGateway
+                />
+              ))}
+            </div>
+          )}
         </section>
 
-        <section className="panel section-header-panel" aria-label="argocd-dashboard-header">
-          <h2 className="section-header-brand">ArgoCD Dashboard</h2>
+        <section className="section-block">
+          <div className="section-head">
+            <h2>Platform Services</h2>
+            <span className="chip muted">{platformApps.length}</span>
+          </div>
+          {platformApps.length === 0 ? (
+            <p className="empty-cell">No platform services found.</p>
+          ) : (
+            <div className="service-grid">
+              {platformApps.map((app) => (
+                <ServiceCard
+                  key={app.name}
+                  service={app}
+                  href={`/platform-services/${encodeURIComponent(app.name)}`}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
-        <ArgoEmbedPanel embedUrl={embedUrl} showHeader={false} linkOnly />
+        <section className="section-block">
+          <div className="section-head">
+            <h2>ArgoCD Dashboard</h2>
+          </div>
+          <ArgoEmbedPanel embedUrl={embedUrl} showHeader={false} linkOnly />
+        </section>
       </section>
     </PortalFrame>
   );
