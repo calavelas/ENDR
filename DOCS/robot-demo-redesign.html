@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENDR · Robot-demo redesign — architecture & plan</title>
+<style>
+  :root{--bg:#07090e;--panel:#0e1220;--panel2:#131a2c;--ink:#e9eefb;--muted:#8a97b4;--line:#1f2942;
+    --amber:#ffb454;--teal:#37d3c3;--good:#3ecf8e;--bad:#ff6b6b;--idp:#7c9cff;--accent:#37d3c3}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 90px}
+  .mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.3px}
+  .lede{color:var(--muted);font-size:16px;margin:0 0 8px;max-width:70ch}
+  .meta{color:#5e6c86;font-size:12px;margin:0 0 30px}
+  h2{font-size:20px;margin:38px 0 10px;padding-top:18px;border-top:1px solid var(--line)}
+  h3{font-size:15.5px;margin:22px 0 7px;color:var(--teal)}
+  p{max-width:74ch}
+  a{color:var(--accent)}
+  code{font-family:ui-monospace,monospace;background:#0a0e18;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:#bfeede}
+  .pill{display:inline-block;font-size:10px;letter-spacing:1px;padding:2px 9px;border-radius:6px;font-weight:700;text-transform:uppercase}
+  .p-endr{background:rgba(55,211,195,.15);color:var(--teal);border:1px solid rgba(55,211,195,.4)}
+  .p-gh{background:rgba(139,148,158,.15);color:#c9d1d9;border:1px solid #30363d}
+  .p-live{background:rgba(255,180,84,.15);color:var(--amber);border:1px solid rgba(255,180,84,.4)}
+  .p-idp{background:rgba(124,156,255,.15);color:var(--idp);border:1px solid rgba(124,156,255,.4)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .flow{background:#0a0e14;border:1px solid var(--line);border-radius:11px;padding:16px 18px;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.9;white-space:pre;overflow:auto;color:#cfe0ff;margin:14px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  tr:hover td{background:rgba(255,255,255,.015)}
+  td.n{color:#5e6c86;font-family:ui-monospace,monospace;width:34px}
+  .tag{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 7px;white-space:nowrap}
+  .t-sdlc{background:rgba(124,156,255,.13);color:#9db4ff} .t-idp{background:rgba(55,211,195,.13);color:var(--teal)}
+  .callout{border-left:3px solid var(--accent);background:rgba(55,211,195,.06);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0;font-size:14px}
+  .callout.warn{border-left-color:var(--amber);background:rgba(255,180,84,.06)}
+  .callout.warn b{color:var(--amber)} .callout b{color:var(--teal)}
+  ul{max-width:74ch} li{margin:5px 0}
+  .todo{list-style:none;padding:0} .todo li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+  .box{font-family:ui-monospace,monospace;color:var(--muted);flex:none}
+  .prio{font-size:10px;font-weight:700;border-radius:5px;padding:1px 7px;flex:none;margin-top:2px}
+  .pr-now{background:rgba(255,107,107,.15);color:var(--bad)} .pr-next{background:rgba(255,180,84,.15);color:var(--amber)} .pr-later{background:rgba(139,148,158,.15);color:#8b949e}
+  .done .desc{color:#5e6c86;text-decoration:line-through}
+  .desc{flex:1} .desc small{display:block;color:#5e6c86;font-size:12px;margin-top:2px}
+  .note{font-size:12px;color:#5e6c86;border-top:1px solid var(--line);margin-top:40px;padding-top:14px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>ENDR — Robot-demo redesign</h1>
+  <p class="lede">Architecture, the IDP↔SDLC journey mapping, and the build plan for the new
+  onboarding experience. This doc is the standing context for that work — read it first.</p>
+  <p class="meta mono">Companion to DOCS/robot-demo-mockup.html · last updated 2026-06-14</p>
+
+  <h2>1 · What we're building & why</h2>
+  <p>The default ENDR pitch ("GitOps, ArgoCD, reconciliation") is dry and invisible to non-engineers.
+  The redesign reframes onboarding as an interactive <b>build-a-robot</b> journey: you create a robot
+  service, watch it deploy through a real PR, see it boot <i>broken</i>, fix it, and decommission it —
+  learning the entire GitOps loop by doing it. The robot (a TARS personality) is just the payload; the
+  <i>platform mechanics</i> are the lesson.</p>
+
+  <div class="card">
+    <h3 style="margin-top:4px">One flow, two audiences (narrative toggle)</h3>
+    <p style="margin:0">The same click-through relabels itself for whoever is watching:</p>
+    <ul style="margin:8px 0 0">
+      <li>🤖 <b>Robot Factory</b> (story mode) — for non-technical people asking <i>"what do you do for your job?"</i></li>
+      <li>⚙ <b>Under the hood (IDP)</b> — for people new to GitOps/DevOps and for platform engineers; exposes the real `SVCS.yaml` → TARS → Helm → ArgoCD machinery.</li>
+    </ul>
+  </div>
+
+  <h2>2 · How the real platform works</h2>
+  <p>The mockup is faithful to ENDR's actual GitOps loop. Three <b>surfaces</b> appear in the demo,
+  signalled by the address bar + a coloured tag, because the loop genuinely spans all three:</p>
+  <p class="legend">
+    <span class="pill p-endr">ENDR portal</span> the self-service UI
+    <span class="pill p-gh">GitHub</span> source of truth / PR / CI
+    <span class="pill p-live">live robot</span> the running service on-cluster
+  </p>
+
+  <div class="flow">Browser ──▶ <span style="color:#37d3c3">ENDR portal (CASE)</span>  declare a service
+                       │
+                       ▼  opens a PR
+              <span style="color:#c9d1d9">GitHub: SVCS.yaml</span>  ◀── single source of truth
+                       │  CI gates the merge (validate-config, robot-validate)
+                       ▼  on merge to main
+              <span style="color:#9db4ff">TARS</span> (GitHub Action) generates:
+                 • app code    → SVCS/&lt;name&gt;/app/         (template: endr-robot)
+                 • Helm chart  → SVCS/&lt;name&gt;/chart/       (template: helm-service)
+                 • ArgoCD app  → KUBE/clusters/&hellip;/services/
+                       │
+                       ▼  reconciles desired → actual
+              <span style="color:#ffb454">ArgoCD</span> deploys to k3d  ──▶  &lt;name&gt;.calavelas.net</div>
+
+  <h3>The two edit layers (the core IDP lesson)</h3>
+  <p>A service has two files that look similar but mean very different things. Understanding the split
+  <b>is</b> the answer to "what does a platform engineer do":</p>
+  <table>
+    <tr><th>File</th><th>Owner</th><th>Role</th></tr>
+    <tr><td class="mono">SVCS.yaml</td><td>developer (via portal)</td><td>The <b>service catalog</b> entry — the high-level "I want a service" abstraction.</td></tr>
+    <tr><td class="mono">chart/values.yaml</td><td>developer</td><td>The <b>tunable knobs</b> the platform chose to expose (image tag, port, env, hostnames). Day-2 changes happen here.</td></tr>
+    <tr><td class="mono">chart/templates/deployment.yaml</td><td><b>platform</b> (TARS)</td><td>The <b>template</b> that renders the knobs into K8s objects. Platform-owned; developers don't touch it.</td></tr>
+  </table>
+  <div class="callout warn">⚠ <b>Mockup correction (pending):</b> screens s5–s8 currently show the user editing
+  <code>chart/templates/deployment.yaml</code>. That's wrong — personality/calibration edits change the
+  <b>Helm values</b> (<code>chart/values.yaml</code>), and the template renders them. Fixing this turns the
+  edit step into the values-vs-template lesson above. See plan item #1.</div>
+
+  <h2>3 · The journey, mapped to IDP planes & SDLC</h2>
+  <p>Every screen is one stage of the developer lifecycle. The mockup now carries a persistent
+  <b>stage rail</b> reflecting this — it relabels between factory/IDP wording and highlights the current
+  phase. The full create → break → fix → destroy arc is one complete GitOps loop (plus a day-2 loop-back
+  at the edit step).</p>
+  <table>
+    <tr><th class="n">#</th><th>Screen</th><th>User action</th><th>SDLC</th><th>IDP plane</th><th>Real artifact</th></tr>
+    <tr><td class="n">0</td><td>Landing</td><td>Enters portal</td><td><span class="tag t-sdlc">—</span></td><td><span class="tag t-idp">Portal / discovery</span></td><td class="mono">endr.calavelas.net</td></tr>
+    <tr><td class="n">1</td><td>Create</td><td>Designs robot, previews YAML</td><td><span class="tag t-sdlc">Plan·Code</span></td><td><span class="tag t-idp">Self-service catalog</span></td><td class="mono">SVCS.yaml entry</td></tr>
+    <tr><td class="n">2</td><td>PR #128</td><td>PR opens, CI ✓, auto-merge</td><td><span class="tag t-sdlc">Code·Test</span></td><td><span class="tag t-idp">Git SoT + CI</span></td><td class="mono">validate-config, reconcile</td></tr>
+    <tr><td class="n">—</td><td>TARS regen</td><td>Platform generates everything</td><td><span class="tag t-sdlc">Build</span></td><td><span class="tag t-idp">Scaffolding engine</span></td><td class="mono">app + chart + ArgoCD app</td></tr>
+    <tr><td class="n">3</td><td>Service page</td><td>Watches sync → Healthy</td><td><span class="tag t-sdlc">Release·Deploy</span></td><td><span class="tag t-idp">CD / reconciliation</span></td><td class="mono">ArgoCD Application</td></tr>
+    <tr><td class="n">4</td><td>⚠ Malfunction</td><td>Observes broken runtime</td><td><span class="tag t-sdlc">Operate·Monitor</span></td><td><span class="tag t-idp">Runtime / observability</span></td><td class="mono">empty env values</td></tr>
+    <tr><td class="n">5</td><td>Edit</td><td>Tunes calibration <b>in values.yaml</b></td><td><span class="tag t-sdlc">Develop (day-2)</span></td><td><span class="tag t-idp">Values self-service</span></td><td class="mono">chart/values.yaml env</td></tr>
+    <tr><td class="n">6</td><td>PR #129 ✗</td><td><code>robot-validate</code> blocks merge</td><td><span class="tag t-sdlc">Test</span></td><td><span class="tag t-idp">Policy-as-code</span></td><td class="mono">robot-validate check</td></tr>
+    <tr><td class="n">7</td><td>PR #129 ✓</td><td>Passes, auto-merge</td><td><span class="tag t-sdlc">Test·Release</span></td><td><span class="tag t-idp">CI gate cleared</span></td><td class="mono">values.yaml diff</td></tr>
+    <tr><td class="n">8</td><td>Re-sync</td><td>ArgoCD rolls the pod</td><td><span class="tag t-sdlc">Deploy</span></td><td><span class="tag t-idp">Reconciliation</span></td><td class="mono">changed manifest</td></tr>
+    <tr><td class="n">9</td><td>● Online</td><td>Sees the result</td><td><span class="tag t-sdlc">Operate·Monitor</span></td><td><span class="tag t-idp">Runtime feedback</span></td><td class="mono">live robot</td></tr>
+    <tr><td class="n">10–11</td><td>Self-destruct → PR #130</td><td>Removes entry, prune</td><td><span class="tag t-sdlc">Decommission</span></td><td><span class="tag t-idp">Lifecycle / prune</span></td><td class="mono">SVCS.yaml removal</td></tr>
+  </table>
+  <p>The stage rail collapses these into one six-step loop: <b>Declare → Commit → Validate → Deliver →
+  Operate → Retire</b> (factory wording: Design → File spec → Inspect → Assemble → Power on →
+  Decommission). Both <i>create</i> and <i>edit</i> restart the loop at Declare, which is what makes the
+  day-2 loop visible.</p>
+
+  <h2>4 · The easter egg (keep it)</h2>
+  <p>If a user hand-sets the calibration in the YAML during <i>create</i> (instead of using the form),
+  the robot boots straight to ONLINE and calls them a smart-ass for reading the source. It rewards the
+  engineer who skips the rails — a deliberate signal that the platform doesn't hide its mechanics.</p>
+
+  <h2>5 · Plan / next steps</h2>
+  <p>Status as of this session. <span class="prio pr-now">NOW</span> = correctness, do first ·
+  <span class="prio pr-next">NEXT</span> = redesign polish · <span class="prio pr-later">LATER</span> = make it real in the codebase.</p>
+  <ul class="todo">
+    <li class="done"><span class="box">[x]</span><span class="prio pr-next">DONE</span><span class="desc">Map the journey onto IDP planes + SDLC phases (section 3).</span></li>
+    <li class="done"><span class="box">[x]</span><span class="prio pr-next">DONE</span><span class="desc">Add a persistent SDLC/IDP stage rail to the mockup that relabels per narrative mode and tracks the current phase.</span></li>
+    <li><span class="box">[ ]</span><span class="prio pr-now">NOW</span><span class="desc">Fix the edit-target in the mockup: s5/s6/s7/s8 + IDP explainers should edit <code>chart/values.yaml</code>, not <code>templates/deployment.yaml</code>.<small>Reframe the diff as a values change (<code>env: { HUMOR: "" → "80" }</code>); recast robot-validate as "values-only, not template".</small></span></li>
+    <li><span class="box">[ ]</span><span class="prio pr-now">NOW</span><span class="desc">Add the values-vs-template explanation to the s5 IDP-mode explainer (the core platform-engineer lesson).</span></li>
+    <li><span class="box">[ ]</span><span class="prio pr-next">NEXT</span><span class="desc">Decide if the stage rail should also appear in story mode only, or both (currently both). Consider hiding the SDLC sub-labels in factory mode.</span></li>
+    <li><span class="box">[ ]</span><span class="prio pr-later">LATER</span><span class="desc">Build the real <code>endr-robot</code> service template (the robot app + personality/calibration env contract).</span></li>
+    <li><span class="box">[ ]</span><span class="prio pr-later">LATER</span><span class="desc">Implement the <code>robot-validate</code> CI policy check (values-only diff + calibration sanity 0–100).</span></li>
+    <li><span class="box">[ ]</span><span class="prio pr-later">LATER</span><span class="desc">Wire the create/edit flows into the actual portal (CASE) + backend so the demo runs against the real loop.</span></li>
+  </ul>
+
+  <h2>6 · Conversation decisions (context log)</h2>
+  <ul>
+    <li>Redesign onboarding as an interactive build-a-robot GitOps journey; keep the dual narrative toggle.</li>
+    <li>Two explicit audiences: IDP mode for GitOps/DevOps newcomers + platform engineers; Robot Factory mode to explain the user's job to non-technical people.</li>
+    <li><b>Edits target Helm values</b> (<code>chart/values.yaml</code>), not the deployment template — and the values/template split is the headline lesson.</li>
+    <li>Next step chosen: build the SDLC/IDP stage rail into the mockup (done) + write this standing doc.</li>
+    <li>Aligns with project constraints: cluster-free/cheap demo path, plain (non-cosmic) naming, clean professional UI — see the demo-strategy & naming notes.</li>
+  </ul>
+
+  <p class="note mono">Source of truth for the prototype: DOCS/robot-demo-mockup.html · This doc records intent & plan so future sessions resume with full context.</p>
+
+</div>
+</body>
+</html>

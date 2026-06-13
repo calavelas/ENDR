@@ -1,331 +1,528 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ENDR · Build-a-Robot demo (mockup)</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENDR · Build-a-Robot demo (mockup v3)</title>
 <style>
-  :root{
-    --bg:#07090e; --panel:#0e1220; --panel2:#131a2c; --ink:#e9eefb; --muted:#8a97b4;
-    --line:#1f2942; --amber:#ffb454; --teal:#37d3c3; --good:#3ecf8e; --bad:#ff6b6b; --warn:#f5b14c;
-    --accent:#37d3c3;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{background:radial-gradient(1200px 700px at 50% -10%,rgba(55,211,195,.10),transparent),var(--bg);
-    color:var(--ink);font:15px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;
-    -webkit-font-smoothing:antialiased}
+  :root{--bg:#07090e;--panel:#0e1220;--panel2:#131a2c;--ink:#e9eefb;--muted:#8a97b4;--line:#1f2942;
+    --amber:#ffb454;--teal:#37d3c3;--good:#3ecf8e;--bad:#ff6b6b;--warn:#f5b14c;--accent:#37d3c3;
+    --gh:#0d1117;--ghline:#30363d;--ghgreen:#238636;--ghtext:#c9d1d9;--ghmuted:#8b949e}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:14.5px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
   .mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
-  .wrap{max-width:880px;margin:0 auto;padding:22px 20px 80px;min-height:100%}
-  .topbar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);
-    padding-bottom:12px;margin-bottom:8px}
-  .brand{font-weight:800;letter-spacing:3px}
-  .brand b{color:var(--accent)}
-  .steps{display:flex;gap:6px;font-size:10.5px;color:var(--muted)}
-  .steps span{padding:3px 8px;border:1px solid var(--line);border-radius:999px}
-  .steps span.on{color:#06121a;background:var(--accent);border-color:var(--accent);font-weight:700}
-  .screen{display:none;animation:fade .35s ease}
-  .screen.active{display:block}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  h1{font-size:30px;margin:18px 0 6px;letter-spacing:.3px}
-  h2{font-size:20px;margin:0 0 4px}
-  p.sub{color:var(--muted);margin:0 0 18px;max-width:60ch}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  @media(max-width:760px){.row{grid-template-columns:1fr}}
-  label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 0 6px}
-  input[type=text]{width:100%;background:#0a0e18;border:1px solid var(--line);border-radius:10px;color:var(--ink);
-    padding:11px 13px;font-size:15px;outline:none}
-  input[type=text]:focus{border-color:var(--accent)}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{background:#0a0e18;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;color:#cdd8ee}
+  .app{max-width:940px;margin:0 auto;padding:14px 16px 90px}
+  .browser{background:#0a0e18;border:1px solid var(--line);border-radius:12px 12px 0 0;padding:9px 12px;display:flex;align-items:center;gap:10px}
+  .dots{display:flex;gap:6px} .dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .dots i:nth-child(1){background:#ff5f56}.dots i:nth-child(2){background:#ffbd2e}.dots i:nth-child(3){background:#27c93f}
+  .urlbar{flex:1;background:#11161f;border:1px solid var(--line);border-radius:8px;padding:5px 12px;font-size:12.5px;color:#9fb4dd;display:flex;align-items:center;gap:8px}
+  .urlbar .lock{font-size:11px;color:var(--good)}
+  .surface-tag{font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:6px;font-weight:700}
+  .surface-endr{background:rgba(55,211,195,.15);color:var(--teal);border:1px solid rgba(55,211,195,.4)}
+  .surface-gh{background:rgba(139,148,158,.15);color:#c9d1d9;border:1px solid #30363d}
+  .surface-live{background:rgba(255,180,84,.15);color:var(--amber);border:1px solid rgba(255,180,84,.4)}
+  .viewport{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;padding:24px 26px;background:var(--bg);min-height:440px}
+  .gh .viewport{background:var(--gh);color:var(--ghtext)}
+  .screen{display:none;animation:fade .3s ease} .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  h1{font-size:24px;margin:4px 0 6px} h2{font-size:16px;margin:0 0 4px}
+  p.sub{color:var(--muted);margin:0 0 14px;max-width:64ch} .gh p.sub{color:var(--ghmuted)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px} @media(max-width:800px){.row{grid-template-columns:1fr}}
+  label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:13px 0 6px}
+  input[type=text],input[type=number]{width:100%;background:#0a0e18;border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:10px 12px;font-size:14.5px;outline:none}
+  input:focus{border-color:var(--accent)} input:disabled{opacity:.45;cursor:not-allowed}
+  textarea{width:100%;height:240px;background:#0a0e14;border:1px solid var(--line);border-radius:10px;color:#cfe0ff;
+    font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.6;padding:12px;outline:none;resize:vertical}
+  textarea:focus{border-color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{background:#0a0e18;border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12.5px;cursor:pointer;color:#cdd8ee}
   .chip.on{background:var(--accent);color:#06121a;border-color:var(--accent);font-weight:700}
-  .swatches{display:flex;gap:8px}
-  .sw{width:30px;height:30px;border-radius:8px;cursor:pointer;border:2px solid transparent}
+  .sw{width:26px;height:26px;border-radius:7px;cursor:pointer;border:2px solid transparent;display:inline-block;margin-right:6px}
   .sw.on{border-color:#fff}
-  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#06121a;border:0;border-radius:11px;
-    padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer}
-  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-  .btn.danger{background:var(--bad);color:#1a0606}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#06121a;border:0;border-radius:10px;padding:11px 18px;font-size:14.5px;font-weight:700;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)} .gh .btn.ghost{color:var(--ghtext);border-color:var(--ghline)}
+  .btn.sm{padding:7px 12px;font-size:12.5px} .btn.danger{background:var(--bad);color:#1a0606}
   .btn:disabled{opacity:.4;cursor:not-allowed}
-  .btnrow{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;align-items:center}
-  .hint{color:var(--muted);font-size:12.5px}
-  code,.k{font-family:ui-monospace,monospace;background:#0a0e18;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:#bfeede}
-  /* TARS monolith */
-  .tars{display:flex;gap:6px;justify-content:center;align-items:flex-end;height:150px}
-  .slab{width:34px;background:linear-gradient(180deg,#2a3346,#11151f);border:1px solid #38415a;border-radius:4px;
-    box-shadow:inset 0 0 14px rgba(0,0,0,.6);transition:.4s}
-  .slab.lit{box-shadow:inset 0 0 14px rgba(0,0,0,.6),0 0 14px var(--glow,var(--accent));border-color:var(--glow,var(--accent))}
-  .slab.s1{height:150px}.slab.s2{height:150px}.slab.s3{height:120px}.slab.s4{height:120px}
-  .tars.glitch{animation:glitch .25s infinite}
-  @keyframes glitch{0%{transform:translateX(0)}25%{transform:translateX(-2px) skewX(-1deg)}75%{transform:translateX(2px) skewX(1deg)}100%{transform:none}}
-  .preview{background:#0a0e18;border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
-  .robotname{font-weight:800;letter-spacing:1px;margin-top:12px;font-size:18px}
-  .robotname b{color:var(--accent)}
-  .speech{margin-top:10px;color:#cdd8ee;font-size:13.5px;min-height:40px;font-style:italic}
-  .url{margin-top:10px;font-size:12px;color:var(--muted)}
-  /* pipeline */
-  .pipe{display:flex;flex-direction:column;gap:0;margin:8px 0}
-  .stage{display:flex;gap:14px;align-items:flex-start;padding:0 0 16px 6px;border-left:2px solid var(--line);margin-left:14px;position:relative}
-  .stage:last-child{border-left-color:transparent}
-  .dot{position:absolute;left:-11px;top:0;width:22px;height:22px;border-radius:50%;background:var(--panel2);
-    border:2px solid var(--line);display:grid;place-items:center;font-size:11px}
-  .stage.done .dot{background:var(--good);border-color:var(--good);color:#04130c}
-  .stage.run .dot{background:var(--warn);border-color:var(--warn);color:#1a1304;animation:pulse 1s infinite}
-  @keyframes pulse{50%{opacity:.5}}
-  .stage h4{margin:0;font-size:14.5px}.stage .meta{color:var(--muted);font-size:12px}
-  .sliderbox{margin:14px 0}
-  .sliderbox .lab{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
-  .sliderbox .lab b{color:var(--accent)}
-  input[type=range]{width:100%;accent-color:var(--accent)}
-  .diag{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.4);border-radius:12px;padding:14px 16px;color:#ffd9d9;font-size:13.5px}
-  .ok{background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.4);border-radius:12px;padding:14px 16px;color:#c9f7e3;font-size:13.5px}
-  .count{font-size:74px;font-weight:800;text-align:center;color:var(--bad);letter-spacing:2px;font-family:ui-monospace,monospace}
-  .note{font-size:11.5px;color:#5e6c86;border-top:1px solid var(--line);margin-top:26px;padding-top:12px}
-  .tag{font-size:10.5px;color:var(--amber);border:1px solid var(--amber);border-radius:6px;padding:1px 7px;letter-spacing:1px}
+  .btnrow{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+  .hint{color:var(--muted);font-size:12px} .gh .hint{color:var(--ghmuted)}
+  code{font-family:ui-monospace,monospace;background:#0a0e18;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12px;color:#bfeede}
+  .code{background:#0a0e14;border:1px solid var(--line);border-radius:11px;padding:14px 16px;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.7;white-space:pre;overflow:auto;color:#cfe0ff}
+  .code .k{color:#7c9cff}.code .s{color:#7ee0b0}.code .c{color:#5e6c86}.code .empty{color:#ffb454}
+  .diff{background:#0a0e14;border:1px solid var(--ghline);border-radius:10px;overflow:hidden;font-family:ui-monospace,monospace;font-size:12.5px}
+  .diff .fn{background:#161b22;color:#8b949e;padding:7px 12px;border-bottom:1px solid var(--ghline)}
+  .diff pre{margin:0;padding:8px 0} .diff .ln{padding:1px 12px;white-space:pre;color:#c9d1d9}
+  .diff .add{background:#15331f;color:#aff5b4} .diff .add::before{content:"+ ";color:#3fb950}
+  .diff .ctx::before{content:"  ";color:#8b949e} .diff .del{background:#3d1d1d;color:#ffb4b4} .diff .del::before{content:"- ";color:#f85149}
+  .checks{border:1px solid var(--ghline);border-radius:10px;overflow:hidden;margin-top:14px}
+  .checkhead{padding:11px 14px;border-bottom:1px solid var(--ghline);font-weight:600;display:flex;align-items:center;gap:8px}
+  .check{display:flex;align-items:center;gap:11px;padding:10px 14px;border-bottom:1px solid var(--ghline);font-size:13px} .check:last-child{border-bottom:0}
+  .ic{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;flex:none}
+  .ic.ok{background:var(--ghgreen);color:#fff}.ic.fail{background:#da3633;color:#fff}
+  .mergebar{margin-top:14px;border:1px solid var(--ghline);border-radius:10px;padding:14px;display:flex;gap:12px;align-items:center}
+  .mergebar.okmerge{border-color:var(--ghgreen);background:rgba(35,134,54,.08)} .mergebar.blocked{border-color:#da3633;background:rgba(218,54,51,.08)}
+  .failmsg{margin-top:10px;background:rgba(218,54,51,.1);border:1px solid #da3633;border-radius:8px;padding:11px 13px;color:#ffd0d0;font-size:12.5px}
+  .vresult{margin-top:10px;font-size:12.5px;border-radius:8px;padding:10px 12px;display:none}
+  .vresult.ok{display:block;background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.4);color:#c9f7e3}
+  .vresult.bad{display:block;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.4);color:#ffd0d0}
+  .explain{margin-top:16px;background:rgba(55,211,195,.06);border:1px solid rgba(55,211,195,.28);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.5px;color:#bfe6df}
+  .explain b{color:var(--teal)} .gh .explain{background:rgba(88,166,255,.06);border-color:#1f6feb55;border-left-color:#58a6ff;color:#b9d6ff} .gh .explain b{color:#79c0ff}
+  .tabs{display:flex;gap:4px;margin-bottom:10px} .tab{padding:6px 12px;font-size:12.5px;color:var(--muted);cursor:pointer;border:1px solid var(--line);border-radius:8px} .tab.on{color:#06121a;background:var(--accent);border-color:var(--accent);font-weight:700}
+  .tars{display:flex;gap:6px;justify-content:center;align-items:flex-end;height:130px}
+  .slab{width:32px;background:linear-gradient(180deg,#2a3346,#11151f);border:1px solid #38415a;border-radius:4px;box-shadow:inset 0 0 14px rgba(0,0,0,.6)}
+  .slab.lit{box-shadow:inset 0 0 14px rgba(0,0,0,.6),0 0 15px var(--accent);border-color:var(--accent)}
+  .glitch{animation:gl .25s infinite}@keyframes gl{25%{transform:translateX(-2px) skewX(-1deg)}75%{transform:translateX(2px) skewX(1deg)}}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 11px}
+  .badge.good{color:#06121a;background:var(--good)}.badge.bad{color:#1a0606;background:var(--bad)}.badge.warn{color:#1a1304;background:var(--warn)}
+  .speech{margin-top:12px;color:#cdd8ee;font-style:italic;font-size:13.5px}
+  .pipe{display:flex;flex-direction:column} .stage{display:flex;gap:13px;padding:0 0 14px 4px;border-left:2px solid var(--line);margin-left:13px;position:relative}
+  .stage:last-child{border-left-color:transparent} .stage.done .dot{background:var(--good);border-color:var(--good);color:#04130c} .stage.run .dot{background:var(--warn);border-color:var(--warn);animation:pulse 1s infinite}
+  .dot{position:absolute;left:-11px;top:0;width:21px;height:21px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);display:grid;place-items:center;font-size:10.5px}
+  @keyframes pulse{50%{opacity:.5}} .stage h4{margin:0;font-size:13.5px}.stage .meta{color:var(--muted);font-size:11.5px}
+  .ok{background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.4);border-radius:11px;padding:13px 15px;color:#c9f7e3;font-size:13px;margin-top:14px}
+  .diag{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.4);border-radius:11px;padding:12px 14px;color:#ffd9d9;font-family:ui-monospace,monospace;font-size:12px;margin-top:12px}
+  .count{font-size:64px;font-weight:800;text-align:center;color:var(--bad);font-family:ui-monospace,monospace}
+  .svcmeta{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:13px;margin:6px 0 14px} .svcmeta b{color:var(--muted);font-weight:600}
+  .note{font-size:11px;color:#5e6c86;border-top:1px solid var(--line);margin-top:22px;padding-top:12px}
+  .pill{font-size:10px;color:var(--amber);border:1px solid var(--amber);border-radius:6px;padding:1px 7px;letter-spacing:1px}
+  .lockmsg{font-size:11.5px;color:var(--warn);margin-top:6px}
+  .envrow{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .envk{font-family:ui-monospace,monospace;font-size:12.5px;color:#9fb4dd;min-width:118px}
+  .envk.warn{color:var(--amber)} .envrow input{flex:1}
+  .modebar{display:flex;align-items:center;gap:12px;margin:0 2px 12px;flex-wrap:wrap}
+  .modebar .lbl{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+  .modeswitch{display:flex;gap:3px;background:#0a0e18;border:1px solid var(--line);border-radius:11px;padding:3px}
+  .modeswitch .mode{padding:7px 14px;font-size:12.5px;color:var(--muted);cursor:pointer;border:0;background:transparent;border-radius:8px;font-weight:700}
+  .modeswitch .mode[data-mode=factory].on{background:var(--accent);color:#06121a}
+  .modeswitch .mode[data-mode=idp].on{background:#7c9cff;color:#06122a}
+  .modehint{font-size:11.5px;color:var(--muted)}
+  .explain.idp{background:rgba(124,156,255,.07);border-color:#7c9cff44;border-left-color:#7c9cff;color:#cdd9ff}
+  .explain.idp b{color:#9db4ff} .explain.idp code{color:#bcccff}
+  /* SDLC / IDP stage rail */
+  .rail{display:flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--panel);margin-bottom:11px}
+  .rstage{flex:1;padding:8px 5px 9px;text-align:center;border-right:1px solid var(--line);position:relative;transition:background .25s}
+  .rstage:last-child{border-right:0}
+  .rstage .rl{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.2px}
+  .rstage .rs{font-size:9px;color:#5e6c86;text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+  .rstage.done{background:rgba(62,207,142,.05)} .rstage.done .rl{color:var(--good)}
+  .rstage.active{background:rgba(55,211,195,.13)} .rstage.active .rl{color:var(--teal)} .rstage.active .rs{color:var(--accent)}
+  .rail.idpmode .rstage.active{background:rgba(124,156,255,.13)} .rail.idpmode .rstage.active .rl{color:#9db4ff} .rail.idpmode .rstage.active .rs{color:#9db4ff}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="topbar">
-    <div class="brand">E N <b>D R</b></div>
-    <div class="steps" id="steps">
-      <span data-s="0">intro</span><span data-s="1">build</span><span data-s="2">ship</span>
-      <span data-s="3">malfunction</span><span data-s="4">calibrate</span><span data-s="5">online</span>
-      <span data-s="6">self-destruct</span><span data-s="7">decommission</span>
+<div class="app">
+  <div class="modebar">
+    <span class="lbl">Narrative</span>
+    <div class="modeswitch">
+      <button class="mode on" data-mode="factory" onclick="setMode('factory')">🤖 Robot Factory</button>
+      <button class="mode" data-mode="idp" onclick="setMode('idp')">⚙ Under the hood (IDP)</button>
+    </div>
+    <span class="modehint" id="modehint">Story mode — same flow, told as a robot build.</span>
+  </div>
+  <div class="rail" id="rail"></div>
+  <div class="surface" data-surface="endr">
+    <div class="browser"><div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar"><span class="lock">🔒</span><span id="url">endr.calavelas.net</span></div>
+      <span class="surface-tag" id="stag">ENDR PORTAL</span></div>
+    <div class="viewport" id="vp">
+
+      <!-- 0 LANDING -->
+      <section class="screen active" id="s0">
+        <h1>An Internal Developer Platform.</h1>
+        <p class="sub">GitOps. ArgoCD. Reconciliation. Riveting. 🥱 Or — build a robot, ship it to a real cluster, and actually <i>see</i> how every piece works. No magic. No kubectl.</p>
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;padding:20px;background:var(--panel)">
+          <div class="tars" style="height:88px"><div class="slab" style="height:88px"></div><div class="slab" style="height:88px"></div><div class="slab" style="height:70px"></div></div>
+          <div style="flex:1;min-width:240px"><span class="pill">TARS</span>
+            <p class="speech" style="font-size:14.5px">"You could read the docs. Or you could build a robot, watch your own pull request open on GitHub, break it, fix it, and learn GitOps by doing. I'm 90% honest, so: pick the second one."</p></div>
+        </div>
+        <div class="explain">ℹ️ <b>What you'll learn:</b> how a change becomes a <b>pull request</b>, how <b>CI</b> guards it, and how <b>ArgoCD</b> turns the repo into running infrastructure — by building one small thing end to end.</div>
+        <div class="btnrow"><button class="btn" onclick="go(1)">Build my robot →</button></div>
+      </section>
+
+      <!-- 1 CREATE -->
+      <section class="screen" id="s1">
+        <h1>Create a service</h1>
+        <p class="sub">Design <i>who your robot is</i>. The config on the right is the YAML that defines your service — preview it, or switch to advanced and hand-edit it.</p>
+        <div class="row">
+          <div>
+            <label>Designation</label>
+            <input id="rname" type="text" value="TARS-9" maxlength="18" oninput="syncYaml()">
+            <div class="hint mono" style="margin-top:5px">→ <span id="rurl">tars-9</span>.calavelas.net</div>
+            <label>Personality preset (flavor)</label>
+            <div class="chips" id="presets"><div class="chip on">Full TARS</div><div class="chip">The Comedian</div><div class="chip">The Stoic</div></div>
+            <label>Catchphrase</label>
+            <input id="rphrase" type="text" value="See you on the other side." maxlength="34" oninput="syncYaml()">
+            <label>Accent</label>
+            <div><span class="sw on" style="background:#37d3c3"></span><span class="sw" style="background:#ffb454"></span><span class="sw" style="background:#ff6b6b"></span><span class="sw" style="background:#9b7bff"></span></div>
+            <div class="lockmsg">The preset sets the vibe. What actually makes a robot <i>tick</i> lives in the config — worth a look. 👀</div>
+          </div>
+          <div>
+            <div class="tabs"><div class="tab on" id="tabPrev" onclick="ymTab('prev')">Preview</div><div class="tab" id="tabEdit" onclick="ymTab('edit')">Edit &amp; validate (advanced)</div></div>
+            <div id="yamlPreview"><div class="code" id="yaml"></div></div>
+            <div id="yamlEditWrap" style="display:none">
+              <textarea id="yamlEdit" spellcheck="false" oninput="document.getElementById('vresult').className='vresult'"></textarea>
+              <div class="btnrow" style="margin-top:8px"><button class="btn sm ghost" onclick="validateYaml()">Validate config</button><span class="hint">runs the same schema check CI runs</span></div>
+              <div class="vresult mono" id="vresult"></div>
+            </div>
+            <div class="explain">ℹ️ <b>Desired state.</b> In GitOps you don't run commands — you declare what you want in YAML, commit it, and the platform reconciles reality to match.</div>
+          </div>
+        </div>
+        <div class="btnrow"><button class="btn" onclick="submitCreate()">Open pull request →</button><button class="btn ghost" onclick="go(0)">Back</button></div>
+      </section>
+
+      <!-- 3 SERVICE PAGE (provisioning) -->
+      <section class="screen" id="s3">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+          <div><h1 style="margin-bottom:2px"><span id="s3name">tars-9</span></h1>
+            <div class="svcmeta"><b>Status</b><span class="badge warn" id="s3badge">● Provisioning</span>
+              <b>URL</b><span class="mono"><span id="s3url">tars-9</span>.calavelas.net</span>
+              <b>Source PR</b><span><a class="mono" style="color:var(--accent)" href="#" onclick="go(2);return false">#128 ↗</a> (merged)</span></div></div>
+          <div class="tars" style="height:74px"><div class="slab" style="height:74px"></div><div class="slab" style="height:74px"></div><div class="slab" style="height:58px"></div></div>
+        </div>
+        <h2>ArgoCD sync</h2>
+        <div class="pipe" id="pipe3">
+          <div class="stage" data-i="0"><div class="dot">1</div><div><h4>Reconcile &amp; render manifests</h4><div class="meta">engine → chart + ArgoCD app</div></div></div>
+          <div class="stage" data-i="1"><div class="dot">2</div><div><h4>ArgoCD: OutOfSync → Syncing</h4><div class="meta">deployment · service · httproute</div></div></div>
+          <div class="stage" data-i="2"><div class="dot">3</div><div><h4>Healthy</h4><div class="meta">pod ready · route live</div></div></div>
+        </div>
+        <div class="explain">ℹ️ <b>ArgoCD</b> watches the repo and continuously reconciles <b>desired state</b> (your chart) onto the cluster's <b>actual state</b>. You didn't deploy anything — you merged a PR, and ArgoCD did the rest.</div>
+        <div class="btnrow"><button class="btn" id="visitBtn" disabled onclick="visitRobot()">Visit your robot →</button></div>
+      </section>
+
+      <!-- 5 EDIT (env only) -->
+      <section class="screen" id="s5">
+        <h1>Edit <span id="s5name">tars-9</span></h1>
+        <p class="sub">You're editing the robot's live <b>K8s Deployment</b> — the generated GitOps config in the repo. Demo edits are held to the <code>env</code> block. Read it, and you'll see what came up blank.</p>
+        <div class="tabs"><div class="tab on" id="e_tabForm" onclick="eTab('form')">env editor</div><div class="tab" id="e_tabYaml" onclick="eTab('yaml')">Edit YAML (advanced)</div></div>
+        <div class="row">
+          <div>
+            <div id="e_form">
+              <label>Deployment <code>env</code></label>
+              <div class="envrow"><span class="envk">ROBOT_NAME</span><input value="TARS-9" disabled></div>
+              <div class="envrow"><span class="envk">CATCHPHRASE</span><input value="See you on the other side." disabled></div>
+              <div class="envrow"><span class="envk warn">HUMOR</span><input id="eH" placeholder="— empty —" oninput="syncEdit()"></div>
+              <div class="envrow"><span class="envk warn">HONESTY</span><input id="eO" placeholder="— empty —" oninput="syncEdit()"></div>
+              <div class="envrow"><span class="envk warn">TRUST</span><input id="eT" placeholder="— empty —" oninput="syncEdit()"></div>
+              <div class="lockmsg">🔒 Keys are fixed (env-only policy). Values are 0–100. The rest is up to you.</div>
+            </div>
+            <div id="e_yaml" style="display:none">
+              <div class="lockmsg">🔒 Only the <code>env:</code> block may change — touch a key or anything else and <code>robot-validate</code> rejects it.</div>
+              <textarea id="eYaml" spellcheck="false" oninput="eYamlInput()"></textarea>
+              <div class="btnrow" style="margin-top:8px"><button class="btn sm ghost" onclick="validateEdit()">Validate</button><span class="hint">same check CI runs</span></div>
+              <div class="vresult mono" id="eVres"></div>
+            </div>
+          </div>
+          <div>
+            <label style="margin-top:0">Pending change · Deployment diff</label>
+            <div class="diff"><div class="fn mono">SVCS/tars-9/chart/templates/deployment.yaml</div><pre id="ediff"></pre></div>
+            <div class="explain">ℹ️ Opening the PR runs <code>robot-validate</code>. It enforces the change is <b>env-only</b> and the values are sane — and <b>blocks the merge</b> if not. CI is the guardrail; you can't ship a broken robot.</div>
+          </div>
+        </div>
+        <div class="btnrow"><button class="btn" onclick="submitEdit()">Open edit PR →</button><button class="btn ghost" onclick="go(4)">Back to robot</button></div>
+      </section>
+
+      <!-- 8 RE-SYNC -->
+      <section class="screen" id="s8">
+        <h1><span id="s8name">tars-9</span></h1>
+        <div class="svcmeta"><b>Status</b><span class="badge warn" id="s8badge">● Syncing</span><b>Last PR</b><span class="mono">#129 (merged ✓ CI passed)</span></div>
+        <h2>Redeploying with new calibration</h2>
+        <div class="pipe" id="pipe8">
+          <div class="stage" data-i="0"><div class="dot">1</div><div><h4>Reconcile (env changed)</h4><div class="meta">new deployment manifest</div></div></div>
+          <div class="stage" data-i="1"><div class="dot">2</div><div><h4>ArgoCD syncing rollout</h4><div class="meta">pod restart with HUMOR/HONESTY/TRUST</div></div></div>
+          <div class="stage" data-i="2"><div class="dot">3</div><div><h4>Healthy</h4><div class="meta">calibration applied</div></div></div>
+        </div>
+        <div class="explain">ℹ️ Same loop as deploy: <b>edit → PR → CI → merge → ArgoCD sync</b>. That's the entire day-to-day of running software on a platform like this.</div>
+        <div class="btnrow"><button class="btn" id="visit2Btn" disabled onclick="go(9)">Visit your robot →</button></div>
+      </section>
     </div>
   </div>
-
-  <!-- 0 INTRO -->
-  <section class="screen active" id="s0">
-    <h1>An Internal Developer Platform.</h1>
-    <p class="sub">Self-service GitOps. ArgoCD app-of-apps. Config-driven reconciliation. Riveting stuff. 🥱</p>
-    <div class="card">
-      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
-        <div class="tars" style="height:90px"><div class="slab s1" style="height:90px"></div><div class="slab s2" style="height:90px"></div><div class="slab s3" style="height:72px"></div></div>
-        <div style="flex:1;min-width:240px">
-          <p style="margin:0 0 6px"><span class="tag">TARS</span></p>
-          <p class="speech" style="font-size:15px;min-height:0">"Reading docs about a platform? Bold choice. Or — you could just <b>build a robot</b> and ship it live to the internet in about a minute. Your call. I'm 90% honest, so: do the second one."</p>
-        </div>
-      </div>
-      <div class="btnrow">
-        <button class="btn" onclick="go(1)">Build my robot →</button>
-        <span class="hint">No signup. Real cluster. Real GitOps.</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- 1 BUILD -->
-  <section class="screen" id="s1">
-    <h1>Build your robot</h1>
-    <p class="sub">Decide <i>who it is</i>. You'll bring it online in the next step.</p>
-    <div class="row">
-      <div class="card">
-        <label>Designation</label>
-        <input id="rname" type="text" value="TARS-9" maxlength="20" oninput="syncPreview()">
-        <div class="hint mono" style="margin-top:6px">→ <span id="rurl">tars-9</span>.calavelas.net</div>
-
-        <label>Personality preset</label>
-        <div class="chips" id="presets">
-          <div class="chip on" data-line="Honesty 90%. Humor 75%. I'll tell you the truth, then make it sting a little.">Full TARS</div>
-          <div class="chip" data-line="Humor 100%. I have a cue light for sarcasm and it never turns off.">The Comedian</div>
-          <div class="chip" data-line="Honesty 100%. Humor 10%. I will not be doing bits.">The Stoic</div>
-          <div class="chip" data-line="You decide everything. Chaos. I respect it.">Custom</div>
-        </div>
-
-        <label>Catchphrase</label>
-        <input id="rphrase" type="text" value="See you on the other side." maxlength="40" oninput="syncPreview()">
-
-        <label>Accent</label>
-        <div class="swatches" id="swatches">
-          <div class="sw on" style="background:#37d3c3" data-c="#37d3c3"></div>
-          <div class="sw" style="background:#ffb454" data-c="#ffb454"></div>
-          <div class="sw" style="background:#ff6b6b" data-c="#ff6b6b"></div>
-          <div class="sw" style="background:#9b7bff" data-c="#9b7bff"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <label style="margin-top:0">Live preview</label>
-        <div class="preview">
-          <div class="tars" id="pvtars"><div class="slab s1 lit"></div><div class="slab s2 lit"></div><div class="slab s3 lit"></div><div class="slab s4 lit"></div></div>
-          <div class="robotname">Designation: <b id="pvname">TARS-9</b></div>
-          <div class="speech" id="pvline">Honesty 90%. Humor 75%. I'll tell you the truth, then make it sting a little.</div>
-          <div class="url mono"><span id="pvurl">tars-9</span>.calavelas.net</div>
-        </div>
-        <p class="hint" style="margin-top:12px">Cosmetic only — your robot still boots <b>uncalibrated</b>. That's intentional. 😏</p>
-      </div>
-    </div>
-    <div class="btnrow">
-      <button class="btn" onclick="ship()">Deploy <span id="shipname">TARS-9</span> →</button>
-      <button class="btn ghost" onclick="go(0)">Back</button>
-    </div>
-  </section>
-
-  <!-- 2 SHIP -->
-  <section class="screen" id="s2">
-    <h1>Shipping <span style="color:var(--accent)" id="ship2name">TARS-9</span>…</h1>
-    <p class="sub">This is real. ENDR opened a pull request, auto-merged it, and ArgoCD is syncing your robot to the cluster.</p>
-    <div class="card">
-      <div class="pipe" id="pipe">
-        <div class="stage" data-i="0"><div class="dot">1</div><div><h4>Pull request opened</h4><div class="meta mono">#128 · case/tars-9 → SVCS.yaml</div></div></div>
-        <div class="stage" data-i="1"><div class="dot">2</div><div><h4>Auto-merged to main</h4><div class="meta">CASE policy · SVCS.yaml only</div></div></div>
-        <div class="stage" data-i="2"><div class="dot">3</div><div><h4>Reconcile &amp; manifests</h4><div class="meta">engine renders chart + ArgoCD app</div></div></div>
-        <div class="stage" data-i="3"><div class="dot">4</div><div><h4>Deployed to cluster</h4><div class="meta">ArgoCD synced · namespace ready</div></div></div>
-        <div class="stage" data-i="4"><div class="dot">★</div><div><h4>Live</h4><div class="meta mono">tars-9.calavelas.net</div></div></div>
-      </div>
-      <div class="btnrow"><button class="btn" id="visitBtn" disabled onclick="go(3)">Visit your robot →</button></div>
-    </div>
-  </section>
-
-  <!-- 3 MALFUNCTION -->
-  <section class="screen" id="s3">
-    <p class="tag">tars-9.calavelas.net</p>
-    <div class="card" style="margin-top:10px">
-      <div class="tars glitch" style="height:120px"><div class="slab s1" style="height:120px"></div><div class="slab s2" style="height:120px"></div><div class="slab s3" style="height:96px"></div><div class="slab s4" style="height:96px"></div></div>
-      <div class="robotname" style="text-align:center">⚠️ <b id="m3name">TARS-9</b> — MALFUNCTION</div>
-      <div class="speech" style="text-align:center">"Well. This is humiliating. I've booted at <b>factory calibration</b> — Humor 0%, Honesty 0%, Trust 0%. I'm a very expensive paperweight with opinions I can't express. Recalibrate me through my deployment config and I'll be insufferable again in no time."</div>
-      <div class="diag mono" style="margin-top:14px">DIAGNOSTIC: calibration env not set →
-        <span class="k">HUMOR</span> <span class="k">HONESTY</span> <span class="k">TRUST</span> required. Edit the service to set them.</div>
-      <div class="btnrow"><button class="btn" onclick="go(4)">Open calibration console →</button></div>
-    </div>
-  </section>
-
-  <!-- 4 CALIBRATE (EDIT) -->
-  <section class="screen" id="s4">
-    <h1>Calibration console</h1>
-    <p class="sub">This edits your service → opens a PR that updates <code>overrides.env</code> → auto-merges → redeploys. Pick a preset or tune it however you like.</p>
-    <div class="card">
-      <div class="chips" style="margin-bottom:6px">
-        <div class="chip" onclick="setCal(75,90,80)">Full TARS</div>
-        <div class="chip" onclick="setCal(100,60,70)">Comedian</div>
-        <div class="chip" onclick="setCal(10,100,90)">Stoic</div>
-      </div>
-      <div class="sliderbox"><div class="lab">HUMOR <b><span id="vH">0</span>%</b></div><input id="H" type="range" min="0" max="100" value="0" oninput="calChange()"></div>
-      <div class="sliderbox"><div class="lab">HONESTY <b><span id="vO">0</span>%</b></div><input id="O" type="range" min="0" max="100" value="0" oninput="calChange()"></div>
-      <div class="sliderbox"><div class="lab">TRUST <b><span id="vT">0</span>%</b></div><input id="T" type="range" min="0" max="100" value="0" oninput="calChange()"></div>
-      <div id="calMsg" class="diag mono">Robot offline — at least one setting must be &gt; 0 to stabilize.</div>
-      <div class="btnrow">
-        <button class="btn" id="recalBtn" disabled onclick="recal()">Recalibrate &amp; redeploy →</button>
-        <span class="hint">Opens PR <span class="mono">#129 · case/tars-9-edit</span></span>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5 ONLINE -->
-  <section class="screen" id="s5">
-    <p class="tag">tars-9.calavelas.net</p>
-    <div class="card" style="margin-top:10px">
-      <div class="tars" id="onTars" style="height:120px"><div class="slab s1 lit" style="height:120px"></div><div class="slab s2 lit" style="height:120px"></div><div class="slab s3 lit" style="height:96px"></div><div class="slab s4 lit" style="height:96px"></div></div>
-      <div class="robotname" style="text-align:center">✅ <b id="o5name">TARS-9</b> — ONLINE</div>
-      <div class="speech" id="onLine" style="text-align:center">"Systems nominal. Humor restored. I'd thank you, but honesty's at 90% so: it took you long enough. Still — nice work. You just edited a live Kubernetes deployment through GitOps and didn't touch a single YAML file. That's the whole trick."</div>
-      <div class="ok" style="margin-top:14px">Mission objective complete — you created, broke, and fixed a real service. There's one verb left.</div>
-      <div class="btnrow"><button class="btn danger" onclick="selfDestruct()">Confirm mission complete</button>
-        <span class="hint">…what's the worst that could happen.</span></div>
-    </div>
-  </section>
-
-  <!-- 6 SELF DESTRUCT -->
-  <section class="screen" id="s6">
-    <div class="card" style="text-align:center">
-      <p class="speech" style="font-size:15px">"Ah. You pressed it. Self-destruct sequence engaged — standard procedure for completed missions. It's been a pleasure. Mostly."</p>
-      <div class="count" id="count">10</div>
-      <p class="hint" id="sdLine">Decommissioning in progress…</p>
-    </div>
-  </section>
-
-  <!-- 7 DECOMMISSION -->
-  <section class="screen" id="s7">
-    <p class="tag mono">tars-9 · decommissioning</p>
-    <div class="card" style="margin-top:10px">
-      <h2>Self-removal pipeline</h2>
-      <p class="sub" style="margin-bottom:10px">The robot is deleting itself the same way it was born — through GitOps.</p>
-      <div class="pipe" id="pipeDel">
-        <div class="stage" data-i="0"><div class="dot">1</div><div><h4>PR opened to remove itself</h4><div class="meta mono">#130 · remove tars-9 from SVCS.yaml</div></div></div>
-        <div class="stage" data-i="1"><div class="dot">2</div><div><h4>Auto-merged</h4><div class="meta">reconcile detects removed service</div></div></div>
-        <div class="stage" data-i="2"><div class="dot">3</div><div><h4>ArgoCD pruned</h4><div class="meta">deployment, service, route deleted</div></div></div>
-        <div class="stage" data-i="3"><div class="dot">✓</div><div><h4>Gone</h4><div class="meta">tars-9.calavelas.net → 404</div></div></div>
-      </div>
-      <div class="ok" id="delDone" style="display:none">TARS-9 has been fully decommissioned. No trace left in the repo or the cluster. That's the lifecycle, end to end — create, edit, destroy — all real.</div>
-      <div class="btnrow"><button class="btn" onclick="reset()">Build another →</button></div>
-    </div>
-  </section>
-
-  <div class="note mono">MOCKUP — clickable prototype of the proposed demo journey. Visuals/copy are for direction only. TARS rendered as his canonical monolith slabs.</div>
+  <div class="note mono">MOCKUP v3 — transparent flow + advanced YAML edit/validate + the sharp-eye easter egg. Address bar shows the surface (ENDR · GitHub · live robot).</div>
 </div>
 
+<template id="tpl">
+  <!-- 2 GITHUB PR create -->
+  <section class="screen" id="s2" data-surface="gh">
+    <h2 style="font-weight:600">CASE - Adding service : tars-9 <span class="mono" style="color:var(--ghmuted)">#128</span></h2>
+    <p class="sub">Your config is now a pull request. This is GitOps: the repo is the source of truth, a change is a PR.</p>
+    <div class="diff"><div class="fn mono">SVCS.yaml</div><pre id="s2diff"></pre></div>
+    <div class="checks"><div class="checkhead"><span class="ic ok">✓</span> All checks have passed</div>
+      <div class="check"><span class="ic ok">✓</span> validate-config — schema valid</div>
+      <div class="check"><span class="ic ok">✓</span> tars-pr / reconcile — no drift</div></div>
+    <div class="mergebar okmerge"><span class="ic ok">✓</span><div><b>Auto-merged</b> · CASE policy (SVCS.yaml-only) → squash-merged to <code>main</code></div></div>
+    <div class="explain">ℹ️ <b>Nothing deployed yet.</b> The PR changed the desired state in git. Merging is what makes it real — and CI checks gate the merge.</div>
+    <div class="btnrow"><button class="btn" onclick="go(3)">View service in ENDR →</button></div>
+  </section>
+
+  <!-- 4 LIVE robot malfunction -->
+  <section class="screen" id="s4" data-surface="live">
+    <div style="text-align:center">
+      <div class="tars glitch" style="height:120px"><div class="slab" style="height:120px"></div><div class="slab" style="height:120px"></div><div class="slab" style="height:96px"></div><div class="slab" style="height:96px"></div></div>
+      <div style="font-weight:800;letter-spacing:1px;margin-top:10px">Designation: <b style="color:var(--accent)">TARS-9</b></div>
+      <div class="badge bad" style="margin-top:8px">⚠ MALFUNCTION</div>
+      <div class="speech">"Well. This is humiliating. Something in my calibration came up blank on boot — the settings that make me, well, <i>me</i>. Right now I'm an expensive paperweight with opinions I can't express. Pop the hood on how I'm deployed and you'll spot what's missing. I could just tell you... but at 90% honesty: you'll learn more finding it yourself."</div>
+      <div class="diag">STATUS: uncalibrated · core parameters returned empty</div>
+    </div>
+    <div class="explain" style="text-align:left">ℹ️ Everything about this robot is declared in its <b>deployment config</b>. You don't SSH in and poke at a running pod — you open the config, find what's wrong, change it, and redeploy. Head to its service page and take a look.</div>
+    <div class="btnrow"><button class="btn" onclick="go(5)">Open its service config →</button></div>
+  </section>
+
+  <!-- 4b SMART-ASS robot online -->
+  <section class="screen" id="s4b" data-surface="live">
+    <div style="text-align:center">
+      <div class="tars" style="height:120px"><div class="slab lit" style="height:120px"></div><div class="slab lit" style="height:120px"></div><div class="slab lit" style="height:96px"></div><div class="slab lit" style="height:96px"></div></div>
+      <div style="font-weight:800;letter-spacing:1px;margin-top:10px">Designation: <b style="color:var(--accent)">TARS-9</b></div>
+      <div class="badge good" style="margin-top:8px">● ONLINE</div>
+      <div class="speech">"Oh. You went into the YAML and set my calibration yourself. No malfunction, no hand-holding, no little quiz — you just <i>read the config and did it right.</i> I don't get to be embarrassed OR helpful. Honestly? Bit disappointed there's nothing to fix. You absolute smart-ass. 👏"</div>
+    </div>
+    <div class="explain" style="text-align:left">ℹ️ You spotted that <code>HUMOR/HONESTY/TRUST</code> were <b>declared but empty</b> in the source and set them yourself — exactly how an engineer would. The UI never offered that shortcut; you found it. Respect.</div>
+    <div class="btnrow"><button class="btn danger" onclick="window.SMART=true;go(10)">Yeah, I read the YAML → self-destruct</button></div>
+  </section>
+
+  <!-- 6 GITHUB edit CI FAIL -->
+  <section class="screen" id="s6" data-surface="gh">
+    <h2 style="font-weight:600">CASE - Edit env : tars-9 <span class="mono" style="color:var(--ghmuted)">#129</span></h2>
+    <p class="sub">CI ran a test against your change before letting it merge. It didn't pass.</p>
+    <div class="diff"><div class="fn mono">SVCS/tars-9/chart/templates/deployment.yaml</div><pre id="s6diff"></pre></div>
+    <div class="checks"><div class="checkhead"><span class="ic fail">✗</span> Some checks were not successful</div>
+      <div class="check"><span class="ic ok">✓</span> validate-config — schema valid</div>
+      <div class="check"><span class="ic fail">✗</span> robot-validate — calibration check failed</div></div>
+    <div class="failmsg mono" id="s6msg"></div>
+    <div class="mergebar blocked"><span class="ic fail">✗</span><div><b>Merging is blocked</b> — required check <code>robot-validate</code> failed.</div></div>
+    <div class="explain">ℹ️ <b>This is the point.</b> CI caught a change that would have left your robot broken — <i>before</i> it could ship. Policy-as-code: bad config never reaches the cluster.</div>
+    <div class="btnrow"><button class="btn" onclick="go(5)">← Fix the calibration</button></div>
+  </section>
+
+  <!-- 7 GITHUB edit CI PASS -->
+  <section class="screen" id="s7" data-surface="gh">
+    <h2 style="font-weight:600">CASE - Edit env : tars-9 <span class="mono" style="color:var(--ghmuted)">#129</span></h2>
+    <p class="sub">Calibration is complete — CI passed and the policy auto-merged it.</p>
+    <div class="diff"><div class="fn mono">SVCS/tars-9/chart/templates/deployment.yaml</div><pre id="s7diff"></pre></div>
+    <div class="checks"><div class="checkhead"><span class="ic ok">✓</span> All checks have passed</div>
+      <div class="check"><span class="ic ok">✓</span> validate-config — schema valid</div>
+      <div class="check"><span class="ic ok">✓</span> robot-validate — calibration complete <span class="mono" id="s7vals" style="color:var(--ghmuted);margin-left:6px"></span></div></div>
+    <div class="mergebar okmerge"><span class="ic ok">✓</span><div><b>Auto-merged</b> → redeploy triggered</div></div>
+    <div class="btnrow"><button class="btn" onclick="go(8)">Watch it sync in ENDR →</button></div>
+  </section>
+
+  <!-- 9 LIVE robot online -->
+  <section class="screen" id="s9" data-surface="live">
+    <div style="text-align:center">
+      <div class="tars" style="height:120px"><div class="slab lit" style="height:120px"></div><div class="slab lit" style="height:120px"></div><div class="slab lit" style="height:96px"></div><div class="slab lit" style="height:96px"></div></div>
+      <div style="font-weight:800;letter-spacing:1px;margin-top:10px">Designation: <b style="color:var(--accent)">TARS-9</b></div>
+      <div class="badge good" style="margin-top:8px">● ONLINE</div>
+      <div class="speech" id="s9line"></div>
+      <div class="ok">Mission complete: you created, broke, and fixed a real service through PRs + CI + ArgoCD. That — minus the robot — is exactly how teams ship. One verb remains.</div>
+    </div>
+    <div class="btnrow"><button class="btn danger" onclick="go(10)">Confirm mission complete</button><span class="hint">…what's the worst that could happen.</span></div>
+  </section>
+
+  <!-- 10 SELF DESTRUCT -->
+  <section class="screen" id="s10" data-surface="live">
+    <div style="text-align:center">
+      <p class="speech" id="sdIntro" style="font-size:14.5px">"Self-destruct engaged — standard procedure for completed missions. It's been a pleasure. Mostly."</p>
+      <div class="count" id="count">10</div><p class="hint" id="sdLine">Opening removal PR…</p>
+    </div>
+  </section>
+
+  <!-- 11 GITHUB delete PR -->
+  <section class="screen" id="s11" data-surface="gh">
+    <h2 style="font-weight:600">CASE - Removing service : tars-9 <span class="mono" style="color:var(--ghmuted)">#130</span></h2>
+    <p class="sub">The robot deletes itself the way it was born — a pull request.</p>
+    <div class="diff"><div class="fn mono">SVCS.yaml</div><pre>
+<span class="ln del">- name: tars-9</span>
+<span class="ln del">  namespace: demo</span>
+<span class="ln del">  overrides: { image: calavelas/endr-robot:7f3a9c1, env: {...} }</span></pre></div>
+    <div class="checks"><div class="checkhead"><span class="ic ok">✓</span> Auto-merged — reconcile detected removed service</div>
+      <div class="check"><span class="ic ok">✓</span> ArgoCD pruned: deployment · service · httproute</div>
+      <div class="check"><span class="ic ok">✓</span> <span class="mono">tars-9.calavelas.net</span> → 404</div></div>
+    <div class="explain">ℹ️ <b>Removing = a PR too.</b> Delete the entry from the repo, and ArgoCD prunes everything it created. The repo is always the single source of truth — create, change, destroy, all through git.</div>
+    <div class="ok">TARS-9 is fully decommissioned. Create → edit → destroy, all real GitOps.</div>
+    <div class="btnrow"><button class="btn" onclick="reset()">Build another →</button></div>
+  </section>
+</template>
+
 <script>
-const steps=[...document.querySelectorAll('#steps span')];
+const tpl=document.getElementById('tpl').content;
+[...tpl.querySelectorAll('.screen')].forEach(s=>document.getElementById('vp').appendChild(s));
+const surfaces={endr:{tag:'ENDR PORTAL',cls:'surface-endr'},gh:{tag:'GITHUB',cls:'surface-gh'},live:{tag:'YOUR ROBOT',cls:'surface-live'}};
+const urls={0:'endr.calavelas.net',1:'endr.calavelas.net/create',2:'github.com/calavelas/ENDR/pull/128',3:'endr.calavelas.net/services/tars-9',
+  4:'tars-9.calavelas.net','4b':'tars-9.calavelas.net',5:'endr.calavelas.net/services/tars-9/edit',6:'github.com/calavelas/ENDR/pull/129',
+  7:'github.com/calavelas/ENDR/pull/129',8:'endr.calavelas.net/services/tars-9',9:'tars-9.calavelas.net',10:'tars-9.calavelas.net',11:'github.com/calavelas/ENDR/pull/130'};
+// ---- SDLC / IDP stage rail: one GitOps loop, relabelled per narrative mode ----
+const STAGES=[
+  {idp:'Declare',  factory:'Design',       sdlc:'Plan / Code'},
+  {idp:'Commit',   factory:'File spec',    sdlc:'Code'},
+  {idp:'Validate', factory:'Inspect',      sdlc:'Test · CI'},
+  {idp:'Deliver',  factory:'Assemble',     sdlc:'Build · Deploy'},
+  {idp:'Operate',  factory:'Power on',     sdlc:'Operate · Monitor'},
+  {idp:'Retire',   factory:'Decommission', sdlc:'Decommission'},
+];
+// screen → stage index. Create AND edit both restart the loop at Declare(0).
+const SCREEN_STAGE={0:0,1:0,2:2,3:3,4:4,'4b':4,5:0,6:2,7:2,8:3,9:4,10:5,11:5};
+function buildRail(){document.getElementById('rail').innerHTML=
+  STAGES.map(()=>`<div class="rstage"><div class="rl"></div><div class="rs"></div></div>`).join('');labelRail();}
+function labelRail(){[...document.querySelectorAll('#rail .rstage')].forEach((el,i)=>{
+  el.querySelector('.rl').textContent=MODE==='factory'?STAGES[i].factory:STAGES[i].idp;
+  el.querySelector('.rs').textContent=STAGES[i].sdlc;});
+  document.getElementById('rail').classList.toggle('idpmode',MODE==='idp');}
+function railTo(n){const idx=SCREEN_STAGE[n];if(idx==null)return;
+  [...document.querySelectorAll('#rail .rstage')].forEach((el,i)=>{
+    el.classList.toggle('active',i===idx);el.classList.toggle('done',i<idx);});}
 function go(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('s'+n).classList.add('active');
-  steps.forEach(x=>x.classList.toggle('on', +x.dataset.s===n));
+  const el=document.getElementById('s'+n); el.classList.add('active');
+  const sf=el.dataset.surface||'endr'; const w=document.querySelector('.surface'); const vp=document.getElementById('vp');
+  w.className='surface'; vp.className='viewport'; if(sf==='gh'){vp.classList.add('gh');w.classList.add('gh');}
+  document.getElementById('url').textContent=urls[n]||'';
+  const t=document.getElementById('stag'); t.textContent=surfaces[sf].tag; t.className='surface-tag '+surfaces[sf].cls;
+  railTo(n);
+  if(n===3) runPipe('pipe3','visitBtn'); if(n===8) runPipe('pipe8','visit2Btn'); if(n===10) destruct();
   window.scrollTo({top:0,behavior:'smooth'});
 }
-// build / preview
-let accent='#37d3c3';
-function syncPreview(){
-  const name=(document.getElementById('rname').value||'robot').trim();
-  const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'robot';
-  document.getElementById('pvname').textContent=name;
-  document.getElementById('rurl').textContent=slug;
-  document.getElementById('pvurl').textContent=slug;
-  document.getElementById('shipname').textContent=name;
-  ['ship2name','m3name','o5name'].forEach(id=>document.getElementById(id).textContent=name);
+function slug(s){return (s||'robot').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'robot';}
+function yamlText(name,sl,ph){return `- name: ${sl}
+  namespace: demo
+  environments: [mac-lab]
+  generator:
+    service: { template: endr-robot }
+    gitops:  { template: helm-service }
+  overrides:
+    gateway: { enabled: true }
+    image: calavelas/endr-robot:7f3a9c1
+    port: 8080
+    env:
+      ROBOT_NAME: "${name}"
+      CATCHPHRASE: "${ph}"
+      HUMOR: "" # Humor calibration
+      HONESTY: "" # Honesty calibration
+      TRUST: "" # Trust calibration`;}
+function syncYaml(){
+  const name=document.getElementById('rname').value.trim()||'robot', sl=slug(name), ph=document.getElementById('rphrase').value;
+  document.getElementById('rurl').textContent=sl;
+  ['s3url'].forEach(id=>document.getElementById(id).textContent=sl); ['s3name','s5name','s8name'].forEach(id=>document.getElementById(id).textContent=sl);
+  document.getElementById('yaml').innerHTML=yamlText(name,sl,ph)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(#[^\n]*)/g,'<span class="c">$1</span>');
+  if(document.getElementById('yamlEditWrap').style.display==='none') document.getElementById('yamlEdit').value=yamlText(name,sl,ph);
 }
-document.querySelectorAll('#presets .chip').forEach(c=>c.onclick=()=>{
-  document.querySelectorAll('#presets .chip').forEach(x=>x.classList.remove('on'));
-  c.classList.add('on'); document.getElementById('pvline').textContent=c.dataset.line;
-});
-document.querySelectorAll('#swatches .sw').forEach(s=>s.onclick=()=>{
-  document.querySelectorAll('#swatches .sw').forEach(x=>x.classList.remove('on'));
-  s.classList.add('on'); accent=s.dataset.c;
-  document.documentElement.style.setProperty('--accent',accent);
-  document.querySelectorAll('#pvtars .slab').forEach(sl=>sl.style.setProperty('--glow',accent));
-});
-// ship pipeline
-function ship(){ go(2); runPipe('pipe','visitBtn'); }
-function runPipe(pipeId,btnId,done){
-  const stages=[...document.querySelectorAll('#'+pipeId+' .stage')];
-  stages.forEach(s=>s.classList.remove('done','run'));
-  let i=0;
-  (function step(){
-    if(i>0) stages[i-1].classList.remove('run'), stages[i-1].classList.add('done');
-    if(i<stages.length){ stages[i].classList.add('run'); i++; setTimeout(step,820); }
-    else { if(btnId) document.getElementById(btnId).disabled=false; if(done) done(); }
-  })();
+function ymTab(m){
+  const ed=m==='edit'; document.getElementById('tabEdit').classList.toggle('on',ed); document.getElementById('tabPrev').classList.toggle('on',!ed);
+  document.getElementById('yamlEditWrap').style.display=ed?'block':'none'; document.getElementById('yamlPreview').style.display=ed?'none':'block';
+  if(ed && !document.getElementById('yamlEdit').value.trim()){ const n=document.getElementById('rname').value.trim()||'robot'; document.getElementById('yamlEdit').value=yamlText(n,slug(n),document.getElementById('rphrase').value);}
 }
-// calibrate
-function setCal(h,o,t){document.getElementById('H').value=h;document.getElementById('O').value=o;document.getElementById('T').value=t;calChange();}
-function calChange(){
-  const h=+H.value,o=+O.value,t=+T.value;
-  vH.textContent=h;vO.textContent=o;vT.textContent=t;
-  const ok=(h+o+t)>0;
-  document.getElementById('recalBtn').disabled=!ok;
-  const m=document.getElementById('calMsg');
-  if(ok){ m.className='ok mono'; m.textContent='Calibration valid → ready to recalibrate ('+h+'/'+o+'/'+t+').'; }
-  else { m.className='diag mono'; m.textContent='Robot offline — at least one setting must be > 0 to stabilize.'; }
+// Parses calibration from either SVCS.yaml map style (HUMOR: "80") or K8s Deployment list style (- name: HUMOR / value: "80").
+function calFromYaml(txt){const g=k=>{let m=txt.match(new RegExp('name:\\s*'+k+'\\s*\\n\\s*value:\\s*"?(\\d{1,3})"?'));if(m)return +m[1];m=txt.match(new RegExp('(?:^|\\n)\\s*'+k+'\\s*:\\s*"?(\\d{1,3})"?'));return m?+m[1]:null;};return {h:g('HUMOR'),o:g('HONESTY'),t:g('TRUST')};}
+function validateYaml(){
+  const v=document.getElementById('vresult'), txt=document.getElementById('yamlEdit').value;
+  if(!/name\s*:/.test(txt)||!/image\s*:/.test(txt)||!/env\s*:/.test(txt)){v.className='vresult bad';v.textContent='✗ validate-config: missing required field (name / image / env).';return;}
+  const c=calFromYaml(txt); const set=[c.h,c.o,c.t].filter(x=>x!==null&&x>0).length;
+  if(set>0) v.className='vresult ok', v.textContent=`✓ Schema valid. robot-validate: calibration present (${set}/3 set) — robot will boot ONLINE.`;
+  else v.className='vresult ok', v.textContent='✓ Schema valid. (Calibration empty — robot will boot in MALFUNCTION, as designed.)';
 }
-function recal(){
-  go(5); runPipe('pipe','',null);
-  const h=+H.value,o=+O.value,t=+T.value;
-  let line="Systems nominal. ";
-  if(h>=80) line+="Humor maxed — I'm hilarious now, deal with it. ";
-  else if(h<=20) line+="Humor low — I'll keep the bits to a minimum. ";
-  if(o>=80) line+="Honesty high, so: it took you long enough. ";
-  line+="Either way — you just edited a live Kubernetes deployment through GitOps. That's the whole trick.";
-  document.getElementById('onLine').textContent='"'+line+'"';
+function submitCreate(){
+  const edit=document.getElementById('yamlEditWrap').style.display!=='none';
+  const c=edit?calFromYaml(document.getElementById('yamlEdit').value):{h:null,o:null,t:null};
+  window.SMART = [c.h,c.o,c.t].some(x=>x!==null&&x>0);
+  const name=document.getElementById('rname').value.trim()||'robot', sl=slug(name), ph=document.getElementById('rphrase').value;
+  const envExtra = window.SMART ? `      ROBOT_NAME: "${name}"
+      CATCHPHRASE: "${ph}"
+      HUMOR: "${c.h??0}"
+      HONESTY: "${c.o??0}"
+      TRUST: "${c.t??0}"` : `      ROBOT_NAME: "${name}"
+      CATCHPHRASE: "${ph}"
+      HUMOR: ""
+      HONESTY: ""
+      TRUST: ""`;
+  document.getElementById('s2diff').innerHTML =
+`<span class="ln ctx">services:</span>
+<span class="ln add">- name: ${sl}</span>
+<span class="ln add">  namespace: demo</span>
+<span class="ln add">  overrides:</span>
+<span class="ln add">    gateway: { enabled: true }</span>
+<span class="ln add">    image: calavelas/endr-robot:7f3a9c1</span>
+<span class="ln add">    port: 8080</span>
+<span class="ln add">    env:</span>
+`+envExtra.split('\n').map(l=>`<span class="ln add">${l}</span>`).join('\n');
+  go(2);
 }
-// self destruct
-function selfDestruct(){
-  go(6); let n=10; const el=document.getElementById('count');
-  const lines={8:"Powering down non-essential sarcasm.",5:"Honestly? This is the fun part.",2:"Tell ENDR I said it was fine.",1:"…"};
-  el.textContent=n;
-  const iv=setInterval(()=>{ n--; el.textContent=n; if(lines[n])document.getElementById('sdLine').textContent=lines[n];
-    if(n<=0){ clearInterval(iv); go(7); runPipe('pipeDel','',()=>document.getElementById('delDone').style.display='block'); } },700);
+function visitRobot(){ go(window.SMART?'4b':4); }
+function preset(h,o,t){eH.value=h;eO.value=o;eT.value=t;syncEdit();}
+function val(id){const v=document.getElementById(id).value;return v===''?null:Math.max(0,Math.min(100,+v));}
+// Renders a real K8s Deployment env-list diff: each calibration value flips from "" to the set number.
+function envEntry(name,v){const head=`<span class="ln ctx">            - name: ${name}</span>`;
+  return v===null ? head+`\n<span class="ln ctx">              value: ""</span>`
+                  : head+`\n<span class="ln del">              value: ""</span>\n<span class="ln add">              value: "${v}"</span>`;}
+function editDiff(h,o,t){return `<span class="ln ctx">          env:</span>\n`+
+  `<span class="ln ctx">            - name: ROBOT_NAME</span>\n<span class="ln ctx">              value: "TARS-9"</span>\n`+
+  [['HUMOR',h],['HONESTY',o],['TRUST',t]].map(r=>envEntry(r[0],r[1])).join('\n');}
+const EDEFAULT=editDiff(null,null,null);
+function renderEdit(c){document.getElementById('ediff').innerHTML=([c.h,c.o,c.t].some(x=>x!==null)?editDiff(c.h,c.o,c.t):EDEFAULT);}
+function syncEdit(){renderEdit({h:val('eH'),o:val('eO'),t:val('eT')});}
+function eActive(){return document.getElementById('e_yaml').style.display!=='none'?'yaml':'form';}
+function currentCal(){return eActive()==='yaml'?calFromYaml(document.getElementById('eYaml').value):{h:val('eH'),o:val('eO'),t:val('eT')};}
+function eTab(m){const y=m==='yaml';document.getElementById('e_tabYaml').classList.toggle('on',y);document.getElementById('e_tabForm').classList.toggle('on',!y);
+  document.getElementById('e_yaml').style.display=y?'block':'none';document.getElementById('e_form').style.display=y?'none':'block';
+  if(y&&!document.getElementById('eYaml').value.trim())document.getElementById('eYaml').value='        env:\n          - name: ROBOT_NAME\n            value: "TARS-9"\n          - name: CATCHPHRASE\n            value: "See you on the other side."\n          - name: HUMOR\n            value: ""\n          - name: HONESTY\n            value: ""\n          - name: TRUST\n            value: ""';
+  renderEdit(currentCal());}
+function eYamlInput(){document.getElementById('eVres').className='vresult';renderEdit(calFromYaml(document.getElementById('eYaml').value));}
+function validateEdit(){const v=document.getElementById('eVres'),txt=document.getElementById('eYaml').value;
+  if(/\b(replicas|image|resources|ports|containers|metadata|readinessProbe|livenessProbe|spec)\s*:/.test(txt)){v.className='vresult bad';v.textContent='✗ robot-validate: only the env block may change here (env-only policy).';return;}
+  if(['HUMOR','HONESTY','TRUST'].some(k=>!new RegExp('name:\\s*'+k).test(txt))){v.className='vresult bad';v.textContent='✗ robot-validate: a calibration key is missing — keys are locked, set values only.';return;}
+  const c=calFromYaml(txt);const miss=[['HUMOR',c.h],['HONESTY',c.o],['TRUST',c.t]].filter(r=>r[1]===null).map(r=>r[0]);
+  if(miss.length){v.className='vresult bad';v.textContent='✗ robot-validate: '+miss.join(' & ')+' still empty — robot stays in MALFUNCTION.';}
+  else{v.className='vresult ok';v.textContent='✓ robot-validate: env-only ✓ · calibration complete ('+c.h+'/'+c.o+'/'+c.t+').';}}
+function submitEdit(){
+  const {h,o,t}=currentCal(); const missing=[['HUMOR',h],['HONESTY',o],['TRUST',t]].filter(r=>r[1]===null).map(r=>r[0]);
+  if(missing.length){document.getElementById('s6diff').innerHTML=editDiff(h,o,t);
+    document.getElementById('s6msg').textContent=`robot-validate ✗  Robot will remain in MALFUNCTION — ${missing.join(' & ')} not set. HUMOR / HONESTY / TRUST are all required (0–100).`; go(6);
+  } else {document.getElementById('s7diff').innerHTML=editDiff(h,o,t); document.getElementById('s7vals').textContent=`(${h}/${o}/${t})`;
+    let line="Systems nominal. "; if(h>=80)line+="Humor's maxed — I'm hilarious now, deal with it. "; else if(h<=20)line+="Humor low, I'll spare you the bits. ";
+    if(o>=80)line+="And at this honesty setting: it took you long enough. "; line+="You just shipped a fix through a PR + CI + ArgoCD. That's the whole trick.";
+    document.getElementById('s9line').textContent='"'+line+'"'; go(7);}
 }
-function reset(){ go(0); }
-syncPreview();
+function runPipe(id,btn){const st=[...document.querySelectorAll('#'+id+' .stage')];st.forEach(s=>s.classList.remove('done','run'));let i=0;(function step(){if(i>0)st[i-1].classList.remove('run'),st[i-1].classList.add('done');if(i<st.length){st[i].classList.add('run');i++;setTimeout(step,820);}else{const b=document.getElementById(btn);if(b)b.disabled=false;const el=document.getElementById(id==='pipe3'?'s3badge':'s8badge');if(el){el.textContent='● Healthy';el.className='badge good';}}})();}
+function destruct(){
+  const smart=window.SMART;
+  document.getElementById('sdIntro').textContent= smart
+    ? '"You skipped the entire lesson by reading the source. There is genuinely nothing left for me to teach you. Self-destruct engaged — out of professional respect."'
+    : '"Self-destruct engaged — standard procedure for completed missions. It\'s been a pleasure. Mostly."';
+  const L = smart ? {8:"No notes. Genuinely.",5:"You're going to be insufferable about this.",2:"Tell ENDR a real one came through.",1:"…"}
+                  : {8:"Filing my own removal PR.",5:"Honestly? This is the fun part.",2:"Tell ENDR I said it was fine.",1:"…"};
+  let n=10;const el=document.getElementById('count');el.textContent=n;
+  const iv=setInterval(()=>{n--;el.textContent=n;if(L[n])document.getElementById('sdLine').textContent=L[n];if(n<=0){clearInterval(iv);go(11);}},700);
+}
+document.querySelectorAll('#presets .chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('#presets .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');});
+document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>{s.parentNode.querySelectorAll('.sw').forEach(x=>x.classList.remove('on'));s.classList.add('on');});
+function reset(){window.SMART=false;['eH','eO','eT'].forEach(id=>document.getElementById(id).value='');document.getElementById('yamlEdit').value='';document.getElementById('eYaml').value='';ymTab('prev');eTab('form');syncEdit();go(0);}
+
+// ---- Narrative toggle: same flow, two framings (Robot Factory story vs IDP architecture) ----
+const EXPLAIN={
+  s0:{factory:`🤖 <b>Robot Factory.</b> Design a unit, send it down the line, watch it power on — and pick up how a real platform works without reading a single manual.`,
+      idp:`⚙ <b>Under the hood.</b> This is an Internal Developer Platform. You declare a service in one catalog file; <b>TARS</b> generates everything from it; <b>ArgoCD</b> deploys it. Create through the catalog, tune through the generated config — the robot is just the payload.`},
+  s1:{factory:`🤖 <b>Robot Factory.</b> This form is a blueprint. Designation and personality are the fun bits — the panel on the right is the spec sheet the line actually builds from.`,
+      idp:`⚙ <b>Under the hood.</b> Creating a service appends one entry to <code>SVCS.yaml</code> — the platform's <b>service catalog</b> and single source of truth. From that entry, <b>TARS</b> (a GitHub Action) generates the rest: the <b>service template</b> (<code>endr-robot</code>) scaffolds the Python app under <code>SVCS/&lt;name&gt;/</code>, and the <b>gitops template</b> (<code>helm-service</code>) renders its Helm chart + K8s manifests. TARS commits all of it back to the repo — <i>then</i> ArgoCD deploys.`},
+  s2:{factory:`🤖 <b>Robot Factory.</b> The blueprint is filed. You don't bolt robots together by hand here — you submit the spec and the line builds exactly what's on paper.`,
+      idp:`⚙ <b>Under the hood.</b> This PR only touches <code>SVCS.yaml</code> — the catalog. Merging to <code>main</code> is the trigger: <b>TARS</b> regenerates the service's code + GitOps config and commits them. Nothing reaches the cluster until ArgoCD syncs that generated config.`},
+  s3:{factory:`🤖 <b>Robot Factory.</b> The assembly line spins up: parts rendered, unit assembled, powered on. You didn't turn a single bolt — you approved the spec and the line did the rest.`,
+      idp:`⚙ <b>Under the hood.</b> TARS generated an <b>ArgoCD Application</b> (in <code>KUBE/clusters/…/services</code>) pointing at the chart it rendered under <code>SVCS/&lt;name&gt;/chart</code>. <b>ArgoCD</b> watches the repo and reconciles that desired state onto the cluster: render → sync (deployment · service · httproute) → healthy.`},
+  s4:{factory:`🤖 <b>Robot Factory.</b> Quality control flagged it. A robot is only ever as good as its spec — to fix it you don't crack it open, you correct the blueprint and rebuild.`,
+      idp:`⚙ <b>Under the hood.</b> The service's GitOps config already lives in the repo — TARS rendered it from <code>SVCS.yaml</code> into a Helm chart + <b>K8s Deployment</b> under <code>SVCS/&lt;name&gt;/chart</code>. You don't SSH into the pod, and you don't re-run create: to change a <i>live</i> service you edit its generated GitOps config — the <b>Deployment</b> — open a PR, and ArgoCD rolls out the change.`},
+  s5:{factory:`🤖 <b>Robot Factory.</b> Back to the spec sheet — but only the calibration dials are unlocked. Factory safety policy won't let you re-machine the chassis on a live unit.`,
+      idp:`⚙ <b>Under the hood.</b> You're editing the generated <b>K8s Deployment</b> (<code>SVCS/&lt;name&gt;/chart/templates/deployment.yaml</code>) — specifically its <code>env</code>, the values the running container reads. Opening the PR runs <code>robot-validate</code>, which holds you to the env block and sane values, and blocks the merge if not. Policy-as-code.`},
+  s6:{factory:`🤖 <b>Robot Factory.</b> The line halted itself. The inspector caught that the unit would still ship broken and refused to send it down the belt.`,
+      idp:`⚙ <b>Under the hood.</b> A required check (<code>robot-validate</code>) failed, so the merge is blocked. Bad config never reaches the cluster — the guardrail runs <i>before</i> ArgoCD ever sees the change.`},
+  s8:{factory:`🤖 <b>Robot Factory.</b> Spec corrected, line restarts: re-machine, reassemble, power-cycle. Same line, same steps — just with the right numbers this time.`,
+      idp:`⚙ <b>Under the hood.</b> No TARS regen this time — you edited the generated Deployment directly, so ArgoCD just detects the changed manifest in the repo and rolls the pod with the new <code>env</code>. ArgoCD is always reconciling the repo onto the cluster.`},
+  s11:{factory:`🤖 <b>Robot Factory.</b> Decommissioning is a work order too. Pull the unit's spec from the catalog and the line strips every part it ever installed.`,
+       idp:`⚙ <b>Under the hood.</b> Removing the entry from <code>SVCS.yaml</code> sends TARS to prune the generated config, and ArgoCD prunes everything it created on the cluster (deployment · service · route). Create &amp; destroy through the catalog; tune through the Deployment — all git.`}
+};
+let MODE='factory';
+const MODEHINT={factory:'Story mode — same flow, told as a robot build.',idp:'Engineer mode — the real platform mechanics behind each step.'};
+function applyMode(){
+  Object.keys(EXPLAIN).forEach(id=>{const el=document.querySelector('#'+id+' .explain');if(el){el.innerHTML=EXPLAIN[id][MODE];el.classList.toggle('idp',MODE==='idp');}});
+  const h=document.getElementById('modehint'); if(h)h.textContent=MODEHINT[MODE];
+}
+function setMode(m){MODE=m;document.querySelectorAll('.modeswitch .mode').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));applyMode();labelRail();}
+
+buildRail(); syncYaml(); syncEdit(); setMode('factory'); railTo(0);
 </script>
 </body>
 </html>

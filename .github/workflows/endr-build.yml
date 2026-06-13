@@ -14,17 +14,6 @@ on:
       - 'ENDR/CASE/Dockerfile'
       - '.dockerignore'
       - '.github/workflows/endr-build.yml'
-  pull_request:
-    paths:
-      - 'ENDR/CASE/**'
-      - '!ENDR/CASE/chart/**'
-      - 'ENDR/PLEX/**'
-      - '!ENDR/PLEX/chart/**'
-      - 'ENDR/pyproject.toml'
-      - 'ENDR/PLEX/Dockerfile'
-      - 'ENDR/CASE/Dockerfile'
-      - '.dockerignore'
-      - '.github/workflows/endr-build.yml'
   workflow_dispatch:
 
 permissions:
