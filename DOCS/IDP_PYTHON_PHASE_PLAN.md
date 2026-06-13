@@ -7,7 +7,7 @@ This plan adapts your original IDP idea to match the way Genesis was structured:
 - validate first, then generate, then raise PR
 
 Current implementation status:
-- Phase 1 (config-driven reconcile + PR automation) is now implemented via `ENDR/TARS/TARS.py svcs-check` and `.github/workflows/tars-init.yml`.
+- Phase 1 (config-driven reconcile + PR automation) is now implemented via `ENDR/engine/engine.py svcs-check` and `.github/workflows/tars-init.yml`.
 
 Related:
 - portfolio narrative: `DOCS/PORTFOLIO_BUILD_GUIDE.md`
@@ -42,7 +42,7 @@ Related:
 ```text
 /
   DOCS/
-  ENDR/SCPT/
+  ENDR/scripts/
   KUBE/
     argocd/
     clusters/
@@ -56,11 +56,11 @@ Related:
         prd/
     policies/
     monitoring/
-  SVCS/
+  services/
     examples/
   ENDR/
-  ENDR/CASE/
-  ENDR/TARS/templates/
+  ENDR/portal/
+  ENDR/engine/templates/
     service/
     gitops/
   .github/workflows/
@@ -104,15 +104,15 @@ Exit criteria:
 Goal: one-command cluster bootstrap and app-of-apps wiring.
 
 Deliverables:
-- `ENDR/SCPT/bootstrap.sh`
-- `ENDR/SCPT/Makefile` targets: `bootstrap`, `down`, `port-forward`
+- `ENDR/scripts/bootstrap.sh`
+- `ENDR/scripts/Makefile` targets: `bootstrap`, `down`, `port-forward`
 - ArgoCD install and root app bootstrap:
   - `KUBE/clusters/mac/lab/core.yaml`
   - `KUBE/clusters/mac/lab/core/*`
 - ingress controller install and documented URLs
 
 Exit criteria:
-- `make -f ENDR/SCPT/Makefile bootstrap` creates cluster and ArgoCD
+- `make -f ENDR/scripts/Makefile bootstrap` creates cluster and ArgoCD
 - root app is Healthy/Synced
 
 ### Phase 2 - Template Engine + Scaffolder (Python)
@@ -122,10 +122,10 @@ Deliverables:
 - generator module in `ENDR`:
   - read global + service config
   - validate config/template references
-  - render service code template (`ENDR/TARS/templates/service`)
-  - render Helm + Argo app template (`ENDR/TARS/templates/gitops`)
+  - render service code template (`ENDR/engine/templates/service`)
+  - render Helm + Argo app template (`ENDR/engine/templates/gitops`)
   - write outputs into `.idp/staging/`
-- sample generated service under `SVCS/examples/`
+- sample generated service under `services/examples/`
 
 Exit criteria:
 - CLI/script can generate one service end-to-end from config

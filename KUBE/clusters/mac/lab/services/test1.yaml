@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/calavelas/ENDR.git
     targetRevision: main
-    path: SVCS/test1/chart
+    path: services/test1/chart
   destination:
     server: https://kubernetes.default.svc
     namespace: demo

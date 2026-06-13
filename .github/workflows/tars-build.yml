@@ -89,7 +89,7 @@ jobs:
           IDP_CONFIG_PATH: ${{ steps.config_compat.outputs.idp_config_path }}
         run: |
           set -euo pipefail
-          python3 ENDR/TARS/TARS.py svcs-check --repo-root .
+          python3 ENDR/engine/engine.py svcs-check --repo-root .
 
       - name: Reconcile summary
         run: |
@@ -210,7 +210,7 @@ jobs:
           IDP_CONFIG_PATH: ${{ steps.config_compat.outputs.idp_config_path }}
         run: |
           set -euo pipefail
-          python3 ENDR/TARS/TARS.py svcs-check --repo-root . --write-worktree
+          python3 ENDR/engine/engine.py svcs-check --repo-root . --write-worktree
 
       - name: Create patch
         id: patch

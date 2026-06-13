@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/calavelas/ENDR.git
     targetRevision: main
-    path: SVCS/miller/chart
+    path: services/miller/chart
   destination:
     server: https://kubernetes.default.svc
     namespace: demo

@@ -5,24 +5,13 @@ on:
     branches:
       - main
     paths:
-      - 'ENDR/CASE/**'
-      - '!ENDR/CASE/chart/**'
-      - 'ENDR/PLEX/**'
-      - '!ENDR/PLEX/chart/**'
+      - 'ENDR/portal/**'
+      - '!ENDR/portal/chart/**'
+      - 'ENDR/api/**'
+      - '!ENDR/api/chart/**'
       - 'ENDR/pyproject.toml'
-      - 'ENDR/PLEX/Dockerfile'
-      - 'ENDR/CASE/Dockerfile'
-      - '.dockerignore'
-      - '.github/workflows/endr-build.yml'
-  pull_request:
-    paths:
-      - 'ENDR/CASE/**'
-      - '!ENDR/CASE/chart/**'
-      - 'ENDR/PLEX/**'
-      - '!ENDR/PLEX/chart/**'
-      - 'ENDR/pyproject.toml'
-      - 'ENDR/PLEX/Dockerfile'
-      - 'ENDR/CASE/Dockerfile'
+      - 'ENDR/api/Dockerfile'
+      - 'ENDR/portal/Dockerfile'
       - '.dockerignore'
       - '.github/workflows/endr-build.yml'
   workflow_dispatch:
@@ -75,11 +64,11 @@ jobs:
           - name: plex
             image_name: plex
             context: .
-            dockerfile: ENDR/PLEX/Dockerfile
+            dockerfile: ENDR/api/Dockerfile
           - name: case
             image_name: case
-            context: ENDR/CASE
-            dockerfile: ENDR/CASE/Dockerfile
+            context: ENDR/portal
+            dockerfile: ENDR/portal/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -161,8 +150,8 @@ jobs:
           owner = os.environ["IMAGE_OWNER"].strip()
           tag = os.environ["IMAGE_TAG"].strip()
           charts = {
-            Path("ENDR/PLEX/chart/values.yaml"): "plex",
-            Path("ENDR/CASE/chart/values.yaml"): "case",
+            Path("ENDR/api/chart/values.yaml"): "plex",
+            Path("ENDR/portal/chart/values.yaml"): "case",
           }
 
           for chart_path, image_name in charts.items():
@@ -178,7 +167,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ENDR/PLEX/chart/values.yaml ENDR/CASE/chart/values.yaml
+          git add ENDR/api/chart/values.yaml ENDR/portal/chart/values.yaml
           if git diff --cached --quiet; then
             echo "No chart updates to commit."
             exit 0
@@ -192,5 +181,5 @@ jobs:
             echo "### ENDR FE/BE image publish summary"
             echo ""
             echo "- Tag: \`${{ needs.meta.outputs.tag }}\`"
-            echo "- Updated charts: \`ENDR/PLEX/chart\`, \`ENDR/CASE/chart\`"
+            echo "- Updated charts: \`ENDR/api/chart\`, \`ENDR/portal/chart\`"
           } >> "$GITHUB_STEP_SUMMARY"

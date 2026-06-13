@@ -9,7 +9,7 @@ It contains:
 - `CASE/`: frontend portal UI.
 - `BSTG/`: Backstage alternative track (software templates + scaffolder action module).
 
-It acts as a thin wrapper over shared logic in `ENDR/TARS/`, and provides:
+It acts as a thin wrapper over shared logic in `ENDR/engine/`, and provides:
 - config validation for `ENDR.yaml` and `SVCS.yaml`
 - service/GitOps scaffolding and reconcile API flows
 - GitHub branch/commit/PR integration
@@ -18,12 +18,12 @@ It acts as a thin wrapper over shared logic in `ENDR/TARS/`, and provides:
 Run locally:
 ```bash
 cd ENDR
-uvicorn TARS.api.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn engine.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Run from repo root:
 ```bash
-python -m uvicorn TARS.api.main:app --reload --host 0.0.0.0 --port 8000 --app-dir ENDR
+python -m uvicorn engine.api.main:app --reload --host 0.0.0.0 --port 8000 --app-dir ENDR
 ```
 
 Validate config files:

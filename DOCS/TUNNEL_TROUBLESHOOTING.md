@@ -16,14 +16,14 @@ connector (its log fills with `context canceled` on those stream URLs). The clus
 healthy (CPU ~0%, no OOM) — the failure is the always-on embedded streaming UI, not server load.
 
 Fix (frontend): make the embed **load on demand**. `ArgoEmbedPanel`
-(`ENDR/CASE/src/app/components/argo-embed-panel.tsx`) now renders a placeholder with a
+(`ENDR/portal/src/app/components/argo-embed-panel.tsx`) now renders a placeholder with a
 **"Load embedded ArgoCD"** button + **"Open in new tab"** link, and only mounts the `<iframe>`
 after an explicit click (with an "Unload" button to stop it). Live sync/health per service is
 already shown natively in the catalog (`dataSource: argocd`), so the iframe is optional. Also
 restored a bounded fetch timeout in `loadSnapshot` (`lib/plex.ts`) so a slow backend can't hang a
 render. Verified: new image renders 0 `<iframe>` on `/argocd` vs 1 on the old image.
 
-Deploy via GitOps (commit → `endr-build.yml` builds `case` image + bumps `ENDR/CASE/chart/values.yaml`
+Deploy via GitOps (commit → `endr-build.yml` builds `case` image + bumps `ENDR/portal/chart/values.yaml`
 → ArgoCD syncs). A local `kubectl set image` does NOT stick — the `platform`→`case` app-of-apps
 self-heal reverts it.
 
@@ -55,7 +55,7 @@ CNAME for the public hostnames — but a hostname can point at only **one** tunn
 | # | Mechanism | Defined in | Routes | Origin |
 |---|---|---|---|---|
 | 1 | **In-cluster gateway** (`pl4nty/cloudflare-kubernetes-gateway` v0.8.1, an ArgoCD app) | `KUBE/clusters/mac/lab/platform/cloudflare.yaml`, `gateway/gateway-cloudflare.yaml`, `gateway/route-cloudflare-{case,argocd}.yaml`, Secret `cloudflare` in ns `gateway` | `case.calavelas.net`, `endr.calavelas.net`, **`argocd.calavelas.net`** | in-cluster Services (`case:80`, `argocd-server:80`) directly |
-| 2 | **Local script** (manual `cloudflared`, tunnel `endr-case`) | `ENDR/SCPT/cloudflare-tunnel.sh` (`make tunnel-*`) | only **one** host (`CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME`) | `https://case.k8s.local` (via Traefik `*.k8s.local`) |
+| 2 | **Local script** (manual `cloudflared`, tunnel `endr-case`) | `ENDR/scripts/cloudflare-tunnel.sh` (`make tunnel-*`) | only **one** host (`CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME`) | `https://case.k8s.local` (via Traefik `*.k8s.local`) |
 
 **Why it manifests:**
 - `cloudflared tunnel route dns` (mechanism 2) and the in-cluster controller (mechanism 1) both

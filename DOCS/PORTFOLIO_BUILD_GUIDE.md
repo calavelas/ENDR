@@ -36,8 +36,8 @@ Key design decisions:
 Main components:
 - `CASE`: developer-facing UI (create/list/detail pages)
 - `ENDR`: FastAPI orchestration (scaffold, PR, status)
-- `ENDR/TARS/templates/service`: service code skeleton
-- `ENDR/TARS/templates/gitops`: Helm + Argo Application templates
+- `ENDR/engine/templates/service`: service code skeleton
+- `ENDR/engine/templates/gitops`: Helm + Argo Application templates
 - `KUBE/*`: ArgoCD root app, per-service app defs, policies, monitoring
 - `.github/workflows/*`: PR validation and policy checks
 
@@ -59,8 +59,8 @@ Output:
 
 ### Phase 1 - Platform Bootstrap
 Output:
-- `ENDR/SCPT/bootstrap.sh`
-- `ENDR/SCPT/Makefile` (`bootstrap`, `up`, `down`, `port-forward`)
+- `ENDR/scripts/bootstrap.sh`
+- `ENDR/scripts/Makefile` (`bootstrap`, `up`, `down`, `port-forward`)
 - ArgoCD installation and root app bootstrap
 
 ### Phase 2 - Scaffolding Engine
@@ -121,7 +121,7 @@ Use this order when recording:
 - ArgoCD synced app screenshot
 - Grafana dashboard screenshot
 - CI policy failure screenshot
-- short terminal clip of `make -f ENDR/SCPT/Makefile bootstrap`
+- short terminal clip of `make -f ENDR/scripts/Makefile bootstrap`
 
 ## 8) Challenges and Tradeoffs to Mention
 

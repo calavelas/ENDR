@@ -14,4 +14,4 @@
 2. `KUBE/clusters/mac/lab/core.yaml` creates the bootstrap ArgoCD application.
 3. Root app syncs `platform` + `services` child applications from `KUBE/clusters/mac/lab/core`.
 4. Platform apps deploy ArgoCD self-management, Traefik, and gateway routes.
-5. Service apps deploy charts from `SVCS/<name>/chart`.
+5. Service apps deploy charts from `services/<name>/chart`.
