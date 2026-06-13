@@ -1,22 +1,38 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { LinkButton } from "../components/ui/button";
-import { PageHeader } from "../components/ui/page-header";
+import { CreateButton } from "../components/create-button";
+import { Explain } from "../components/explain";
+import { StageRail } from "../components/stage-rail";
 import { HistoryPanel } from "./history-panel";
 
 export default function HistoryPage() {
   return (
-    <>
-      <section className="portal-main">
-        <PageHeader
-          title="History"
-          subtitle="Pull requests opened by the portal (title format “portal - Adding service :”)."
-          actions={<LinkButton href="/create">Create service</LinkButton>}
-        />
+    <div className="mc">
+      <StageRail active="deliver" />
 
-        <HistoryPanel />
-      </section>
-    </>
+      <div className="mc-page-actions">
+        <CreateButton />
+      </div>
+
+      <Explain
+        idp={
+          <>
+            Every change ships as a <b>pull request</b>. This is the delivery trail — each PR, the CI
+            checks that gated it, and the pipeline that merged and deployed it. The repo is the single
+            source of truth.
+          </>
+        }
+        interstellar={
+          <>
+            Every change ships as a <b>pull request</b> — the mission log. Each PR, the checks that
+            gated it, and the pipeline that merged and launched it. The repo is the single source of
+            truth.
+          </>
+        }
+      />
+
+      <HistoryPanel />
+    </div>
   );
 }

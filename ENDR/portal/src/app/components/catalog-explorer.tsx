@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { environmentLabel, platformServiceLabel, useNarrative } from "../lib/narrative";
 import {
   buildArgoApplicationUrl,
   buildGithubFolderUrl,
@@ -13,10 +14,11 @@ import {
   sortByName,
   syncTone,
   type NodeTone,
-  type ServiceNode
+  type ServiceNode,
 } from "../lib/platform";
-import { ServiceCard } from "./ui/service-card";
-import { Toolbar } from "./ui/toolbar";
+import { Explain } from "./explain";
+import * as Icon from "./icons";
+import { StageRail } from "./stage-rail";
 
 type View = "cards" | "table";
 type ToneFilter = "all" | NodeTone;
@@ -36,116 +38,12 @@ interface Group {
   basePath: string;
 }
 
-function FilterSelect({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: ToneFilter;
-  onChange: (value: ToneFilter) => void;
-}) {
+function Badge({ status, tone }: { status: string; tone: NodeTone }) {
   return (
-    <label className="toolbar-filter">
-      <span>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value as ToneFilter)}>
-        <option value="all">All</option>
-        <option value="good">Good</option>
-        <option value="warn">Warning</option>
-        <option value="bad">Bad</option>
-        <option value="neutral">Neutral</option>
-      </select>
-    </label>
-  );
-}
-
-function CatalogTable({
-  group,
-  items,
-  embedUrl,
-  githubRepoUrl,
-  githubBranch,
-}: {
-  group: Group;
-  items: ServiceNode[];
-  embedUrl: string;
-  githubRepoUrl: string;
-  githubBranch: string;
-}) {
-  return (
-    <section className="panel service-table-wrap">
-      <table className="service-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Namespace</th>
-            <th>Health</th>
-            <th>Sync</th>
-            <th>Image</th>
-            <th>Revision</th>
-            <th>Updated</th>
-            <th>ArgoCD</th>
-            <th>GitHub</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((service) => {
-            const folder = group.id === "application" ? buildServiceFolderPath(service.name) : service.sourcePath;
-            return (
-              <tr key={service.name}>
-                <td>
-                  <Link className="entity-link" href={`${group.basePath}/${encodeURIComponent(service.name)}`}>
-                    {service.name}
-                  </Link>
-                </td>
-                <td>{service.namespace}</td>
-                <td>
-                  <span className={`status-pill tone-${healthTone(service.healthStatus)}`}>{service.healthStatus}</span>
-                </td>
-                <td>
-                  <span className={`status-pill tone-${syncTone(service.syncStatus)}`}>{service.syncStatus}</span>
-                </td>
-                <td>
-                  <code>{service.imageTag ?? "n/a"}</code>
-                </td>
-                <td>
-                  <code>{shortRevision(service.revision)}</code>
-                </td>
-                <td>{optionalTimestamp(service.deployedAt)}</td>
-                <td>
-                  {embedUrl ? (
-                    <a
-                      className="open-link compact"
-                      href={buildArgoApplicationUrl(embedUrl, service.name)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open
-                    </a>
-                  ) : (
-                    <span className="empty-cell">n/a</span>
-                  )}
-                </td>
-                <td>
-                  {folder ? (
-                    <a
-                      className="entity-link"
-                      href={buildGithubFolderUrl(githubRepoUrl, githubBranch, folder)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Folder
-                    </a>
-                  ) : (
-                    <span className="empty-cell">n/a</span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </section>
+    <span className={`mc-badge ${tone}`}>
+      <span className="mc-badge-dot" />
+      {status}
+    </span>
   );
 }
 
@@ -156,6 +54,7 @@ export function CatalogExplorer({
   githubRepoUrl,
   githubBranch,
 }: CatalogExplorerProps) {
+  const { mode, t } = useNarrative();
   const [query, setQuery] = useState("");
   const [health, setHealth] = useState<ToneFilter>("all");
   const [sync, setSync] = useState<ToneFilter>("all");
@@ -186,54 +85,211 @@ export function CatalogExplorer({
   };
 
   const groups: Group[] = [
-    { id: "application", label: "Application Services", items: sortByName(services), basePath: "/application-services" },
-    { id: "platform", label: "Platform Services", items: sortByName(platformServices), basePath: "/platform-services" }
+    {
+      id: "application",
+      label: mode === "interstellar" ? "Robots" : "Application Services",
+      items: sortByName(services),
+      basePath: "/application-services",
+    },
+    {
+      id: "platform",
+      label: mode === "interstellar" ? "Subsystems" : "Platform Services",
+      items: sortByName(platformServices),
+      basePath: "/platform-services",
+    },
   ];
+
+  const displayName = (group: Group, service: ServiceNode) =>
+    group.id === "platform" ? platformServiceLabel(service.name, mode) : service.name;
 
   return (
     <>
-      <Toolbar query={query} onQuery={setQuery} placeholder="Search services…">
-        <FilterSelect label="Health" value={health} onChange={setHealth} />
-        <FilterSelect label="Sync" value={sync} onChange={setSync} />
-        <div className="view-toggle" role="group" aria-label="View">
-          <button type="button" className={view === "cards" ? "active" : ""} onClick={() => setView("cards")}>
+      <StageRail active="operate" />
+
+      <div className="mc-page-actions">
+        <Link href="/create" className="mc-btn mc-btn-lg">
+          <Icon.Plus size={16} />
+          {t.createCta}
+        </Link>
+        {embedUrl ? (
+          <a href={embedUrl} target="_blank" rel="noreferrer" className="mc-btn mc-btn-lg mc-btn-soft">
+            Open ArgoCD
+            <Icon.ExternalLink size={14} />
+          </a>
+        ) : null}
+      </div>
+
+      <Explain
+        idp={
+          <>
+            Your <b>service catalog</b> — every service ENDR runs, with live health and sync straight
+            from ArgoCD. Open one to inspect its config, or <b>create</b> a new one to start the
+            delivery flow.
+          </>
+        }
+        interstellar={
+          <>
+            Your <b>fleet</b> — every robot in service, with live health and sync from the autopilot.
+            Open one to inspect it, or <b>build</b> a new one to start a mission.
+          </>
+        }
+      />
+
+      <div className="mc-toolbar">
+        <input
+          className="mc-toolbar-search"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={mode === "interstellar" ? "Search robots…" : "Search services…"}
+          aria-label="Search"
+        />
+        <select
+          className="mc-select"
+          value={health}
+          onChange={(event) => setHealth(event.target.value as ToneFilter)}
+          aria-label="Filter by health"
+        >
+          <option value="all">All health</option>
+          <option value="good">Healthy</option>
+          <option value="warn">Warning</option>
+          <option value="bad">Degraded</option>
+          <option value="neutral">Unknown</option>
+        </select>
+        <select
+          className="mc-select"
+          value={sync}
+          onChange={(event) => setSync(event.target.value as ToneFilter)}
+          aria-label="Filter by sync"
+        >
+          <option value="all">All sync</option>
+          <option value="good">Synced</option>
+          <option value="warn">Progressing</option>
+          <option value="bad">Out of sync</option>
+          <option value="neutral">Unknown</option>
+        </select>
+        <div className="mc-seg" role="group" aria-label="View">
+          <button type="button" className={`mc-seg-opt${view === "cards" ? " on" : ""}`} onClick={() => setView("cards")}>
             Cards
           </button>
-          <button type="button" className={view === "table" ? "active" : ""} onClick={() => setView("table")}>
+          <button type="button" className={`mc-seg-opt${view === "table" ? " on" : ""}`} onClick={() => setView("table")}>
             Table
           </button>
         </div>
-      </Toolbar>
+      </div>
 
       {groups.map((group) => {
         const filtered = group.items.filter(matches);
         return (
-          <section className="section-block" key={group.id}>
-            <div className="section-head">
-              <h2>{group.label}</h2>
-              <span className="chip muted">{filtered.length}</span>
+          <section className="mc-section" key={group.id}>
+            <div className="mc-section-head">
+              <h2 className="mc-section-title">{group.label}</h2>
+              <span className="mc-count-chip">{filtered.length}</span>
             </div>
+
             {filtered.length === 0 ? (
-              <p className="empty-cell">No matching services.</p>
+              <p className="mc-empty">No matching {mode === "interstellar" ? "robots" : "services"}.</p>
             ) : view === "cards" ? (
-              <div className="service-grid">
+              <div className="mc-card-grid">
                 {filtered.map((service) => (
-                  <ServiceCard
+                  <Link
                     key={service.name}
-                    service={service}
                     href={`${group.basePath}/${encodeURIComponent(service.name)}`}
-                    showGateway={group.id === "application"}
-                  />
+                    className="mc-card"
+                  >
+                    <div className="mc-card-head">
+                      <span className="mc-card-name">{displayName(group, service)}</span>
+                      <Badge status={service.healthStatus} tone={healthTone(service.healthStatus)} />
+                    </div>
+                    <div className="mc-card-meta">
+                      <Badge status={service.syncStatus} tone={syncTone(service.syncStatus)} />
+                      <span className="mc-chip">
+                        <span className="mc-chip-key">{t.namespaceLabel}</span>
+                        {environmentLabel(service.namespace, mode)}
+                      </span>
+                      {service.imageTag ? (
+                        <span className="mc-chip mc-mono">{service.imageTag}</span>
+                      ) : null}
+                    </div>
+                  </Link>
                 ))}
               </div>
             ) : (
-              <CatalogTable
-                group={group}
-                items={filtered}
-                embedUrl={embedUrl}
-                githubRepoUrl={githubRepoUrl}
-                githubBranch={githubBranch}
-              />
+              <div className="mc-panel">
+                <div className="mc-table-wrap">
+                  <table className="mc-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Health</th>
+                        <th>Sync</th>
+                        <th>{t.namespaceLabel}</th>
+                        <th>Image</th>
+                        <th>Revision</th>
+                        <th>Updated</th>
+                        <th>ArgoCD</th>
+                        <th>GitHub</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((service) => {
+                        const folder =
+                          group.id === "application" ? buildServiceFolderPath(service.name) : service.sourcePath;
+                        return (
+                          <tr key={service.name}>
+                            <td>
+                              <Link
+                                className="mc-table-name"
+                                href={`${group.basePath}/${encodeURIComponent(service.name)}`}
+                              >
+                                {displayName(group, service)}
+                              </Link>
+                            </td>
+                            <td>
+                              <Badge status={service.healthStatus} tone={healthTone(service.healthStatus)} />
+                            </td>
+                            <td>
+                              <Badge status={service.syncStatus} tone={syncTone(service.syncStatus)} />
+                            </td>
+                            <td>{environmentLabel(service.namespace, mode)}</td>
+                            <td className="mc-mono">{service.imageTag ?? "n/a"}</td>
+                            <td className="mc-mono">{shortRevision(service.revision)}</td>
+                            <td>{optionalTimestamp(service.deployedAt)}</td>
+                            <td>
+                              {embedUrl ? (
+                                <a
+                                  className="mc-extlink"
+                                  href={buildArgoApplicationUrl(embedUrl, service.name)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Open
+                                </a>
+                              ) : (
+                                <span className="mc-muted">n/a</span>
+                              )}
+                            </td>
+                            <td>
+                              {folder ? (
+                                <a
+                                  className="mc-extlink"
+                                  href={buildGithubFolderUrl(githubRepoUrl, githubBranch, folder)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Folder
+                                </a>
+                              ) : (
+                                <span className="mc-muted">n/a</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </section>
         );

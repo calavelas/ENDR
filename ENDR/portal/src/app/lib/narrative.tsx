@@ -132,6 +132,44 @@ export function platformServiceLabel(name: string, mode: NarrativeMode): string 
   return PLATFORM_INTERSTELLAR[name.trim().toLowerCase()] ?? titleCase(name);
 }
 
+// ── The IDP delivery flow (one GitOps loop) ─────────────────────────────────
+// Straight from DOCS/robot-demo-mockup.html: the same six-stage lifecycle,
+// relabelled per narrative. `sub` is the constant SDLC mapping shown beneath.
+export type StageId =
+  | "declare"
+  | "commit"
+  | "validate"
+  | "deliver"
+  | "operate"
+  | "retire";
+
+export interface JourneyStage {
+  id: StageId;
+  label: string;
+  sub: string;
+}
+
+const STAGE_DEFS: Array<{ id: StageId; idp: string; interstellar: string; sub: string }> = [
+  { id: "declare", idp: "Declare", interstellar: "Design", sub: "Plan · Code" },
+  { id: "commit", idp: "Commit", interstellar: "File spec", sub: "Code" },
+  { id: "validate", idp: "Validate", interstellar: "Inspect", sub: "Test · CI" },
+  { id: "deliver", idp: "Deliver", interstellar: "Assemble", sub: "Build · Deploy" },
+  { id: "operate", idp: "Operate", interstellar: "Power on", sub: "Operate · Monitor" },
+  { id: "retire", idp: "Retire", interstellar: "Decommission", sub: "Decommission" },
+];
+
+export function journeyStages(mode: NarrativeMode): JourneyStage[] {
+  return STAGE_DEFS.map((stage) => ({
+    id: stage.id,
+    label: mode === "interstellar" ? stage.interstellar : stage.idp,
+    sub: stage.sub,
+  }));
+}
+
+export function stageIndex(id: StageId): number {
+  return STAGE_DEFS.findIndex((stage) => stage.id === id);
+}
+
 // ── Context ────────────────────────────────────────────────────────────────
 interface NarrativeContextValue {
   mode: NarrativeMode;

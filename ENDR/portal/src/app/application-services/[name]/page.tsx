@@ -1,16 +1,9 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
-import { ArgoEmbedPanel } from "../../components/argo-embed-panel";
-import { LinkButton } from "../../components/ui/button";
-import { PageHeader } from "../../components/ui/page-header";
-import { StatusPill } from "../../components/ui/status-pill";
-import { Tabs } from "../../components/ui/tabs";
+import { ServiceDetailView } from "../../components/service-detail-view";
 import {
   buildArgoApplicationUrl,
   buildGithubFileUrl,
@@ -19,11 +12,9 @@ import {
   buildServiceFolderPath,
   findServiceByName,
   loadSnapshot,
-  optionalTimestamp,
   resolveArgoEmbedUrl,
   resolveGithubBranch,
   resolveGithubRepoUrl,
-  shortRevision
 } from "../../lib/platform";
 
 interface ServiceDetailPageProps {
@@ -59,7 +50,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     const response = await fetch(serviceReadmeRawUrl, { cache: "no-store" });
     if (!response.ok) {
       serviceReadmeError =
-        response.status === 404 ? "README.md not found for this service." : `Unable to load README.md (HTTP ${response.status}).`;
+        response.status === 404
+          ? "README.md not found for this service."
+          : `Unable to load README.md (HTTP ${response.status}).`;
     } else {
       serviceReadmeContent = await response.text();
       if (!serviceReadmeContent.trim()) {
@@ -71,154 +64,28 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     serviceReadmeError = `Unable to load README.md: ${detail}`;
   }
 
-  const overview = (
-    <div className="detail-grid">
-      <article className="panel detail-panel">
-        <h2 className="panel-title">Identity</h2>
-        <dl className="kv-list">
-          <div>
-            <dt>Kind</dt>
-            <dd>application service</dd>
-          </div>
-          <div>
-            <dt>Namespace</dt>
-            <dd>{service.namespace}</dd>
-          </div>
-          <div>
-            <dt>Access</dt>
-            <dd>
-              <a className="entity-link" href={serviceAccessUrl} target="_blank" rel="noreferrer">
-                {serviceAccessHost}
-              </a>
-            </dd>
-          </div>
-          <div>
-            <dt>Source Path</dt>
-            <dd>
-              <code>{service.sourcePath}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>GitHub</dt>
-            <dd>
-              <a className="entity-link" href={serviceGithubUrl} target="_blank" rel="noreferrer">
-                Open folder
-              </a>
-            </dd>
-          </div>
-        </dl>
-      </article>
-
-      <article className="panel detail-panel">
-        <h2 className="panel-title">Deployment</h2>
-        <dl className="kv-list">
-          <div>
-            <dt>Health</dt>
-            <dd>
-              <StatusPill status={service.healthStatus} kind="health" />
-            </dd>
-          </div>
-          <div>
-            <dt>Sync</dt>
-            <dd>
-              <StatusPill status={service.syncStatus} kind="sync" />
-            </dd>
-          </div>
-          <div>
-            <dt>Image</dt>
-            <dd>
-              <code>{service.imageTag ?? "n/a"}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>Revision</dt>
-            <dd>
-              <code>{shortRevision(service.revision)}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>Deployed</dt>
-            <dd>{optionalTimestamp(service.deployedAt)}</dd>
-          </div>
-        </dl>
-      </article>
-    </div>
-  );
-
-  const readme = (
-    <section className="panel detail-panel readme-panel" aria-label="service-readme">
-      <p className="embed-note">
-        Loaded from{" "}
-        <a className="entity-link" href={serviceReadmeGithubUrl} target="_blank" rel="noreferrer">
-          {serviceReadmePath}
-        </a>
-        .
-      </p>
-      {serviceReadmeError ? (
-        <p className="form-error" role="alert">
-          {serviceReadmeError}
-        </p>
-      ) : (
-        <div className="service-readme-content markdown-preview">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{serviceReadmeContent}</ReactMarkdown>
-        </div>
-      )}
-    </section>
-  );
-
-  const argocd = serviceArgoUrl ? (
-    <ArgoEmbedPanel embedUrl={serviceArgoUrl} />
-  ) : (
-    <p className="empty-cell">Live ArgoCD is not available in this environment.</p>
-  );
-
   return (
-    <>
-      <section className="portal-main">
-        <PageHeader
-          title={service.name}
-          subtitle="Application service"
-          actions={
-            serviceArgoUrl ? (
-              <LinkButton href={serviceArgoUrl} external>
-                Open in ArgoCD
-              </LinkButton>
-            ) : undefined
-          }
-        />
-
-        <div className="detail-status-strip">
-          <StatusPill status={service.healthStatus} kind="health" />
-          <StatusPill status={service.syncStatus} kind="sync" />
-          <span className="chip muted">{service.namespace}</span>
-          <span className="chip muted">image {service.imageTag ?? "n/a"}</span>
-        </div>
-
-        {snapshot.warnings.length > 0 && (
-          <section className="warning-box" aria-live="polite">
-            <h2>Warnings</h2>
-            <ul>
-              {snapshot.warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        <Tabs
-          tabs={[
-            { id: "overview", label: "Overview", content: overview },
-            { id: "readme", label: "README", content: readme },
-            { id: "argocd", label: "ArgoCD", content: argocd }
-          ]}
-        />
-
-        <p>
-          <Link className="entity-link" href="/catalog">
-            ← Back to Catalog
-          </Link>
-        </p>
-      </section>
-    </>
+    <ServiceDetailView
+      kind="application"
+      name={service.name}
+      namespace={service.namespace}
+      healthStatus={service.healthStatus}
+      syncStatus={service.syncStatus}
+      imageTag={service.imageTag}
+      revision={service.revision}
+      deployedAt={service.deployedAt}
+      sourcePath={service.sourcePath}
+      accessHost={serviceAccessHost}
+      accessUrl={serviceAccessUrl}
+      githubFolderUrl={serviceGithubUrl}
+      readme={{
+        path: serviceReadmePath,
+        githubUrl: serviceReadmeGithubUrl,
+        content: serviceReadmeContent,
+        error: serviceReadmeError,
+      }}
+      argoUrl={serviceArgoUrl}
+      warnings={snapshot.warnings}
+    />
   );
 }
