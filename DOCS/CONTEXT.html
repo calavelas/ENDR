@@ -7,9 +7,9 @@
 <style>
   :root{
     --bg:#0b0f1a; --panel:#121826; --panel2:#0e1320; --ink:#e8edf7; --muted:#9aa7bd;
-    --line:#243049; --accent:#5b8cff; --accent2:#7c5cff; --good:#3ecf8e; --warn:#f5b14c;
+    --line:#243049; --accent:#37d3c3; --accent2:#2bb6a8; --good:#3ecf8e; --warn:#f5b14c;
     --bad:#ff6b6b; --chip:#1b2438; --code:#0a0e18;
-    --case:#5b8cff; --plex:#7c5cff; --tars:#3ecf8e; --kube:#f5b14c; --scpt:#ff8fae; --bstg:#4cd6e8;
+    --portal:#37d3c3; --api:#7c9cff; --engine:#3ecf8e; --kube:#f5b14c; --scripts:#ff8fae;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -20,7 +20,6 @@
   code,kbd{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86em}
   code{background:var(--code);border:1px solid var(--line);padding:.08em .4em;border-radius:5px;color:#cfe0ff}
   .layout{display:grid;grid-template-columns:264px 1fr;gap:0;max-width:1280px;margin:0 auto}
-  /* Sidebar */
   nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:24px 18px;
     border-right:1px solid var(--line);background:var(--panel2)}
   nav.toc h1{font-size:20px;margin:0 0 2px;letter-spacing:.5px}
@@ -28,7 +27,6 @@
   nav.toc a{display:block;color:var(--muted);padding:5px 10px;border-radius:7px;font-size:13.5px;border-left:2px solid transparent}
   nav.toc a:hover{color:var(--ink);background:var(--chip);text-decoration:none}
   nav.toc .grp{color:#5e6c86;text-transform:uppercase;font-size:10.5px;letter-spacing:1.2px;margin:16px 0 6px 10px}
-  /* Main */
   main{padding:40px 48px 120px;min-width:0}
   section{margin-bottom:52px;scroll-margin-top:20px}
   h2{font-size:26px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
@@ -37,7 +35,7 @@
   h3{font-size:18px;margin:26px 0 8px;color:#cdd8ee}
   .lead{color:var(--muted);font-size:15px;margin:0 0 18px;max-width:75ch}
   p{max-width:78ch}
-  .hero{background:radial-gradient(1200px 400px at 0% -10%,rgba(124,92,255,.18),transparent),
+  .hero{background:radial-gradient(1200px 400px at 0% -10%,rgba(55,211,195,.18),transparent),
     linear-gradient(135deg,#121a2e,#0e1320);border:1px solid var(--line);border-radius:18px;
     padding:34px 36px;margin-bottom:34px}
   .hero h1{font-size:40px;margin:0 0 6px;letter-spacing:1px}
@@ -55,7 +53,6 @@
   .mod .role{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.6px}
   .mod p{font-size:13.5px;color:#c4cfe2;margin:8px 0 0}
   .mod .path{font-size:12px;color:#7f8db0;margin-top:8px;font-family:ui-monospace,monospace}
-  /* Flow steps */
   .flow{counter-reset:step;display:grid;gap:0}
   .step{position:relative;padding:0 0 22px 56px;border-left:2px solid var(--line);margin-left:18px}
   .step:last-child{border-left:2px solid transparent}
@@ -77,7 +74,7 @@
   .tag-good{color:var(--good)}.tag-warn{color:var(--warn)}.tag-bad{color:var(--bad)}
   .kvs{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13.5px}
   .kvs b{color:#cdd8ee;font-weight:600}
-  .note{border-left:3px solid var(--accent);background:rgba(91,140,255,.07);padding:12px 16px;border-radius:0 10px 10px 0;color:#c8d3e8;font-size:13.5px;margin:14px 0}
+  .note{border-left:3px solid var(--accent);background:rgba(55,211,195,.07);padding:12px 16px;border-radius:0 10px 10px 0;color:#c8d3e8;font-size:13.5px;margin:14px 0}
   .note.warn{border-color:var(--warn);background:rgba(245,177,76,.08)}
   .note.good{border-color:var(--good);background:rgba(62,207,142,.08)}
   .ascii{font-family:ui-monospace,monospace;font-size:12px;line-height:1.5;white-space:pre;color:#9fb4dd;
@@ -97,19 +94,20 @@
   <div class="grp">Understand</div>
   <a href="#what">1 · What is ENDR</a>
   <a href="#bigidea">2 · The big idea</a>
-  <a href="#glossary">3 · Codename glossary</a>
+  <a href="#glossary">3 · Module glossary</a>
   <a href="#arch">4 · Architecture</a>
   <div class="grp">Mechanics</div>
   <a href="#config">5 · Config = source of truth</a>
   <a href="#flow">6 · Golden-path flow</a>
-  <a href="#tars">7 · TARS engine</a>
+  <a href="#engine">7 · engine (automation)</a>
   <a href="#cicd">8 · CI/CD workflows</a>
   <a href="#kube">9 · KUBE / ArgoCD</a>
-  <a href="#case">10 · CASE frontend</a>
-  <a href="#plex">11 · PLEX universe</a>
+  <a href="#portal">10 · portal (UI)</a>
+  <a href="#api">11 · api (snapshot)</a>
   <div class="grp">Operate</div>
   <a href="#run">12 · Run it locally</a>
-  <a href="#state">13 · Current state</a>
+  <a href="#robot">13 · Robot lifecycle</a>
+  <a href="#state">14 · Current state</a>
 </nav>
 
 <main>
@@ -129,20 +127,29 @@
     </div>
   </div>
 
+  <div class="note good" style="margin-bottom:30px">
+    <b>Updated 2026-06-14.</b> Three big changes landed since the first version of this map:
+    <b>(1)</b> the codename modules were renamed to functional names
+    (<code>CASE→portal</code>, <code>PLEX+TARS/api→api</code>, <code>TARS→engine</code>, <code>SCPT→scripts</code>,
+    <code>SVCS→services</code>; <code>ENDR.yaml→platform.yaml</code>, <code>SVCS.yaml→services.yaml</code>;
+    routes <code>/api/plex/*→/api/platform/*</code>); <b>(2)</b> the portal got a full UI/UX redesign
+    (top-nav, soft-shadow cards, status pills, cards/table catalog, tabbed detail); <b>(3)</b> the
+    "build-a-robot" demo is being wired in as a real service lifecycle. See §13–14.
+  </div>
+
   <!-- 1 -->
   <section id="what">
     <h2><span class="num">1</span> What is ENDR</h2>
-    <p class="lead">ENDR is a portfolio-grade clone of the "internal developer platform" idea (think Backstage,
-      Humanitec, or Spotify's Backstage golden paths) — the running joke baked into the UI is
-      <i>"Damn… I should have used Backstage."</i> It is built to demonstrate the full GitOps loop end-to-end.</p>
+    <p class="lead">ENDR is a portfolio-grade "internal developer platform" (think Backstage, Humanitec, or
+      Spotify's golden paths). It demonstrates the full GitOps loop end-to-end.</p>
     <p>The promise of an IDP: a developer should be able to stand up a production-shaped service —
       container build, Helm chart, ArgoCD app, ingress route, a public URL — <b>without knowing Kubernetes</b>.
       They fill in a short form ("I want a service called <code>cooper</code>"), and the platform does the rest
       through pull requests and automation, so everything stays auditable in git.</p>
     <div class="grid g3">
-      <div class="card"><h3 style="margin-top:0">Self-service</h3><p style="color:#bcc8de;font-size:13.5px;margin:0">A web portal (<b>CASE</b>) where you create &amp; browse services and watch them deploy live.</p></div>
-      <div class="card"><h3 style="margin-top:0">Config-driven</h3><p style="color:#bcc8de;font-size:13.5px;margin:0">Two YAML files (<code>ENDR.yaml</code> + <code>SVCS.yaml</code>) fully describe the platform &amp; every service.</p></div>
-      <div class="card"><h3 style="margin-top:0">Reconciled</h3><p style="color:#bcc8de;font-size:13.5px;margin:0">An engine (<b>TARS</b>) renders templates and opens PRs so the repo always matches the desired state.</p></div>
+      <div class="card"><h3 style="margin-top:0">Self-service</h3><p style="color:#bcc8de;font-size:13.5px;margin:0">A web portal (<b>portal</b>) where you create &amp; browse services and watch them deploy live.</p></div>
+      <div class="card"><h3 style="margin-top:0">Config-driven</h3><p style="color:#bcc8de;font-size:13.5px;margin:0">Two YAML files (<code>platform.yaml</code> + <code>services.yaml</code>) fully describe the platform &amp; every service.</p></div>
+      <div class="card"><h3 style="margin-top:0">Reconciled</h3><p style="color:#bcc8de;font-size:13.5px;margin:0">The <b>engine</b> renders templates and opens PRs so the repo always matches the desired state.</p></div>
     </div>
   </section>
 
@@ -153,81 +160,79 @@
       Humans (or the portal) only ever edit the small declarative config; machines generate everything else
       and keep it in sync.</p>
     <div class="ascii">  DESIRED STATE                 RECONCILE                  ACTUAL STATE
-  ┌───────────────┐         ┌──────────────────┐         ┌────────────────┐
-  │  ENDR.yaml    │         │   TARS engine    │         │  Kubernetes    │
-  │  SVCS.yaml    │ ──────▶ │  renders Helm /  │ ──────▶ │  cluster via   │
-  │ (what we want)│         │  ArgoCD manifests│         │  ArgoCD sync   │
-  └───────────────┘         │  → opens PR      │         └────────────────┘
-        ▲                   └──────────────────┘                  │
-        │  edit via portal / PR              git is truth         │ live status
-        └──────────────────────────  CASE portal reads back ◀─────┘</div>
-    <div class="note">Two reconcile loops stack on top of each other:
-      <b>TARS</b> reconciles <i>config → generated repo files</i> (via GitHub PRs), and <b>ArgoCD</b>
-      reconciles <i>repo files → live cluster</i>. Neither step is manual.</div>
+  ┌────────────────┐        ┌──────────────────┐        ┌────────────────┐
+  │  platform.yaml │        │   engine         │        │  Kubernetes    │
+  │  services.yaml │ ─────▶ │  renders Helm /  │ ─────▶ │  cluster via   │
+  │ (what we want) │        │  ArgoCD manifests│        │  ArgoCD sync   │
+  └────────────────┘        │  → opens PR      │        └────────────────┘
+        ▲                   └──────────────────┘                 │
+        │  edit via portal / PR              git is truth        │ live status
+        └─────────────────────────  portal reads back ◀─────────┘</div>
+    <div class="note">Two reconcile loops stack: the <b>engine</b> reconciles <i>config → generated repo files</i>
+      (via GitHub PRs), and <b>ArgoCD</b> reconciles <i>repo files → live cluster</i>. Neither step is manual.</div>
   </section>
 
   <!-- 3 -->
   <section id="glossary">
-    <h2><span class="num">3</span> Codename glossary <span class="badge">read this first</span></h2>
-    <p class="lead">The repo uses four-letter codenames (Interstellar / sci-fi flavored). Decoding them makes
-      the whole tree readable.</p>
+    <h2><span class="num">3</span> Module glossary <span class="badge">read this first</span></h2>
+    <p class="lead">The modules used to carry Interstellar codenames; they were renamed to functional names
+      (2026-06-14). Old name → new name is shown so older commits/docs still decode.</p>
     <table>
-      <tr><th>Name</th><th>What it really is</th><th>Tech</th><th>Path</th></tr>
-      <tr><td><b style="color:var(--case)">CASE</b></td><td>The <b>frontend developer portal</b> — the web UI you click in</td><td>Next.js 15 / React 19</td><td><code>ENDR/CASE/</code></td></tr>
-      <tr><td><b style="color:var(--plex)">PLEX</b></td><td>Backend <b>domain module</b> that builds the "universe" view of apps/services for the portal</td><td>Python / Pydantic</td><td><code>ENDR/PLEX/</code></td></tr>
-      <tr><td><b style="color:var(--tars)">TARS</b></td><td>The <b>automation engine</b> — config loader, template renderer, reconcile CLI &amp; API</td><td>Python / FastAPI / Jinja2</td><td><code>ENDR/TARS/</code></td></tr>
-      <tr><td><b style="color:var(--scpt)">SCPT</b></td><td>"Scripts" — bootstrap / dev-stack / smoke-test shell scripts + the <code>Makefile</code></td><td>Bash / Make</td><td><code>ENDR/SCPT/</code></td></tr>
-      <tr><td><b style="color:var(--bstg)">BSTG</b></td><td>"Backstage" alternative track — software templates + custom scaffolder actions</td><td>Backstage</td><td><code>ENDR/BSTG/</code></td></tr>
-      <tr><td><b style="color:var(--kube)">KUBE</b></td><td>All Kubernetes / GitOps infra — ArgoCD app-of-apps, Helm platform charts, gateways</td><td>ArgoCD / Helm / Gateway API</td><td><code>KUBE/</code></td></tr>
-      <tr><td><b>SVCS</b></td><td>The deployable application services themselves (code + Helm chart per service)</td><td>FastAPI services</td><td><code>SVCS/</code></td></tr>
-      <tr><td><b>REFS</b></td><td>Legacy / reference implementations kept for migration guidance</td><td>—</td><td><code>REFS/</code></td></tr>
+      <tr><th>Module</th><th>Was</th><th>What it is</th><th>Tech</th><th>Path</th></tr>
+      <tr><td><b style="color:var(--portal)">portal</b></td><td>CASE</td><td>The <b>frontend developer portal</b> — the web UI you click in</td><td>Next.js 15 / React 19</td><td><code>ENDR/portal/</code></td></tr>
+      <tr><td><b style="color:var(--api)">api</b></td><td>PLEX + TARS/api</td><td>The <b>backend service</b> — FastAPI HTTP layer + the platform/domain logic that builds the dashboard snapshot</td><td>Python / FastAPI / Pydantic</td><td><code>ENDR/api/</code></td></tr>
+      <tr><td><b style="color:var(--engine)">engine</b></td><td>TARS</td><td>The <b>automation library + CLI</b> — config loader, template renderer, reconcile</td><td>Python / Jinja2</td><td><code>ENDR/engine/</code></td></tr>
+      <tr><td><b style="color:var(--scripts)">scripts</b></td><td>SCPT</td><td>bootstrap / dev-stack / smoke-test shell scripts + the <code>Makefile</code></td><td>Bash / Make</td><td><code>ENDR/scripts/</code></td></tr>
+      <tr><td><b style="color:var(--kube)">KUBE</b></td><td>—</td><td>All Kubernetes / GitOps infra — ArgoCD app-of-apps, platform Helm charts, gateways</td><td>ArgoCD / Helm / Gateway API</td><td><code>KUBE/</code></td></tr>
+      <tr><td><b>services</b></td><td>SVCS</td><td>The deployable application services themselves (code + Helm chart per service)</td><td>FastAPI services</td><td><code>services/</code></td></tr>
+      <tr><td><b>apps/robot</b></td><td>—</td><td>The shared "build-a-robot" demo image (personality via env)</td><td>Flask</td><td><code>apps/robot/</code></td></tr>
     </table>
-    <div class="note">Mental model: <b>ENDR</b> = the platform umbrella. Inside it, <b>CASE</b> is the face,
-      <b>TARS</b> is the brain, <b>PLEX</b> feeds the dashboard, <b>SCPT</b> runs the chores, and <b>KUBE</b> is the ground it deploys to.</div>
+    <div class="note">Mental model: <b>ENDR</b> = the platform umbrella (and the project/repo name). Inside it,
+      <b>portal</b> is the face, <b>api</b> is the backend, <b>engine</b> is the automation brain, <b>scripts</b> runs
+      the chores, and <b>KUBE</b> is the ground it deploys to. (The old <code>BSTG</code> Backstage track was deleted.)</div>
   </section>
 
   <!-- 4 -->
   <section id="arch">
     <h2><span class="num">4</span> Architecture at a glance</h2>
-    <p class="lead">Five cooperating pieces. The portal and engine are decoupled — CASE proxies to a FastAPI
-      backend that is just a thin wrapper over the shared <b>TARS</b> Python module.</p>
+    <p class="lead">The portal and backend are decoupled — the portal proxies to a FastAPI <b>api</b> service that
+      wraps the platform/domain logic and the shared <b>engine</b> library.</p>
     <div class="legend">
-      <span><i class="dot" style="background:var(--case)"></i>CASE (UI)</span>
-      <span><i class="dot" style="background:var(--plex)"></i>PLEX (data)</span>
-      <span><i class="dot" style="background:var(--tars)"></i>TARS (engine)</span>
+      <span><i class="dot" style="background:var(--portal)"></i>portal (UI)</span>
+      <span><i class="dot" style="background:var(--api)"></i>api (backend)</span>
+      <span><i class="dot" style="background:var(--engine)"></i>engine (automation)</span>
       <span><i class="dot" style="background:var(--kube)"></i>KUBE (infra)</span>
     </div>
     <div class="ascii">                         ┌──────────────────────────────────────────┐
-   Browser  ───────────▶ │  CASE  ·  Next.js portal (:3000)           │
+   Browser  ───────────▶ │  portal · Next.js (:3000)                  │
                          │  /  /catalog  /create  /argocd  /history   │
                          └───────────────┬──────────────────────────-─┘
-                    Next.js API routes proxy /api/plex/*
+                  Next.js API routes proxy /api/platform/*
                                          │
                          ┌───────────────▼──────────────────────────-─┐
-                         │  ENDR backend · FastAPI (:8000)            │
-                         │  thin wrapper → TARS.api.main:app          │
+                         │  api · FastAPI (:8000)  — api.main:app      │
                          ├────────────────────────────────────────────┤
-                         │  PLEX  build_plex_universe()  ── reads ──▶  ArgoCD API (live)
-                         │  TARS  scaffold / reconcile / github_client │      └─ or config fallback
+                         │  snapshot.build_platform_snapshot() ─reads─▶ ArgoCD API (live)
+                         │  engine  scaffold / reconcile / github      │     └─ or config fallback
                          └───────────────┬────────────────────────────┘
                                          │ opens Pull Requests
                                          ▼
-   ENDR.yaml / SVCS.yaml ───▶  GitHub repo (source of truth)  ───▶  GitHub Actions (TARS workflows)
-                                         │                                   │ build images, render manifests
-                                         ▼                                   ▼
-                              KUBE/clusters/.../services/*.yaml   ◀── generated ──  SVCS/&lt;svc&gt;/chart/*
+  platform.yaml / services.yaml ─▶ GitHub repo (truth) ─▶ GitHub Actions (reconcile/build)
+                                         │                          │ build images, render manifests
+                                         ▼                          ▼
+                         KUBE/clusters/.../services/*.yaml ◀─ generated ─ services/&lt;svc&gt;/chart/*
                                          │
                                          ▼
-                              ArgoCD app-of-apps  ──sync──▶  k3d / Kubernetes cluster
+                              ArgoCD app-of-apps ──sync──▶ k3d / Kubernetes cluster
                                          │
-                              Traefik + Cloudflare Gateway ──▶  https://&lt;svc&gt;.calavelas.net</div>
+                              Traefik + Cloudflare Gateway ──▶ https://&lt;svc&gt;.calavelas.net</div>
     <div class="grid g3" style="margin-top:18px">
-      <div class="mod"><h4><i class="dot" style="background:var(--case)"></i>CASE</h4><div class="role">Frontend portal</div><p>Next.js App Router. Pages for overview, catalog, create-service, embedded ArgoCD, and history. Talks only to its own <code>/api/plex/*</code> routes, which proxy to the backend.</p><div class="path">ENDR/CASE/src/app</div></div>
-      <div class="mod"><h4><i class="dot" style="background:var(--plex)"></i>PLEX</h4><div class="role">Universe builder</div><p>Builds <code>PlexUniverse</code> = coreApps + services with sync/health status. Reads live ArgoCD if creds set, else falls back to a config-derived snapshot.</p><div class="path">ENDR/PLEX/plex.py</div></div>
-      <div class="mod"><h4><i class="dot" style="background:var(--tars)"></i>TARS</h4><div class="role">Automation engine</div><p>Config models + loader, Jinja2 scaffolder, GitHub client, and the <code>svcs-check</code> reconcile CLI. Used by both the API and CI.</p><div class="path">ENDR/TARS/{config,scaffold,cli,api}</div></div>
+      <div class="mod"><h4><i class="dot" style="background:var(--portal)"></i>portal</h4><div class="role">Frontend</div><p>Next.js App Router. Top-nav shell, dashboard, cards/table catalog, create flow, tabbed service detail, embedded ArgoCD, history. Talks only to its own <code>/api/platform/*</code> routes.</p><div class="path">ENDR/portal/src/app</div></div>
+      <div class="mod"><h4><i class="dot" style="background:var(--api)"></i>api</h4><div class="role">Backend service</div><p>FastAPI (<code>api.main:app</code>) + <code>snapshot.py</code> (<code>build_platform_snapshot</code>), <code>router.py</code>, <code>transactions.py</code>. Reads live ArgoCD if creds set, else a config snapshot.</p><div class="path">ENDR/api/</div></div>
+      <div class="mod"><h4><i class="dot" style="background:var(--engine)"></i>engine</h4><div class="role">Automation</div><p>Config models + loader, Jinja2 scaffolder, GitHub client, and the <code>services-check</code> reconcile CLI (<code>engine/engine.py</code>). Used by both the api and CI.</p><div class="path">ENDR/engine/{config,scaffold,cli,templates}</div></div>
       <div class="mod"><h4><i class="dot" style="background:var(--kube)"></i>KUBE</h4><div class="role">GitOps infra</div><p>ArgoCD app-of-apps (core → platform / services / gateway), vendored Helm charts for ArgoCD &amp; Traefik, Gateway-API routes, Cloudflare tunnel.</p><div class="path">KUBE/clusters/mac/lab</div></div>
-      <div class="mod"><h4><i class="dot" style="background:var(--scpt)"></i>SCPT</h4><div class="role">Ops scripts</div><p>The <code>Makefile</code> + bash: <code>dev-start</code>, <code>bootstrap</code>, <code>svcs-check</code>, smoke tests, port-forwards, Cloudflare tunnel control.</p><div class="path">ENDR/SCPT/Makefile</div></div>
-      <div class="mod"><h4><i class="dot" style="background:#888"></i>SVCS</h4><div class="role">The services</div><p>One folder per deployable app: FastAPI source + <code>Dockerfile</code> + generated <code>chart/</code> Helm chart. Currently: sample, cooper, miller, test1.</p><div class="path">SVCS/&lt;name&gt;/</div></div>
+      <div class="mod"><h4><i class="dot" style="background:var(--scripts)"></i>scripts</h4><div class="role">Ops scripts</div><p>The <code>Makefile</code> + bash: <code>dev-start</code>, <code>bootstrap</code>, <code>services-check</code>, smoke tests, port-forwards, Cloudflare tunnel control.</p><div class="path">ENDR/scripts/Makefile</div></div>
+      <div class="mod"><h4><i class="dot" style="background:#888"></i>services</h4><div class="role">The services</div><p>One folder per deployable app: source + <code>Dockerfile</code> + generated <code>chart/</code>. Currently: sample, cooper, finc, miller, test1.</p><div class="path">services/&lt;name&gt;/</div></div>
     </div>
   </section>
 
@@ -235,12 +240,12 @@
   <section id="config">
     <h2><span class="num">5</span> Config = the source of truth</h2>
     <p class="lead">Two root files drive everything. They are deliberately tiny and human-editable; every other
-      file in <code>SVCS/&lt;svc&gt;/chart</code> and <code>KUBE/clusters/.../services</code> is <i>generated from them</i>.</p>
+      file in <code>services/&lt;svc&gt;/chart</code> and <code>KUBE/clusters/.../services</code> is <i>generated from them</i>.</p>
     <div class="grid g2">
       <div class="card">
-        <h3 style="margin-top:0"><code>ENDR.yaml</code> — platform metadata</h3>
+        <h3 style="margin-top:0"><code>platform.yaml</code> — platform metadata</h3>
         <p style="color:#bcc8de;font-size:13.5px">Who owns the platform, the git coordinates, what clusters/namespaces exist,
-          and the <b>template catalog</b> (the "golden paths" services can be generated from).</p>
+          and the <b>template catalog</b> (the golden paths services can be generated from).</p>
 <pre><span class="k">projectName</span>: endr
 <span class="k">config</span>:
   <span class="k">git</span>: { provider: github, owner: <span class="s">calavelas</span>, repo: <span class="s">ENDR</span> }
@@ -248,13 +253,13 @@
     kubernetes: [{ name: <span class="s">mac-lab</span> }]
   <span class="k">namespace</span>: [{ name: demo }, { name: demo2 }]
 <span class="k">templates</span>:
-  <span class="k">service</span>:  [ python-fastapi ]   <span class="c"># app code template</span>
-  <span class="k">gitops</span>:   [ helm-service ]      <span class="c"># chart + ArgoCD app</span></pre>
+  <span class="k">service</span>:  [ python-fastapi, endr-robot ]  <span class="c"># app templates</span>
+  <span class="k">gitops</span>:   [ helm-service ]              <span class="c"># chart + ArgoCD app</span></pre>
       </div>
       <div class="card">
-        <h3 style="margin-top:0"><code>SVCS.yaml</code> — service catalog</h3>
+        <h3 style="margin-top:0"><code>services.yaml</code> — service catalog</h3>
         <p style="color:#bcc8de;font-size:13.5px">The list of services that should exist. Each entry picks templates,
-          a namespace + environments, and <b>overrides</b> (gateway on/off, the pinned image tag).</p>
+          a namespace + environments, and <b>overrides</b> (gateway, pinned image tag, env).</p>
 <pre><span class="k">services</span>:
 - <span class="k">name</span>: cooper
   <span class="k">namespace</span>: demo
@@ -267,69 +272,69 @@
     image: <span class="s">calavelas/cooper:f04d84a</span>  <span class="c"># ← bumped by CI</span></pre>
       </div>
     </div>
-    <div class="note good">Add a service = append ~12 lines to <code>SVCS.yaml</code>. That single edit causes TARS to
-      render a Dockerfile, a Helm chart, and an ArgoCD Application, and ArgoCD to deploy it. The <code>image</code> tag
-      is auto-rewritten by CI (<code>git-&lt;sha&gt;</code>) every time the service's source changes.</div>
+    <div class="note good">Add a service = append ~12 lines to <code>services.yaml</code>. That single edit causes the engine to
+      render a chart + ArgoCD Application, and ArgoCD to deploy it. The <code>image</code> tag is auto-rewritten by CI
+      (<code>&lt;sha&gt;</code>) every time the service's source changes.</div>
   </section>
 
   <!-- 6 -->
   <section id="flow">
     <h2><span class="num">6</span> The golden-path flow (create a service)</h2>
-    <p class="lead">What actually happens when a developer creates "cooper" in the portal. This is the loop the
-      whole project exists to demonstrate.</p>
+    <p class="lead">What actually happens when a developer creates "cooper" in the portal — the loop the whole
+      project exists to demonstrate.</p>
     <div class="flow">
-      <div class="step"><div class="who">CASE · browser</div><h4>Fill the form &amp; preview</h4><p>On <code>/create</code> you pick a name, templates, namespace, environment, gateway. Clicking preview posts <code>dryRun:true</code> → TARS renders into <code>.idp/staging</code> and returns the exact files that would be generated, plus the new <code>SVCS.yaml</code>.</p></div>
-      <div class="step"><div class="who">TARS · scaffold/service.py</div><h4>Open a Pull Request</h4><p>Submitting posts <code>dryRun:false</code>. TARS creates a <code>case/&lt;svc&gt;-&lt;ts&gt;</code> branch and opens a PR that <b>changes only <code>SVCS.yaml</code></b> (titled <code>CASE - Adding service : cooper</code>). The heavy generation is deferred to CI.</p></div>
-      <div class="step"><div class="who">GitHub Actions · tars-pr.yml</div><h4>Validate &amp; (optionally) auto-merge</h4><p>The PR runs <code>TARS.py svcs-check</code> as a read-only drift check. A policy can auto-approve + squash-merge CASE PRs that touch only <code>SVCS.yaml</code>, then delete the <code>case/*</code> branch.</p></div>
-      <div class="step"><div class="who">GitHub Actions · tars-build.yml</div><h4>Reconcile on main → generate assets</h4><p>On merge to <code>main</code>, TARS runs <code>svcs-check --write-worktree</code>: it renders the full Helm chart into <code>SVCS/cooper/chart</code> and the ArgoCD app into <code>KUBE/clusters/mac/lab/services/cooper.yaml</code>, updates the README service table, and commits them back.</p></div>
-      <div class="step"><div class="who">GitHub Actions · svcs-build.yml</div><h4>Build &amp; publish the image</h4><p>Changed service source triggers a multi-arch Docker build → pushed to Docker Hub. <code>update-image-tags</code> rewrites <code>SVCS.yaml</code>'s <code>image:</code> to <code>git-&lt;sha&gt;</code>, then regenerates the chart values and commits again.</p></div>
-      <div class="step"><div class="who">KUBE · ArgoCD</div><h4>Sync to the cluster</h4><p>The <b>services</b> app-of-apps discovers <code>cooper.yaml</code> and ArgoCD syncs the Helm chart into namespace <code>demo</code>: Deployment, Service, HTTPRoute — with <code>CreateNamespace=true</code>.</p></div>
+      <div class="step"><div class="who">portal · browser</div><h4>Fill the form &amp; preview</h4><p>On <code>/create</code> you pick a name, template, namespace, environment, gateway (advanced: GitOps template). Preview posts <code>dryRun:true</code> → the engine renders into <code>.idp/staging</code> and returns the files that would be generated, plus the new <code>services.yaml</code>.</p></div>
+      <div class="step"><div class="who">engine · scaffold/service.py</div><h4>Open a Pull Request</h4><p>Submitting posts <code>dryRun:false</code>. It creates a <code>portal/&lt;svc&gt;</code> branch and opens a PR that <b>changes only <code>services.yaml</code></b> (titled <code>portal - Adding service : cooper</code>). Heavy generation is deferred to CI.</p></div>
+      <div class="step"><div class="who">Actions · reconcile-pr.yml</div><h4>Validate &amp; (optionally) auto-merge</h4><p>The PR runs <code>engine.py services-check</code> as a read-only drift check. Policy can auto-approve + squash-merge portal PRs that touch only <code>services.yaml</code>, then delete the <code>portal/*</code> branch.</p></div>
+      <div class="step"><div class="who">Actions · reconcile.yml</div><h4>Reconcile on main → generate assets</h4><p>On merge to <code>main</code>, the engine runs <code>services-check --write-worktree</code>: renders the chart into <code>services/cooper/chart</code> and the ArgoCD app into <code>KUBE/clusters/mac/lab/services/cooper.yaml</code>, and commits them back.</p></div>
+      <div class="step"><div class="who">Actions · services-build.yml</div><h4>Build &amp; publish the image</h4><p>Changed service source triggers a multi-arch Docker build → Docker Hub. <code>update-image-tags</code> rewrites <code>services.yaml</code>'s <code>image:</code> to <code>&lt;sha&gt;</code>, regenerates chart values, commits again.</p></div>
+      <div class="step"><div class="who">KUBE · ArgoCD</div><h4>Sync to the cluster</h4><p>The <b>services</b> app-of-apps discovers <code>cooper.yaml</code> and ArgoCD syncs the chart into namespace <code>demo</code>: Deployment, Service, HTTPRoute — with <code>CreateNamespace=true</code>.</p></div>
       <div class="step"><div class="who">Gateway · Traefik + Cloudflare</div><h4>Get a live URL</h4><p>If <code>gateway.enabled</code>, an HTTPRoute exposes the service at <code>https://cooper.calavelas.net</code> via the Cloudflare tunnel + Traefik gateway.</p></div>
-      <div class="step"><div class="who">CASE · live</div><h4>Watch it appear</h4><p>The create panel polls <code>/api/plex/transactions/&lt;pr#&gt;</code> for pipeline stages, then polls <code>/api/plex</code> until cooper shows up in the catalog with sync/health status. Loop closed.</p></div>
+      <div class="step"><div class="who">portal · live</div><h4>Watch it appear</h4><p>The create panel polls <code>/api/platform/transactions/&lt;pr#&gt;</code> for pipeline stages, then polls <code>/api/platform</code> until cooper shows up in the catalog with sync/health status. Loop closed.</p></div>
     </div>
   </section>
 
   <!-- 7 -->
-  <section id="tars">
-    <h2><span class="num">7</span> TARS — the automation engine</h2>
-    <p class="lead">One Python module, two entrypoints: a CLI (<code>ENDR/TARS/TARS.py</code>) used by CI, and a
-      FastAPI app (<code>TARS/api/main.py</code>) used by the portal. Both share <code>config/</code>, <code>scaffold/</code>,
-      and <code>templates/</code>.</p>
-    <h3>CLI subcommands (<code>python3 ENDR/TARS/TARS.py …</code>)</h3>
+  <section id="engine">
+    <h2><span class="num">7</span> engine — the automation library</h2>
+    <p class="lead">One Python package, used two ways: a CLI (<code>ENDR/engine/engine.py</code>) for CI, and imported by
+      the <b>api</b> service for the portal. Shares <code>config/</code>, <code>scaffold/</code>, and <code>templates/</code>.</p>
+    <h3>CLI subcommands (<code>python3 ENDR/engine/engine.py …</code>)</h3>
     <table>
       <tr><th>Subcommand</th><th>What it does</th></tr>
-      <tr><td><code>svcs-check</code></td><td>The reconcile core. Renders expected assets for every service in <code>SVCS.yaml</code>, diffs against the repo, finds drift + removed services. <code>--write-worktree</code> writes the files; <code>--open-pr</code> opens a reconcile PR; <code>--write-scope gitops</code> limits to chart/app files. Also rewrites the README service table.</td></tr>
-      <tr><td><code>discover-changed-services</code></td><td>Used by CI: maps a git diff to affected services and emits a GitHub Actions build <b>matrix</b> (context, Dockerfile, image tag) for Docker Hub or GHCR.</td></tr>
-      <tr><td><code>update-image-tags</code></td><td>Rewrites <code>overrides.image</code> in <code>SVCS.yaml</code> to <code>&lt;repo&gt;:&lt;tag&gt;</code> for selected services (preserving formatting via ruamel). This is how a new build SHA propagates into desired state.</td></tr>
+      <tr><td><code>services-check</code></td><td>The reconcile core (was <code>svcs-check</code>). Renders expected assets for every service in <code>services.yaml</code>, diffs against the repo, finds drift + removed services. <code>--write-worktree</code> writes files; <code>--open-pr</code> opens a reconcile PR; <code>--write-scope gitops</code> limits to chart/app files.</td></tr>
+      <tr><td><code>discover-changed-services</code></td><td>Maps a git diff to affected services and emits a GitHub Actions build <b>matrix</b> (context, Dockerfile, image tag).</td></tr>
+      <tr><td><code>update-image-tags</code></td><td>Rewrites <code>overrides.image</code> in <code>services.yaml</code> to <code>&lt;repo&gt;:&lt;tag&gt;</code> for selected services (preserving formatting via ruamel).</td></tr>
     </table>
     <h3>Inside the engine</h3>
     <div class="grid g2">
-      <div class="mod"><h4>config/</h4><p><code>models.py</code> — Pydantic schema for <code>ENDR.yaml</code>/<code>SVCS.yaml</code> with k8s-DNS-label validation. <code>loader.py</code> — loads + cross-validates both. <code>paths.py</code> — resolves cluster/app repo paths.</p></div>
-      <div class="mod"><h4>scaffold/</h4><p><code>service.py</code> — renders the Jinja2 template trees into a staging dir, builds the commit file map, and (non-dry-run) drives branch→commit→PR. <code>github_client.py</code> — thin GitHub REST wrapper.</p></div>
-      <div class="mod"><h4>cli/svcs_check.py</h4><p>The reconcile algorithm: render-expected → diff → classify (added/updated/removed) → write worktree and/or open PR → emit JSON summary + GitHub Actions outputs.</p></div>
-      <div class="mod"><h4>templates/</h4><p>Golden paths: <code>service/python-fastapi</code> (app, Dockerfile, requirements) and <code>gitops/helm-service</code> (Chart, values, deployment/service/httproute + ArgoCD Application). All <code>.j2</code>.</p></div>
+      <div class="mod"><h4>config/</h4><p><code>models.py</code> — Pydantic schema for <code>platform.yaml</code>/<code>services.yaml</code> with k8s-DNS-label validation. <code>loader.py</code> — loads + cross-validates both. <code>paths.py</code> — resolves cluster/app repo paths.</p></div>
+      <div class="mod"><h4>scaffold/</h4><p><code>service.py</code> — renders Jinja2 template trees into staging, builds the commit file map, and (non-dry-run) drives branch→commit→PR. <code>github_client.py</code> — thin GitHub REST wrapper.</p></div>
+      <div class="mod"><h4>cli/services_check.py</h4><p>The reconcile algorithm: render-expected → diff → classify (added/updated/removed) → write worktree and/or open PR → emit JSON + GitHub Actions outputs.</p></div>
+      <div class="mod"><h4>templates/</h4><p>Golden paths: <code>service/python-fastapi</code>, <code>service/endr-robot</code> (README-only; shared image), and <code>gitops/helm-service</code> (Chart, values, deployment/service/httproute + ArgoCD Application). All <code>.j2</code>.</p></div>
     </div>
-    <div class="note">Key design choice: the <b>CASE-created PR only touches <code>SVCS.yaml</code></b>. All the generated
-      files are produced later by the TARS workflow on <code>main</code>. This keeps human-facing PRs tiny and makes the
-      engine the sole author of generated assets — no drift from hand-edits.</div>
+    <div class="note">Key design choice: the <b>portal-created PR only touches <code>services.yaml</code></b>. Generated files
+      are produced later by the reconcile workflow on <code>main</code> — keeping human-facing PRs tiny and the engine the
+      sole author of generated assets.</div>
   </section>
 
   <!-- 8 -->
   <section id="cicd">
     <h2><span class="num">8</span> CI/CD — the GitHub Actions workflows</h2>
-    <p class="lead">Four workflows in <code>.github/workflows/</code> implement the automation. They are the muscle
-      behind the golden-path flow above.</p>
+    <p class="lead">Workflows in <code>.github/workflows/</code> implement the automation. Each now has a plain-language
+      header comment describing what it does.</p>
     <table>
       <tr><th>Workflow</th><th>Trigger</th><th>Does</th></tr>
-      <tr><td><code>tars-pr.yml</code></td><td>PR touching <code>ENDR.yaml</code>/<code>SVCS.yaml</code></td><td>Read-only <code>svcs-check</code> drift check; optional auto-approve+merge policy for CASE service PRs; cleans up merged <code>case/*</code> branches.</td></tr>
-      <tr><td><code>tars-build.yml</code></td><td>Push to <code>main</code> (config changed)</td><td>Reconcile → <code>svcs-check --write-worktree</code> to render manifests → commit "TARS : Sync generated assets" → trigger the service image build.</td></tr>
-      <tr><td><code>svcs-build.yml</code></td><td>Service source change / dispatch</td><td><code>discover-changed-services</code> → multi-arch Docker build → push to Docker Hub → <code>update-image-tags</code> + regenerate chart values → commit "Persist image tag".</td></tr>
-      <tr><td><code>endr-build.yml</code></td><td><code>ENDR/CASE/**</code> or <code>ENDR/PLEX/**</code> change</td><td>Builds the <code>case</code> + <code>plex</code> platform images. PRs validate build only; <code>main</code> pushes images and bumps <code>CASE/chart</code> &amp; <code>PLEX/chart</code> <code>values.yaml</code> with the new <code>&lt;sha7&gt;</code> tag.</td></tr>
+      <tr><td><code>reconcile-pr.yml</code><br><span style="color:#7f8db0">(was tars-pr)</span></td><td>PR touching <code>platform.yaml</code>/<code>services.yaml</code></td><td>Read-only <code>services-check</code> drift check; optional auto-approve+merge for portal service PRs; cleans up merged <code>portal/*</code> branches.</td></tr>
+      <tr><td><code>reconcile.yml</code><br><span style="color:#7f8db0">(was tars-build)</span></td><td>Push to <code>main</code> (config changed)</td><td>Reconcile → <code>services-check --write-worktree</code> → commit "ci(reconcile): sync generated assets" → trigger the service image build.</td></tr>
+      <tr><td><code>services-build.yml</code><br><span style="color:#7f8db0">(was svcs-build)</span></td><td>Service source change / dispatch</td><td><code>discover-changed-services</code> → multi-arch Docker build → Docker Hub → <code>update-image-tags</code> + regenerate values → commit "ci(services): persist image tag".</td></tr>
+      <tr><td><code>platform-build.yml</code><br><span style="color:#7f8db0">(was endr-build)</span></td><td><code>ENDR/portal/**</code> or <code>ENDR/api/**</code> change</td><td>Builds the <code>portal</code> + <code>api</code> images on push to <code>main</code> and bumps <code>portal/chart</code> &amp; <code>api/chart</code> <code>values.yaml</code> with the new tag.</td></tr>
+      <tr><td><code>robot-build.yml</code></td><td><code>apps/robot/**</code> change</td><td>Builds + pushes the shared <code>endr-robot</code> demo image.</td></tr>
     </table>
-    <div class="note warn">Secrets/vars used: <code>DOCKERHUB_USERNAME</code> / <code>DOCKERHUB_PASSWORD</code> for image
-      publish, <code>GITHUB_TOKEN</code> for PRs, and repo var <code>TARS_DELETE_SOURCE_BRANCH_ON_MERGE</code> to toggle
-      branch cleanup. You can see this rhythm directly in the git log: <code>feat(idp): register service …</code> →
-      <code>TARS : Sync generated assets</code> → <code>TARS : Persist image tag …</code>.</div>
+    <div class="note warn">Secrets/vars (kept under their original names — external repo config): <code>DOCKERHUB_USERNAME</code> /
+      <code>DOCKERHUB_PASSWORD</code> for image publish, <code>GITHUB_TOKEN</code> for PRs, and repo vars
+      <code>CASE_PR_AUTHOR</code> / <code>CASE_AUTOMERGE_TOKEN</code> / <code>TARS_DELETE_SOURCE_BRANCH_ON_MERGE</code>
+      for the auto-merge policy.</div>
   </section>
 
   <!-- 9 -->
@@ -339,153 +344,174 @@
       from one root Application and fans out by <b>sync waves</b>.</p>
     <div class="ascii">core.yaml  (root Application, auto-prune + self-heal)
    └─ core/            ── app-of-apps definitions
-        ├─ platform.yaml   (wave 1) ─▶ platform/   argocd · traefik · case · plex · cloudflare
-        ├─ service.yaml    (wave 2) ─▶ services/   sample · cooper · miller · test1   (directory.recurse)
+        ├─ platform.yaml   (wave 1) ─▶ platform/   argocd · traefik · portal · api · cloudflare
+        ├─ service.yaml    (wave 2) ─▶ services/   sample · cooper · finc · miller · test1
         └─ gateway.yaml    (wave 4) ─▶ gateway/    GatewayClass · Gateways · HTTPRoutes · TLS
 
    platforms/          ── vendored Helm charts
-        ├─ argocd/helm  (wave −2, self-manages, Redis-HA subchart)
-        └─ traefik/helm (wave 0, ingress + Gateway API CRDs)</div>
+        ├─ argocd/helm  (self-manages, Redis-HA subchart)
+        └─ traefik/helm (ingress + Gateway API CRDs)</div>
     <div class="grid g3" style="margin-top:14px">
-      <div class="mod"><h4>platform</h4><p>Cluster-wide services: ArgoCD itself, Traefik ingress, the CASE &amp; PLEX platform apps, and the Cloudflare tunnel.</p></div>
-      <div class="mod"><h4>services</h4><p>One ArgoCD Application per app service, each pointing at <code>SVCS/&lt;name&gt;/chart</code>. Discovered automatically via <code>directory.recurse</code>.</p></div>
-      <div class="mod"><h4>gateway</h4><p>Kubernetes Gateway-API resources + Cloudflare tunnel routes that expose services at <code>*.calavelas.net</code>. Uses ServerSideApply.</p></div>
+      <div class="mod"><h4>platform</h4><p>Cluster-wide services: ArgoCD itself, Traefik, the <code>portal</code> &amp; <code>api</code> apps (<code>platform/portal.yaml</code>, <code>platform/api.yaml</code>), and the Cloudflare tunnel.</p></div>
+      <div class="mod"><h4>services</h4><p>One ArgoCD Application per app service, each pointing at <code>services/&lt;name&gt;/chart</code>. Discovered via <code>directory.recurse</code>.</p></div>
+      <div class="mod"><h4>gateway</h4><p>Gateway-API resources + Cloudflare tunnel routes exposing services at <code>*.calavelas.net</code> (the portal at <code>portal.calavelas.net</code> + <code>endr.calavelas.net</code>).</p></div>
     </div>
-    <p style="margin-top:14px">Every app runs with auto-prune + self-heal and <code>CreateNamespace=true</code>, so the
-      cluster continuously converges to whatever the repo says — that's the second reconcile loop.</p>
+    <p style="margin-top:14px">Every app runs auto-prune + self-heal with <code>CreateNamespace=true</code>, so the cluster
+      continuously converges to whatever the repo says — the second reconcile loop.</p>
   </section>
 
   <!-- 10 -->
-  <section id="case">
-    <h2><span class="num">10</span> CASE — the developer portal</h2>
+  <section id="portal">
+    <h2><span class="num">10</span> portal — the developer UI</h2>
     <p class="lead">Next.js 15 (App Router) + React 19 + Tailwind. The browser never calls the backend directly —
-      Next.js API routes under <code>/api/plex/*</code> proxy to the FastAPI backend (base from
-      <code>ENDR_API_URL</code>, default <code>http://127.0.0.1:8000</code>).</p>
+      Next.js routes under <code>/api/platform/*</code> proxy to the <b>api</b> service (base from
+      <code>ENDR_API_URL</code>, default <code>http://127.0.0.1:8000</code>). Redesigned 2026-06-14 (top-nav shell,
+      soft-shadow cards, icon+colour status pills, shared component kit under <code>components/ui/</code>).</p>
     <table>
       <tr><th>Route</th><th>Shows</th></tr>
-      <tr><td><code>/</code></td><td>Overview dashboard — hero, service counts, application + platform service tables, embedded ArgoCD.</td></tr>
-      <tr><td><code>/catalog</code></td><td>Unified catalog table of all apps + platform services with health/sync status and links to ArgoCD &amp; GitHub. (<code>/services</code> &amp; <code>/platform-services</code> redirect here.)</td></tr>
-      <tr><td><code>/create</code></td><td>The create-service form: template/namespace/env/gateway pickers, dry-run preview of generated files, submit→PR, and live pipeline polling.</td></tr>
-      <tr><td><code>/argocd</code></td><td>Embedded read-only ArgoCD operations view (iframe via <code>ArgoEmbedPanel</code>).</td></tr>
-      <tr><td><code>/history</code></td><td>Audit list of CASE-created PRs; <code>/history/[serviceName]</code> drills into one service's PR/pipeline lifecycle.</td></tr>
-      <tr><td><code>/application-services/[name]</code></td><td>Service detail: identity, deploy status, README.md fetched from GitHub &amp; rendered, embedded ArgoCD app view.</td></tr>
+      <tr><td><code>/</code></td><td>Dashboard — page header, StatCards (total / healthy / needs-attention / data source), application + platform service cards, embedded ArgoCD.</td></tr>
+      <tr><td><code>/catalog</code></td><td>Catalog with a toolbar (search + health/sync filters) and a <b>cards/table</b> view toggle. (<code>/services</code> &amp; <code>/platform-services</code> redirect here.)</td></tr>
+      <tr><td><code>/create</code></td><td>Guided single-column create form (field hints, Advanced disclosure), dry-run preview, submit→PR, live pipeline polling.</td></tr>
+      <tr><td><code>/argocd</code></td><td>Embedded read-only ArgoCD view (load-on-demand iframe via <code>ArgoEmbedPanel</code>).</td></tr>
+      <tr><td><code>/history</code></td><td>Audit list of portal-created PRs; <code>/history/[serviceName]</code> drills into one service's lifecycle.</td></tr>
+      <tr><td><code>/application-services/[name]</code><br><code>/platform-services/[name]</code></td><td>Tabbed service detail (Overview / README / ArgoCD) with a status strip.</td></tr>
     </table>
     <h3>The backend proxy endpoints</h3>
     <div class="kvs">
-      <code>GET /api/plex</code><span><b>PLEX universe</b> — coreApps + services + metadata</span>
-      <code>GET /api/plex/templates</code><span>available service/gitops templates, namespaces, environments</span>
-      <code>POST /api/plex/services</code><span>create a service (<code>dryRun</code> for preview, else opens PR)</span>
-      <code>GET /api/plex/history</code><span>CASE-tracked PRs</span>
-      <code>GET /api/plex/transactions/{pr#}</code><span>poll PR + pipeline stage status</span>
-      <code>GET /api/plex/template-file</code><span>fetch one template file's contents for the viewer</span>
+      <code>GET /api/platform</code><span><b>platform snapshot</b> — platformServices + services + metadata</span>
+      <code>GET /api/platform/templates</code><span>available service/gitops templates, namespaces, environments</span>
+      <code>POST /api/platform/services</code><span>create a service (<code>dryRun</code> for preview, else opens PR)</span>
+      <code>GET /api/platform/history</code><span>portal-tracked PRs</span>
+      <code>GET /api/platform/transactions/{pr#}</code><span>poll PR + pipeline stage status</span>
+      <code>GET /api/platform/template-file</code><span>fetch one template file's contents for the viewer</span>
     </div>
   </section>
 
   <!-- 11 -->
-  <section id="plex">
-    <h2><span class="num">11</span> PLEX — the "universe" model</h2>
-    <p class="lead">PLEX is the read-side. It assembles a <code>PlexUniverse</code> the portal renders: a galaxy of
-      <b>coreApps</b> (platform) and <b>services</b>, each a <code>PlexNode</code> with sync/health, image tag, source
-      path, and an <code>orbitBand</code> (a space-themed ring index).</p>
+  <section id="api">
+    <h2><span class="num">11</span> api — the platform snapshot model</h2>
+    <p class="lead">The read-side (formerly the cosmic "PLEX universe", now de-themed). <code>build_platform_snapshot()</code>
+      assembles a <code>PlatformSnapshot</code> the portal renders: <b>platformServices</b> + <b>services</b>, each a
+      <code>ServiceNode</code> with sync/health, image tag, source path.</p>
     <div class="card">
       <h3 style="margin-top:0">Two data sources, graceful fallback</h3>
       <table>
         <tr><th>Mode</th><th>When</th><th>Status values</th></tr>
-        <tr><td><code>dataSource:"argocd"</code></td><td><code>PLEX_ARGOCD_SERVER</code> set &amp; reachable — hits ArgoCD's <code>/api/v1/applications</code></td><td class="tag-good">live Synced / Healthy, real image tags &amp; deploy times</td></tr>
-        <tr><td><code>dataSource:"config"</code></td><td>no ArgoCD creds, or the API call fails</td><td class="tag-warn">"Unknown" — a snapshot derived purely from <code>SVCS.yaml</code> + manifests, with a warning</td></tr>
+        <tr><td><code>dataSource:"argocd"</code></td><td><code>API_ARGOCD_SERVER</code> set &amp; reachable — hits ArgoCD's <code>/api/v1/applications</code></td><td class="tag-good">live Synced / Healthy, real image tags &amp; deploy times</td></tr>
+        <tr><td><code>dataSource:"config"</code></td><td>no ArgoCD creds, or the API call fails</td><td class="tag-warn">a snapshot derived purely from <code>services.yaml</code> + manifests, with a warning</td></tr>
       </table>
-      <p style="color:#bcc8de;font-size:13.5px;margin-bottom:0">It even re-reads the remote <code>SVCS.yaml</code> from GitHub
-        (<code>raw.githubusercontent.com</code>) so the portal reflects the true source of truth, and it cross-checks
-        ArgoCD's <code>services</code> app to avoid showing stale/pruned services. This is why the demo at
+      <p style="color:#bcc8de;font-size:13.5px;margin-bottom:0">It re-reads the remote <code>services.yaml</code> from GitHub
+        (<code>raw.githubusercontent.com</code>) so the portal reflects the true source of truth. This is why the demo at
         <code>endr.calavelas.net</code> works even without cluster credentials.</p>
     </div>
-    <div class="note">Env knobs: <code>PLEX_ARGOCD_SERVER</code> / <code>PLEX_ARGOCD_TOKEN</code> / <code>PLEX_ARGOCD_VERIFY_TLS</code>
-      (live data) · <code>PLEX_SVCS_CONFIG_URL</code> (which <code>SVCS.yaml</code> to read) · <code>PLEX_SERVICE_GATEWAY_DOMAIN</code>
-      (defaults <code>calavelas.net</code>, builds the per-service URL).</div>
+    <div class="note">Env knobs: <code>API_ARGOCD_SERVER</code> / <code>API_ARGOCD_TOKEN</code> / <code>API_ARGOCD_VERIFY_TLS</code>
+      (live data) · <code>API_SERVICES_CONFIG_URL</code> (which <code>services.yaml</code> to read) ·
+      <code>API_SERVICE_GATEWAY_DOMAIN</code> (defaults <code>calavelas.net</code>). The portal reads
+      <code>ENDR_API_URL</code> + <code>PORTAL_*</code> (embed/github) env.</div>
   </section>
 
   <!-- 12 -->
   <section id="run">
     <h2><span class="num">12</span> Run it locally</h2>
-    <p class="lead">Everything is driven through one Makefile: <code>ENDR/SCPT/Makefile</code>.</p>
+    <p class="lead">Everything is driven through one Makefile: <code>ENDR/scripts/Makefile</code>.</p>
     <div class="grid g2">
       <div class="card">
-        <h3 style="margin-top:0">Dev stack (portal + API)</h3>
-<pre><span class="c"># start CASE (:3000) + PLEX/FastAPI (:8000)</span>
-make -f ENDR/SCPT/Makefile dev-start
-make -f ENDR/SCPT/Makefile dev-status
-make -f ENDR/SCPT/Makefile dev-logs
-make -f ENDR/SCPT/Makefile dev-stop</pre>
+        <h3 style="margin-top:0">Dev stack (portal + api)</h3>
+<pre><span class="c"># start portal (:3000) + api/FastAPI (:8000)</span>
+make -f ENDR/scripts/Makefile dev-start
+make -f ENDR/scripts/Makefile dev-status
+make -f ENDR/scripts/Makefile dev-logs
+make -f ENDR/scripts/Makefile dev-stop</pre>
         <div class="kvs" style="font-size:12.5px">
-          <b>CASE</b><span>http://127.0.0.1:3000</span>
-          <b>ENDR API</b><span>http://127.0.0.1:8000</span>
-          <b>PLEX API</b><span>…:8000/api/plex</span>
+          <b>portal</b><span>http://127.0.0.1:3000</span>
+          <b>api</b><span>http://127.0.0.1:8000</span>
+          <b>snapshot</b><span>…:8000/api/platform</span>
         </div>
       </div>
       <div class="card">
         <h3 style="margin-top:0">Config &amp; reconcile</h3>
-<pre><span class="c"># validate ENDR.yaml + SVCS.yaml</span>
-make -f ENDR/SCPT/Makefile validate-config
+<pre><span class="c"># validate platform.yaml + services.yaml</span>
+make -f ENDR/scripts/Makefile validate-config
 <span class="c"># dry-run drift check (no writes)</span>
-make -f ENDR/SCPT/Makefile svcs-check
+make -f ENDR/scripts/Makefile services-check
 <span class="c"># render generated assets into worktree</span>
-make -f ENDR/SCPT/Makefile svcs-sync</pre>
+make -f ENDR/scripts/Makefile services-sync</pre>
       </div>
       <div class="card">
         <h3 style="margin-top:0">Cluster (k3d)</h3>
 <pre><span class="c"># needs k3d + kubectl + helm</span>
-make -f ENDR/SCPT/Makefile bootstrap
-make -f ENDR/SCPT/Makefile port-forward      <span class="c"># ArgoCD/Grafana</span>
-make -f ENDR/SCPT/Makefile smoke-test</pre>
+make -f ENDR/scripts/Makefile bootstrap
+make -f ENDR/scripts/Makefile port-forward
+make -f ENDR/scripts/Makefile smoke-test</pre>
       </div>
       <div class="card">
         <h3 style="margin-top:0">Public ingress (optional)</h3>
 <pre><span class="c"># Cloudflare tunnel → *.calavelas.net</span>
-make -f ENDR/SCPT/Makefile tunnel-setup
-make -f ENDR/SCPT/Makefile tunnel-start
-make -f ENDR/SCPT/Makefile tunnel-status</pre>
+make -f ENDR/scripts/Makefile tunnel-setup
+make -f ENDR/scripts/Makefile tunnel-start
+make -f ENDR/scripts/Makefile tunnel-status</pre>
       </div>
     </div>
   </section>
 
   <!-- 13 -->
+  <section id="robot">
+    <h2><span class="num">13</span> Robot lifecycle <span class="badge">in progress</span></h2>
+    <p class="lead">The "build-a-robot" demo (<code>DOCS/robot-demo-mockup.html</code>) is being wired in as a <b>real</b>
+      service lifecycle: create → break → fix → destroy, all via GitOps. Full plan in
+      <code>DOCS/ROBOT_LIFECYCLE_PLAN.html</code>.</p>
+    <p>A robot is just a normal ENDR service whose behaviour is 100% env-driven, running the shared
+      <code>calavelas/endr-robot</code> image (<code>apps/robot/app.py</code>): set <code>HUMOR</code>/<code>HONESTY</code>/<code>TRUST</code>
+      (sum&gt;0) and it boots <span class="tag-good">ONLINE</span>; leave them empty and it boots
+      <span class="tag-bad">MALFUNCTION</span>. Calibration lives in <code>services.yaml</code> <code>overrides.env</code>, so
+      both create and fix are <code>services.yaml</code>-only PRs.</p>
+    <table>
+      <tr><th>Phase</th><th>Status</th></tr>
+      <tr><td><b>A · endr-robot service template</b> — registered in <code>platform.yaml</code>; renders chart + ArgoCD app with calibration env in the deployment</td><td class="tag-good">done</td></tr>
+      <tr><td><b>C · portal create with personality</b> — ROBOT_NAME/CATCHPHRASE/HUMOR/HONESTY/TRUST fields when the robot template is selected</td><td class="tag-warn">next</td></tr>
+      <tr><td><b>D · portal values-edit flow</b> — PR a robot's calibration env (the "fix")</td><td class="tag-warn">todo</td></tr>
+      <tr><td><b>B · robot-validate CI</b> — required check: calibration keys present + values 0–100</td><td class="tag-warn">todo</td></tr>
+      <tr><td><b>E · end-to-end + narrative</b> — create→MALFUNCTION→fix→ONLINE→destroy; robot image-tag handling</td><td class="tag-warn">todo</td></tr>
+    </table>
+  </section>
+
+  <!-- 14 -->
   <section id="state">
-    <h2><span class="num">13</span> Current state of the repo</h2>
+    <h2><span class="num">14</span> Current state of the repo</h2>
     <div class="grid g2">
       <div class="card">
-        <h3 style="margin-top:0">Services running <span class="badge">4</span></h3>
+        <h3 style="margin-top:0">Application services <span class="badge">5</span></h3>
         <table>
-          <tr><th>Service</th><th>Namespace</th><th>Image tag</th></tr>
-          <tr><td><code>sample</code></td><td>demo</td><td><code>47e65d3</code></td></tr>
-          <tr><td><code>cooper</code></td><td>demo</td><td><code>f04d84a</code></td></tr>
-          <tr><td><code>miller</code></td><td>demo</td><td><code>adcfff3</code></td></tr>
-          <tr><td><code>test1</code></td><td>demo</td><td><code>0d39140</code></td></tr>
+          <tr><th>Service</th><th>Namespace</th></tr>
+          <tr><td><code>sample</code></td><td>demo</td></tr>
+          <tr><td><code>cooper</code></td><td>demo</td></tr>
+          <tr><td><code>finc</code></td><td>demo</td></tr>
+          <tr><td><code>miller</code></td><td>demo</td></tr>
+          <tr><td><code>test1</code></td><td>demo</td></tr>
         </table>
         <p style="color:#7f8db0;font-size:12.5px;margin-bottom:0">All on the <code>python-fastapi</code> + <code>helm-service</code>
-          golden path, gateway enabled. Named after Interstellar characters — fitting the TARS/CASE theme.</p>
+          golden path, gateway enabled. Plus ~9 platform services (argocd, traefik, portal, api, gateway, …).</p>
       </div>
       <div class="card">
-        <h3 style="margin-top:0">Uncommitted working changes</h3>
-        <p style="color:#bcc8de;font-size:13.5px">Five files modified on <code>main</code> (per <code>git status</code>):</p>
+        <h3 style="margin-top:0">Recent work (2026-06-14)</h3>
         <div class="kvs" style="font-size:12.5px">
-          <code>CASE/.../service-create-panel.tsx</code><span>+8 lines (create flow tweak)</span>
-          <code>CASE/.../lib/plex.ts</code><span>simplified (−~17 lines)</span>
-          <code>PLEX/plex.py</code><span>−2 lines</span>
-          <code>TARS/scaffold/service.py</code><span>small change</span>
-          <code>CASE/tsconfig.tsbuildinfo</code><span>build artifact</span>
+          <b>Rename</b><span>codenames → functional names, on main</span>
+          <b>UI redesign</b><span>top-nav, finc-style cards, catalog toggle, tabbed detail, friendlier create</span>
+          <b>Robot</b><span>endr-robot template (phase A) — lifecycle in progress</span>
         </div>
-        <p style="color:#7f8db0;font-size:12px;margin-bottom:0">Not yet committed — in-progress edits to the portal API
-          client and scaffolder.</p>
+        <p style="color:#7f8db0;font-size:12px;margin-bottom:0">Working on <code>main</code> directly during the refactor;
+          UI + robot commits are local pending push. Live-cluster follow-ups: recreate the <code>api-github-token</code>
+          secret + a post-rename <code>render.yaml</code> image tag before the demo serves again.</p>
       </div>
     </div>
-    <div class="note good">If you remember nothing else: <b>edit <code>SVCS.yaml</code> → PR → TARS generates everything
-      → ArgoCD deploys it → CASE shows it.</b> That sentence is the entire platform.</div>
+    <div class="note good">If you remember nothing else: <b>edit <code>services.yaml</code> → PR → the engine generates everything
+      → ArgoCD deploys it → the portal shows it.</b> That sentence is the entire platform.</div>
   </section>
 
   <footer>
-    Generated context map for the <b>ENDR</b> Internal Developer Platform · derived from README, DOCS,
-    <code>ENDR.yaml</code>/<code>SVCS.yaml</code>, the TARS engine, CI workflows, KUBE manifests, and the CASE/PLEX code.
-    Open this file in any browser — it is fully self-contained.
+    Context map for the <b>ENDR</b> Internal Developer Platform · reflects the post-rename naming, the portal UI
+    redesign, and the in-progress robot lifecycle. Companion docs: <code>UI_REDESIGN_PLAN.html</code>,
+    <code>ROBOT_LIFECYCLE_PLAN.html</code>, <code>robot-demo-redesign.html</code>. Self-contained — open in any browser.
   </footer>
 </main>
 </div>
