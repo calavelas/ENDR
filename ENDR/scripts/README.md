@@ -12,12 +12,12 @@
 
 ## Common usage
 ```bash
-make -f ENDR/SCPT/Makefile bootstrap
-make -f ENDR/SCPT/Makefile validate-config
-make -f ENDR/SCPT/Makefile svcs-check
-make -f ENDR/SCPT/Makefile dev-start
-make -f ENDR/SCPT/Makefile dev-status
-make -f ENDR/SCPT/Makefile dev-stop
+make -f ENDR/scripts/Makefile bootstrap
+make -f ENDR/scripts/Makefile validate-config
+make -f ENDR/scripts/Makefile svcs-check
+make -f ENDR/scripts/Makefile dev-start
+make -f ENDR/scripts/Makefile dev-status
+make -f ENDR/scripts/Makefile dev-stop
 ```
 
 Bootstrap environment overrides:
@@ -36,10 +36,10 @@ Use `dev-stack.sh` to run the full local stack:
 - Optional ArgoCD port-forward on `https://127.0.0.1:18443`
 
 ```bash
-bash ENDR/SCPT/dev-stack.sh start
-bash ENDR/SCPT/dev-stack.sh status
-bash ENDR/SCPT/dev-stack.sh logs all
-bash ENDR/SCPT/dev-stack.sh stop
+bash ENDR/scripts/dev-stack.sh start
+bash ENDR/scripts/dev-stack.sh status
+bash ENDR/scripts/dev-stack.sh logs all
+bash ENDR/scripts/dev-stack.sh stop
 ```
 
 Environment overrides:
@@ -65,17 +65,17 @@ Prerequisites:
 One-time setup:
 ```bash
 export CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME=case.example.com
-make -f ENDR/SCPT/Makefile tunnel-login
-make -f ENDR/SCPT/Makefile tunnel-setup
+make -f ENDR/scripts/Makefile tunnel-login
+make -f ENDR/scripts/Makefile tunnel-setup
 ```
 
 Run/observe:
 ```bash
 export CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME=case.example.com
-make -f ENDR/SCPT/Makefile tunnel-start
-make -f ENDR/SCPT/Makefile tunnel-status
-make -f ENDR/SCPT/Makefile tunnel-logs
-make -f ENDR/SCPT/Makefile tunnel-stop
+make -f ENDR/scripts/Makefile tunnel-start
+make -f ENDR/scripts/Makefile tunnel-status
+make -f ENDR/scripts/Makefile tunnel-logs
+make -f ENDR/scripts/Makefile tunnel-stop
 ```
 
 Default tunnel origin (local side):

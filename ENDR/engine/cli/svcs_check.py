@@ -11,7 +11,7 @@ from typing import Any
 
 import yaml
 
-from TARS.config.paths import cluster_apps_abs_dir, cluster_apps_repo_dir
+from engine.config.paths import cluster_apps_abs_dir, cluster_apps_repo_dir
 
 
 @dataclass(slots=True)
@@ -97,9 +97,9 @@ def filter_reconcile_files_for_scope(
 
 
 def load_api_modules(repo_root: Path) -> tuple[Any, Any, Any, Any]:
-    from TARS.config.loader import load_all_configs
-    from TARS.scaffold.github_client import GitHubAPIError, GitHubClient
-    from TARS.scaffold.service import render_scaffold_for_service
+    from engine.config.loader import load_all_configs
+    from engine.scaffold.github_client import GitHubAPIError, GitHubClient
+    from engine.scaffold.service import render_scaffold_for_service
 
     return load_all_configs, render_scaffold_for_service, GitHubClient, GitHubAPIError
 

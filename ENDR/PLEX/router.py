@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from pathlib import Path
 
-from TARS.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
+from engine.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
 from PLEX.plex import PlatformSnapshot, build_platform_snapshot, load_plex_configs
 from PLEX.transactions import (
     CaseHistoryResponse,

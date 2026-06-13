@@ -10,13 +10,13 @@ from urllib import error, parse, request
 
 from pydantic import BaseModel
 
-from TARS.config.loader import (
+from engine.config.loader import (
     load_idp_config,
     resolve_config_paths,
     validate_consistency,
 )
-from TARS.config.models import IDPConfig, ServicesConfig
-from TARS.config.paths import (
+from engine.config.models import IDPConfig, ServicesConfig
+from engine.config.paths import (
     DEFAULT_ARGOCD_NAMESPACE,
     active_cluster_name,
     cluster_apps_repo_dir,

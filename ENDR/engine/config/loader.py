@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError
 
-from TARS.config.models import IDPConfig, ServicesConfig, TemplateRef
+from engine.config.models import IDPConfig, ServicesConfig, TemplateRef
 
 REPO_CONFIG_FILE = "ENDR.yaml"
 SERVICES_CONFIG_FILE = "SVCS.yaml"

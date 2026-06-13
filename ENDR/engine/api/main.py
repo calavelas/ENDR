@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 
 from PLEX.router import router as plex_router
-from TARS.config.loader import build_validation_report, load_all_configs
-from TARS.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
+from engine.config.loader import build_validation_report, load_all_configs
+from engine.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
 
 app = FastAPI(title="IDP API", version="0.1.0")
 app.include_router(plex_router)

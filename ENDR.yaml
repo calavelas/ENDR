@@ -20,13 +20,13 @@ templates:
     - name: python-fastapi
       type: service
       description: FastAPI service template
-      path: ENDR/TARS/templates/service/python-fastapi
+      path: ENDR/engine/templates/service/python-fastapi
   gitops:
     - name: helm-service
       type: gitops
       description: Helm chart and ArgoCD app template
-      path: ENDR/TARS/templates/gitops/helm-service
+      path: ENDR/engine/templates/gitops/helm-service
     - name: helm-service2
       type: gitops
       description: Helm chart and ArgoCD app template
-      path: ENDR/TARS/templates/gitops/helm-service
+      path: ENDR/engine/templates/gitops/helm-service

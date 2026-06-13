@@ -68,7 +68,7 @@ start_api() {
   log "starting idp-api on 127.0.0.1:${API_PORT}"
   (
     cd "${API_DIR}"
-    IDP_REPO_ROOT="${ROOT_DIR}" "${VENV_DIR}/bin/python" -m uvicorn TARS.api.main:app \
+    IDP_REPO_ROOT="${ROOT_DIR}" "${VENV_DIR}/bin/python" -m uvicorn engine.api.main:app \
       --host 127.0.0.1 \
       --port "${API_PORT}"
   ) >"${TMP_DIR}/idp-api.log" 2>&1 &
@@ -157,7 +157,7 @@ run_platform_checks() {
   require_cmd bash
 
   log "running bootstrap"
-  CLUSTER_NAME="${CLUSTER_NAME}" bash "${ROOT_DIR}/ENDR/SCPT/bootstrap.sh"
+  CLUSTER_NAME="${CLUSTER_NAME}" bash "${ROOT_DIR}/ENDR/scripts/bootstrap.sh"
 
   log "verifying kubernetes context"
   kubectl config use-context "k3d-${CLUSTER_NAME}" >/dev/null

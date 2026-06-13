@@ -12,7 +12,7 @@ from urllib import error, parse, request
 
 from pydantic import BaseModel, Field
 
-from TARS.config.loader import load_idp_config, resolve_config_paths
+from engine.config.loader import load_idp_config, resolve_config_paths
 
 CASE_PR_TITLE_PREFIX = "CASE - Adding service :"
 _GITHUB_API_BASE = "https://api.github.com"

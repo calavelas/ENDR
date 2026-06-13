@@ -55,7 +55,7 @@ CNAME for the public hostnames — but a hostname can point at only **one** tunn
 | # | Mechanism | Defined in | Routes | Origin |
 |---|---|---|---|---|
 | 1 | **In-cluster gateway** (`pl4nty/cloudflare-kubernetes-gateway` v0.8.1, an ArgoCD app) | `KUBE/clusters/mac/lab/platform/cloudflare.yaml`, `gateway/gateway-cloudflare.yaml`, `gateway/route-cloudflare-{case,argocd}.yaml`, Secret `cloudflare` in ns `gateway` | `case.calavelas.net`, `endr.calavelas.net`, **`argocd.calavelas.net`** | in-cluster Services (`case:80`, `argocd-server:80`) directly |
-| 2 | **Local script** (manual `cloudflared`, tunnel `endr-case`) | `ENDR/SCPT/cloudflare-tunnel.sh` (`make tunnel-*`) | only **one** host (`CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME`) | `https://case.k8s.local` (via Traefik `*.k8s.local`) |
+| 2 | **Local script** (manual `cloudflared`, tunnel `endr-case`) | `ENDR/scripts/cloudflare-tunnel.sh` (`make tunnel-*`) | only **one** host (`CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME`) | `https://case.k8s.local` (via Traefik `*.k8s.local`) |
 
 **Why it manifests:**
 - `cloudflared tunnel route dns` (mechanism 2) and the in-cluster controller (mechanism 1) both

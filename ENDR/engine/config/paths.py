@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from TARS.config.models import IDPConfig
+from engine.config.models import IDPConfig
 
 DEFAULT_ARGOCD_NAMESPACE = "argocd"
 DEFAULT_SERVICE_NAMESPACE = "default"

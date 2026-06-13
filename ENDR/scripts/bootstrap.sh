@@ -134,8 +134,8 @@ URLs:
 - Services (gateway): https://mann.k8s.local, https://miller.k8s.local, https://edmund.k8s.local
 
 Commands:
-- make -f ENDR/SCPT/Makefile dev-start
-- make -f ENDR/SCPT/Makefile port-forward-argocd
+- make -f ENDR/scripts/Makefile dev-start
+- make -f ENDR/scripts/Makefile port-forward-argocd
 
 Credentials:
 - ArgoCD username: admin

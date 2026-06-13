@@ -3,8 +3,8 @@
 `TARS` is the shared Python backend module for automation and generation.
 
 It is used by:
-- direct CLI entrypoint (`ENDR/TARS/TARS.py`)
-- API runtime (`ENDR/TARS/api/*`)
+- direct CLI entrypoint (`ENDR/engine/engine.py`)
+- API runtime (`ENDR/engine/api/*`)
 
 ## Submodules
 - `api/`: API-compatible handlers and models consumed by `ENDR`.

@@ -199,7 +199,7 @@ start_all() {
 
   start_process \
     "plex" \
-    "cd '${REPO_ROOT}' && export PLEX_ARGOCD_SERVER='${PLEX_ARGOCD_SERVER}' && export PLEX_ARGOCD_TOKEN='${PLEX_ARGOCD_TOKEN}' && export PLEX_ARGOCD_VERIFY_TLS='${PLEX_ARGOCD_VERIFY_TLS}' && exec '${REPO_ROOT}/ENDR/.venv/bin/python' -m uvicorn TARS.api.main:app --reload --host '${PLEX_HOST}' --port '${PLEX_PORT}' --app-dir ENDR" \
+    "cd '${REPO_ROOT}' && export PLEX_ARGOCD_SERVER='${PLEX_ARGOCD_SERVER}' && export PLEX_ARGOCD_TOKEN='${PLEX_ARGOCD_TOKEN}' && export PLEX_ARGOCD_VERIFY_TLS='${PLEX_ARGOCD_VERIFY_TLS}' && exec '${REPO_ROOT}/ENDR/.venv/bin/python' -m uvicorn engine.api.main:app --reload --host '${PLEX_HOST}' --port '${PLEX_PORT}' --app-dir ENDR" \
     "${BACKEND_PID_FILE}" \
     "${BACKEND_LOG_FILE}"
 

@@ -8,14 +8,14 @@ from pathlib import Path
 from jinja2 import Environment, StrictUndefined
 from pydantic import AliasChoices, BaseModel, Field
 
-from TARS.config.loader import load_all_configs
-from TARS.config.paths import (
+from engine.config.loader import load_all_configs
+from engine.config.paths import (
     DEFAULT_ARGOCD_NAMESPACE,
     DEFAULT_SERVICE_NAMESPACE,
     active_cluster_alias,
     service_app_manifest_repo_path,
 )
-from TARS.config.models import (
+from engine.config.models import (
     IDPConfig,
     GatewayConfig,
     ResourceConfig,
@@ -23,7 +23,7 @@ from TARS.config.models import (
     ServiceOverrides,
     TemplateRef,
 )
-from TARS.scaffold.github_client import GitHubAPIError, GitHubClient
+from engine.scaffold.github_client import GitHubAPIError, GitHubClient
 
 
 class CreateServiceRequest(BaseModel):
@@ -360,7 +360,7 @@ def _validate_template_selection(
 
 
 def create_service(request: CreateServiceRequest) -> CreateServiceResponse:
-    idp_config, _services_config, paths = load_all_configs()
+    idp_config, services_config, paths = load_all_configs()
     repo_root = Path(paths.repoRoot)
     services_config_path = Path(paths.servicesConfigPath).resolve()
 
@@ -378,6 +378,10 @@ def create_service(request: CreateServiceRequest) -> CreateServiceResponse:
         service_template_name=service_template_name,
         gitops_template_name=gitops_template_name,
     )
+
+    for existing in services_config.services:
+        if existing.name == request.name:
+            raise ValueError(f"service already exists in SVCS.yaml: {request.name}")
 
     namespace = request.namespace or DEFAULT_SERVICE_NAMESPACE
     environments = request.environments if request.environments else [active_cluster_alias(idp_config)]
@@ -430,7 +434,6 @@ def create_service(request: CreateServiceRequest) -> CreateServiceResponse:
         base_branch = idp_config.config.git.defaultBranch
         remote_services_config = github_client.get_file_content(base_branch, relative_services_config)
         if remote_services_config is not None:
-            # Source of truth is SVCS.yaml on the repository default branch.
             commit_files[relative_services_config] = _render_updated_services_config_bytes(remote_services_config, service)
         else:
             commit_files[relative_services_config] = _render_updated_services_config(services_config_path, service)

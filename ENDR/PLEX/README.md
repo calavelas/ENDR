@@ -12,7 +12,7 @@ Primary module:
 
 Notes:
 - runtime configuration and service catalog are loaded from shared config modules in `TARS.config`.
-- `ENDR/TARS/api/main.py` includes the PLEX router into the shared backend app.
+- `ENDR/engine/api/main.py` includes the PLEX router into the shared backend app.
 - service catalog (`SVCS.yaml`) is loaded from GitHub `main` by default:
   - `https://github.com/calavelas/ENDR/blob/main/SVCS.yaml`
 

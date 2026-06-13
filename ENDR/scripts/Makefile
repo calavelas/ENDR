@@ -9,16 +9,16 @@ bootstrap:
 
 up:
 	@echo "Starting local CASE + PLEX dev processes..."
-	@echo "Run stack: make -f ENDR/SCPT/Makefile dev-start"
-	@echo "Stop stack: make -f ENDR/SCPT/Makefile dev-stop"
-	@echo "Status: make -f ENDR/SCPT/Makefile dev-status"
+	@echo "Run stack: make -f ENDR/scripts/Makefile dev-start"
+	@echo "Stop stack: make -f ENDR/scripts/Makefile dev-stop"
+	@echo "Status: make -f ENDR/scripts/Makefile dev-status"
 
 api: plex
 
 web: case
 
 plex:
-	cd $(REPO_ROOT)/ENDR && uvicorn TARS.api.main:app --reload --host 0.0.0.0 --port 8000
+	cd $(REPO_ROOT)/ENDR && uvicorn engine.api.main:app --reload --host 0.0.0.0 --port 8000
 
 case:
 	cd $(REPO_ROOT)/ENDR/CASE && ENDR_API_URL=http://127.0.0.1:8000 npm run dev
@@ -68,11 +68,11 @@ smoke-test-platform:
 
 svcs-check:
 	@echo "Running SVCS check (dry-run, no PR)..."
-	$(REPO_ROOT)/ENDR/.venv/bin/python $(REPO_ROOT)/ENDR/TARS/TARS.py svcs-check --repo-root $(REPO_ROOT)
+	$(REPO_ROOT)/ENDR/.venv/bin/python $(REPO_ROOT)/ENDR/engine/engine.py svcs-check --repo-root $(REPO_ROOT)
 
 svcs-sync:
 	@echo "Running SVCS check and writing generated files to working tree..."
-	$(REPO_ROOT)/ENDR/.venv/bin/python $(REPO_ROOT)/ENDR/TARS/TARS.py svcs-check --repo-root $(REPO_ROOT) --write-worktree
+	$(REPO_ROOT)/ENDR/.venv/bin/python $(REPO_ROOT)/ENDR/engine/engine.py svcs-check --repo-root $(REPO_ROOT) --write-worktree
 
 tunnel-login:
 	bash $(MAKEFILE_DIR)/cloudflare-tunnel.sh login
