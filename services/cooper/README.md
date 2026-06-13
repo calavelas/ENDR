@@ -15,9 +15,9 @@ After `SVCS Build/Deploy` completes and ArgoCD sync is healthy, access this serv
 - Namespace: `demo`
 - Port: `8080`
 - Service Template: `python-fastapi`
-- GitOps Template: configured in `SVCS.yaml`
+- GitOps Template: configured in `services.yaml`
 
 ## Notes
 
-- Source code is generated under `SVCS/cooper/`.
-- Deployment resources are generated under `SVCS/cooper/chart/`.
+- Source code is generated under `services/cooper/`.
+- Deployment resources are generated under `services/cooper/chart/`.
