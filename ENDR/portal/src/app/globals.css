@@ -25,6 +25,17 @@
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
+  /* Accent (matches the robot-demo mockup) — primary actions, active nav, links. */
+  --accent: #37d3c3;
+  --accent-strong: #2bb6a8;
+  --accent-soft: rgba(55, 211, 195, 0.12);
+  --accent-contrast: #06121a;
+  /* Type scale — nudged up for readability over the old 0.7–0.86rem range. */
+  --fs-xs: 0.74rem;
+  --fs-sm: 0.84rem;
+  --fs-base: 0.95rem;
+  --fs-lg: 1.1rem;
+  --fs-xl: 1.4rem;
 }
 
 * {
@@ -1576,13 +1587,35 @@ code {
 
 .chip,
 .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
   border-radius: 999px;
-  padding: 0.2rem 0.56rem;
-  font-size: 0.68rem;
+  padding: 0.2rem 0.58rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
   border: 1px solid transparent;
+}
+
+/* Accessibility: status is conveyed by icon + colour, not colour alone. */
+.status-pill::before {
+  font-weight: 700;
+  line-height: 1;
+  font-size: 0.85em;
+}
+.status-pill.tone-good::before {
+  content: "\2713";
+}
+.status-pill.tone-warn::before {
+  content: "\26A0";
+}
+.status-pill.tone-bad::before {
+  content: "\2715";
+}
+.status-pill.tone-neutral::before {
+  content: "\2022";
 }
 
 .chip.muted {

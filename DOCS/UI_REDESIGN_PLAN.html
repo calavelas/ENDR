@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENDR Portal · UI/UX Redesign Plan</title>
+<style>
+  :root{--bg:#0c0c0e;--panel:#18181b;--panel2:#131316;--ink:#f4f4f6;--ink2:#d0d0d8;--muted:#8b8b96;--line:#25252a;
+    --teal:#37d3c3;--accent:#37d3c3;--good:#6ee7a0;--warn:#f5cf84;--bad:#f5a1aa;--idp:#7c9cff}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 100px}
+  .mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.3px}
+  .lede{color:var(--muted);font-size:16px;margin:0 0 6px;max-width:72ch}
+  .meta{color:#5e6c86;font-size:12px;margin:0 0 28px}
+  h2{font-size:20px;margin:36px 0 10px;padding-top:18px;border-top:1px solid var(--line)}
+  h3{font-size:15.5px;margin:20px 0 7px;color:var(--teal)}
+  p{max-width:74ch} a{color:var(--accent)}
+  code{font-family:ui-monospace,monospace;background:#0a0e18;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:#bfeede}
+  ul{max-width:76ch} li{margin:5px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .swatches{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .sw{border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:11px;min-width:120px}
+  .sw i{display:block;height:26px;border-radius:6px;margin-bottom:6px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;border:1px solid}
+  .p-good{color:var(--good);border-color:#2f6b4d;background:rgba(110,231,160,.10)}
+  .p-warn{color:var(--warn);border-color:#6b5a2f;background:rgba(245,207,132,.10)}
+  .p-bad{color:var(--bad);border-color:#6b2f36;background:rgba(245,161,170,.10)}
+  .callout{border-left:3px solid var(--accent);background:rgba(55,211,195,.06);border-radius:0 10px 10px 0;padding:11px 15px;margin:15px 0;font-size:14px}
+  .callout b{color:var(--teal)}
+  .keep{border-left-color:var(--good);background:rgba(110,231,160,.06)} .keep b{color:var(--good)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .ba{font-size:12.5px} .ba .b{color:var(--bad)} .ba .a{color:var(--good)}
+  .phase{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+  .num{flex:none;width:26px;height:26px;border-radius:50%;background:rgba(55,211,195,.14);color:var(--teal);display:grid;place-items:center;font-weight:700;font-size:13px}
+  .tag{font-size:10px;font-weight:700;border-radius:5px;padding:1px 7px}
+  .t-build{background:rgba(124,156,255,.14);color:var(--idp)} .t-keep{background:rgba(110,231,160,.14);color:var(--good)}
+  .note{font-size:12px;color:#5e6c86;border-top:1px solid var(--line);margin-top:36px;padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>ENDR Portal — UI/UX Redesign Plan</h1>
+  <p class="lede">Bring the clean, modern feel of the robot-demo mockup to the real developer portal —
+  better hierarchy, accessible status, lighter density — <b>without changing any IDP functionality,
+  routes, or data contracts.</b></p>
+  <p class="meta mono">Part 3 of the naming/UI overhaul · plan for review before building · 2026-06-14</p>
+
+  <div class="callout keep">✅ <b>Already done (de-cosmic + rename):</b> the portal is at <code>ENDR/portal</code>,
+  the API layer is <code>/api/platform</code> via <code>lib/platform.ts</code>, and there is already a
+  cohesive dark theme in <code>globals.css</code> (no space/cosmic styling left). This redesign builds
+  on that base — it is polish + componentization, not a rewrite.</div>
+
+  <h2>1 · Goals & principles</h2>
+  <ul>
+    <li><b>Mockup-grade polish:</b> card surfaces, clear status, calm spacing, confident typography — the look of the robot-demo, applied to real pages.</li>
+    <li><b>Preserve all IDP function:</b> same routes, same <code>loadSnapshot()</code> data flow, same create→PR→reconcile→deploy behaviour, same ArgoCD embed. Pure presentation layer.</li>
+    <li><b>Fix the real weaknesses</b> the current UI has (below), not just repaint.</li>
+    <li><b>Accessibility:</b> status = icon + colour (not colour alone), larger base type, better contrast.</li>
+    <li><b>Componentize:</b> replace repeated inline markup with a small set of shared React components, so future pages stay consistent.</li>
+  </ul>
+
+  <h3>The 5 weaknesses this fixes (from the current-UI audit)</h3>
+  <ol>
+    <li><b>Table overload</b> — 7–10 dense columns; health/sync buried among image tag, revision, etc.</li>
+    <li><b>Colour-only status</b> — pills fail colour-blind users (no icons/symbols).</li>
+    <li><b>Tiny type</b> — headers ~10px, body ~12px; strains readability.</li>
+    <li><b>No progressive disclosure</b> — detail pages dump every field (gateway/url/capabilities) even when empty.</li>
+    <li><b>Weak onboarding</b> — funny but vague hero, no help text, no empty states.</li>
+  </ol>
+
+  <h2>2 · Design tokens (refine, don't replace)</h2>
+  <p>Keep the existing dark palette and CSS-variable approach in <code>globals.css</code>; tune for contrast and add an accent + a proper type scale.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#0c0c0e"></i>bg <span class="mono">#0c0c0e</span></div>
+    <div class="sw"><i style="background:#18181b"></i>panel <span class="mono">#18181b</span></div>
+    <div class="sw"><i style="background:#25252a"></i>line <span class="mono">#25252a</span></div>
+    <div class="sw"><i style="background:#37d3c3"></i>accent <span class="mono">#37d3c3</span></div>
+    <div class="sw"><i style="background:#6ee7a0"></i>good <span class="mono">#6ee7a0</span></div>
+    <div class="sw"><i style="background:#f5cf84"></i>warn <span class="mono">#f5cf84</span></div>
+    <div class="sw"><i style="background:#f5a1aa"></i>bad <span class="mono">#f5a1aa</span></div>
+  </div>
+  <ul>
+    <li><b>Type scale:</b> body 0.84rem → <b>0.95rem</b>; table headers 0.7rem → <b>0.78rem</b>; line-height 1.3 → <b>1.55</b> for copy. Add tokens <code>--fs-xs/sm/base/lg/xl</code>.</li>
+    <li><b>Add an accent token</b> (<code>--accent: #37d3c3</code>) for primary actions/active states (today buttons reuse status colours).</li>
+    <li><b>Status with icon:</b> standardize ✓ synced/healthy · ⚠ progressing/unknown · ✕ outofsync/degraded, driven by the existing <code>syncTone()</code>/<code>healthTone()</code> helpers in <code>lib/platform.ts</code> (no logic change, just richer rendering).</li>
+    <li><b>Spacing/radius:</b> keep <code>--radius-*</code>; slightly increase panel padding for breathing room.</li>
+  </ul>
+  <p>Status pill, before vs after:</p>
+  <p><span class="mono" style="font-size:12px">before:</span>
+     <span class="pill p-good" style="border-radius:6px">Synced</span>
+     <span class="pill p-bad" style="border-radius:6px">Degraded</span>
+     &nbsp;&nbsp;<span class="mono" style="font-size:12px">after:</span>
+     <span class="pill p-good">✓ Synced</span>
+     <span class="pill p-warn">⚠ Progressing</span>
+     <span class="pill p-bad">✕ Degraded</span></p>
+
+  <h2>3 · Shared components to build</h2>
+  <p>Extract these as real React components under <code>ENDR/portal/src/app/components/ui/</code> (today most are inline markup + global CSS classes):</p>
+  <table>
+    <tr><th>Component</th><th>Replaces</th><th>Used by</th></tr>
+    <tr><td><code>StatusPill</code> (icon+tone)</td><td>inline <code>&lt;span class="status-pill tone-*"&gt;</code></td><td>every list + detail</td></tr>
+    <tr><td><code>PageHeader</code></td><td>repeated <code>.hero-row</code> markup</td><td>all pages</td></tr>
+    <tr><td><code>StatCard</code></td><td>sidebar overview counts</td><td>dashboard, sidebar</td></tr>
+    <tr><td><code>ServiceCard</code></td><td>dense table rows (list views)</td><td>dashboard, catalog</td></tr>
+    <tr><td><code>Toolbar</code> (search/filter/sort)</td><td>nothing (new)</td><td>catalog, history</td></tr>
+    <tr><td><code>Button</code> / <code>LinkButton</code></td><td>inline <code>.btn</code>/<code>.open-link</code> variants</td><td>everywhere</td></tr>
+    <tr><td><code>FormField</code> (label+hint+input)</td><td>per-page form markup</td><td>create, history filters</td></tr>
+    <tr><td><code>Alert</code> / <code>EmptyState</code></td><td>warning box; missing-data gaps</td><td>all pages</td></tr>
+    <tr><td><code>Tabs</code></td><td>stacked detail sections</td><td>service detail pages</td></tr>
+  </table>
+
+  <h2>4 · Page-by-page</h2>
+  <div class="grid2">
+    <div class="card"><h3 style="margin-top:2px">Dashboard <span class="mono" style="font-size:11px">/</span></h3>
+      <p class="ba"><span class="b">Now:</span> big hero + two 7-col tables (320px scroll boxes).<br>
+      <span class="a">→</span> Tighter hero with a real "what to do next"; a row of <b>StatCards</b> (total / synced / needs-attention / data-source); services as <b>ServiceCards</b> with status top-right; "needs attention" surfaced first.</p></div>
+    <div class="card"><h3 style="margin-top:2px">Catalog <span class="mono" style="font-size:11px">/catalog</span></h3>
+      <p class="ba"><span class="b">Now:</span> two 10-col tables, horizontal scroll.<br>
+      <span class="a">→</span> Add a <b>Toolbar</b> (search by name, filter by health/sync/namespace, sort); keep a table but trim to scannable columns (name, status, namespace, image) with the rest on the detail page; card/table toggle optional.</p></div>
+    <div class="card"><h3 style="margin-top:2px">Service detail</h3>
+      <p class="ba"><span class="b">Now:</span> every panel stacked (identity, status, gateway, url, capabilities, README) even when empty.<br>
+      <span class="a">→</span> <b>Tabs</b>: Overview · Configuration · README · ArgoCD. Hide empty fields with graceful "not configured" states. Status block up top.</p></div>
+    <div class="card"><h3 style="margin-top:2px">Create <span class="mono" style="font-size:11px">/create</span></h3>
+      <p class="ba"><span class="b">Now:</span> 3-col form + preview + file viewer; minimal help.<br>
+      <span class="a">→</span> Keep the flow & dry-run/transaction logic intact; wrap fields in <b>FormField</b> with one-line hints; clearer pipeline-status display (reuse the mockup's stage styling). No backend change.</p></div>
+    <div class="card"><h3 style="margin-top:2px">History <span class="mono" style="font-size:11px">/history</span></h3>
+      <p class="ba"><span class="b">Now:</span> filter dropdowns + PR table.<br>
+      <span class="a">→</span> Same data; <b>Toolbar</b> for the filters, cleaner timeline rows, status pills with icons, real empty state.</p></div>
+    <div class="card"><h3 style="margin-top:2px">ArgoCD <span class="mono" style="font-size:11px">/argocd</span></h3>
+      <p class="ba"><span class="b">Now:</span> conditional embed / placeholder (already load-on-demand).<br>
+      <span class="a">→</span> Mostly leave as-is; restyle the placeholder + header to match. <b>Keep the load-on-demand embed</b> (it fixed the tunnel hang).</p></div>
+  </div>
+
+  <h2>5 · Phasing (each phase independently shippable)</h2>
+  <div class="phase"><span class="num">1</span><div><b>Tokens + status</b> <span class="tag t-build">build</span><br>Refine <code>globals.css</code> tokens (type scale, accent, contrast); ship <code>StatusPill</code> with icons. Lowest risk, instant visual lift across every page.</div></div>
+  <div class="phase"><span class="num">2</span><div><b>Component kit</b> <span class="tag t-build">build</span><br>Button, PageHeader, StatCard, Alert, EmptyState, FormField, Tabs, Toolbar under <code>components/ui/</code>.</div></div>
+  <div class="phase"><span class="num">3</span><div><b>Dashboard + Catalog</b> <span class="tag t-build">build</span><br>StatCards, ServiceCards, the catalog Toolbar (search/filter/sort). The highest-traffic surfaces.</div></div>
+  <div class="phase"><span class="num">4</span><div><b>Detail pages</b> <span class="tag t-build">build</span><br>Tabbed detail + graceful empty states.</div></div>
+  <div class="phase"><span class="num">5</span><div><b>Create + History</b> <span class="tag t-build">build</span><br>FormField hints, cleaner pipeline/timeline. Backend untouched.</div></div>
+  <div class="phase"><span class="num">6</span><div><b>Polish pass</b> <span class="tag t-build">build</span><br>Responsive tightening, motion, final a11y check; verify with <code>tsc --noEmit</code> + the local dev stack each phase.</div></div>
+
+  <h2>6 · Explicitly preserved (no change)</h2>
+  <div class="callout keep">✅ Routes &amp; redirects · <code>loadSnapshot()</code> → <code>/api/platform</code> data flow · <code>PlatformSnapshot</code>/<code>ServiceNode</code> shapes · create→PR→reconcile→deploy behaviour · the load-on-demand ArgoCD embed · server/client component split · auto-refresh polling.</div>
+
+  <h2>7 · Decisions (answered 2026-06-14)</h2>
+  <ul>
+    <li><b>Catalog view</b> → <b>cards/table toggle</b> with a view switcher that remembers the preference.</li>
+    <li><b>Dashboard hero</b> → <b>summary-first</b>: status line + StatCards (total / healthy / needs-attention / data-source).</li>
+    <li><b>Accent colour</b> → <b>teal <code>#37d3c3</code></b> (matches the mockup). Tokenized as <code>--accent</code>.</li>
+    <li><b>Light mode</b> → <b>out of scope</b> (dark-only for now).</li>
+  </ul>
+  <p><b>Phase 1 status:</b> ✅ accent + type-scale tokens added to <code>globals.css</code>; status pills now render icon + colour (✓ / ⚠ / ✕ / •) for accessibility, via CSS scoped to <code>.status-pill</code> — every existing pill upgraded with no JSX change.</p>
+
+  <p class="note mono">On approval I start at Phase 1 (tokens + StatusPill) and ship phase-by-phase, verifying each with tsc + the local dev stack. Companion docs: DOCS/robot-demo-redesign.html, DOCS/REFACTOR_NAMING_UI_PLAN.md.</p>
+
+</div>
+</body>
+</html>
