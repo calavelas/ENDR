@@ -2231,3 +2231,10 @@ code {
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 .detail-status-strip { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
+
+/* ===== Service card: whole-card click (stretched link) ===== */
+.service-card { position: relative; }
+.service-card-link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.service-card-head, .service-card-status, .service-card-meta { position: relative; z-index: 0; }
+.service-card-external { position: relative; z-index: 2; }
+.service-card:hover .service-card-name { color: var(--accent); }

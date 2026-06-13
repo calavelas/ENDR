@@ -17,10 +17,10 @@ export function ServiceCard({
 
   return (
     <div className="service-card">
+      {/* Stretched link: the whole card navigates; interactive children sit above it. */}
+      <Link href={href} className="service-card-link" aria-label={`Open ${service.name}`} />
       <div className="service-card-head">
-        <Link href={href} className="service-card-name">
-          {service.name}
-        </Link>
+        <span className="service-card-name">{service.name}</span>
         <span className="chip muted">{service.namespace}</span>
       </div>
       <div className="service-card-status">
@@ -33,7 +33,7 @@ export function ServiceCard({
           <code>{service.imageTag ?? "n/a"}</code>
         </span>
         {showGateway && gatewayEnabled ? (
-          <a className="entity-link" href={serviceUrl} target="_blank" rel="noreferrer">
+          <a className="entity-link service-card-external" href={serviceUrl} target="_blank" rel="noreferrer">
             open ↗
           </a>
         ) : null}
