@@ -941,10 +941,10 @@ export function CreateServicePanel() {
           )}
 
           <div className="form-actions">
-            <button type="button" className="open-link subtle" onClick={onGeneratePreview} disabled={previewing || submitting}>
+            <button type="button" className="ui-btn ui-btn-ghost" onClick={onGeneratePreview} disabled={previewing || submitting}>
               {previewing ? "Generating..." : "Generate Preview"}
             </button>
-            <button type="submit" className="open-link" disabled={submitting || previewing || !isPreviewCurrent}>
+            <button type="submit" className="ui-btn ui-btn-primary" disabled={submitting || previewing || !isPreviewCurrent}>
               {submitting ? "Submitting..." : "Create Service"}
             </button>
           </div>
