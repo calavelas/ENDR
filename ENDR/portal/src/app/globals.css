@@ -1445,14 +1445,16 @@ code {
 
 .create-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "create file"
-    "preview file"
-    "result result";
+    "create"
+    "preview"
+    "result"
+    "file";
   gap: 1rem;
-  align-items: stretch;
+  align-items: start;
   min-width: 0;
+  max-width: 880px;
 }
 
 .create-layout > .panel {
@@ -2243,3 +2245,14 @@ code {
 
 /* Disabled buttons */
 .ui-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== Create form: field hints + Advanced disclosure (user-friendly pass) ===== */
+.field-hint { display: block; margin-top: 0.32rem; font-size: var(--fs-xs); color: var(--muted); line-height: 1.45; font-weight: 400; }
+.field-hint code { font-size: 0.78em; }
+.create-advanced { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-soft); padding: 0; }
+.create-advanced > summary { cursor: pointer; padding: 0.7rem 0.9rem; font-size: var(--fs-sm); font-weight: 600; color: var(--text-secondary); list-style: none; user-select: none; }
+.create-advanced > summary::-webkit-details-marker { display: none; }
+.create-advanced > summary::before { content: "▸"; color: var(--muted); margin-right: 0.45rem; display: inline-block; }
+.create-advanced[open] > summary::before { content: "▾"; }
+.create-advanced[open] > summary { border-bottom: 1px solid var(--line); }
+.create-advanced-body { padding: 0.9rem; display: grid; gap: 0.9rem; }

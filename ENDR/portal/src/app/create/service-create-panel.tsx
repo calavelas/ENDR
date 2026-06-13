@@ -780,7 +780,7 @@ export function CreateServicePanel() {
         <form className="create-form" onSubmit={onSubmit}>
           <div className="create-form-grid">
             <label className="field-span-2">
-              Service Name
+              Service name
               <input
                 type="text"
                 value={serviceName}
@@ -789,10 +789,13 @@ export function CreateServicePanel() {
                 autoComplete="off"
                 required
               />
+              <span className="field-hint">
+                Lowercase letters, numbers, and dashes. Becomes the URL <code>{(serviceName || "<name>")}.calavelas.net</code>.
+              </span>
             </label>
 
-            <label>
-              Service Template
+            <label className="field-span-2">
+              Service template
               <select value={serviceTemplate} onChange={(event) => setServiceTemplate(event.target.value)} required>
                 {options?.serviceTemplates.map((template) => (
                   <option key={template.name} value={template.name}>
@@ -800,45 +803,70 @@ export function CreateServicePanel() {
                   </option>
                 ))}
               </select>
+              <span className="field-hint">
+                {selectedServiceTemplate?.description || "What kind of service to scaffold."}
+              </span>
             </label>
 
             <label>
-              GitOps Template
-              <select value={gitopsTemplate} onChange={(event) => setGitopsTemplate(event.target.value)} required>
-                {options?.gitopsTemplates.map((template) => (
-                  <option key={template.name} value={template.name}>
-                    {template.name}
+              Namespace
+              <select value={namespace} onChange={(event) => setNamespace(event.target.value)} required>
+                {options?.namespaces.map((item) => (
+                  <option key={item.name} value={item.name}>
+                    {item.name}
                   </option>
                 ))}
               </select>
+              <span className="field-hint">Kubernetes namespace to deploy into.</span>
             </label>
 
-            <div className="field-span-2 create-template-preview-block">
-              <div className="panel-header-row">
-                <p className="create-template-preview-title">Template Preview</p>
-                <button
-                  type="button"
-                  className="open-link compact subtle"
-                  onClick={() => setTemplatePreviewCollapsed((value) => !value)}
-                  aria-expanded={!templatePreviewCollapsed}
-                >
-                  {templatePreviewCollapsed ? "Expand" : "Collapse"}
-                </button>
-              </div>
+            <label>
+              Environment
+              <select value={environment} onChange={(event) => setEnvironment(event.target.value)} required>
+                {options?.kubernetesEnvironments.map((item) => (
+                  <option key={item.name} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+              <span className="field-hint">Target cluster.</span>
+            </label>
 
-              {templatePreviewCollapsed ? (
-                <p className="embed-note">Template preview is collapsed.</p>
-              ) : (
+            <div className="field-span-2 create-toggle">
+              <label className="create-toggle-row">
+                <input
+                  type="checkbox"
+                  checked={gatewayEnabled}
+                  onChange={(event) => setGatewayEnabled(event.target.checked)}
+                />
+                <span>Expose publicly (Gateway)</span>
+              </label>
+              <p className="create-toggle-help">
+                Serve this service at <code>https://{(serviceName || "<service>")}.calavelas.net</code>.
+              </p>
+            </div>
+
+            <details className="field-span-2 create-advanced">
+              <summary>Advanced options</summary>
+              <div className="create-advanced-body">
+                <label>
+                  GitOps template
+                  <select value={gitopsTemplate} onChange={(event) => setGitopsTemplate(event.target.value)} required>
+                    {options?.gitopsTemplates.map((template) => (
+                      <option key={template.name} value={template.name}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="field-hint">How the service is packaged &amp; deployed. The default is usually right.</span>
+                </label>
+
                 <section className="create-template-preview">
                   <article className="create-template-card">
-                    <h3>Service Template Preview</h3>
-                    <p className="embed-note">
-                      <strong>{selectedServiceTemplate?.name ?? "n/a"}</strong>
-                    </p>
-                    {selectedServiceTemplate?.description && <p className="embed-note">{selectedServiceTemplate.description}</p>}
+                    <h3>Service template files</h3>
                     {selectedServiceTemplate?.path && (
                       <p className="embed-note">
-                        Path: <code>{selectedServiceTemplate.path}</code>
+                        <code>{selectedServiceTemplate.path}</code>
                       </p>
                     )}
                     <ul className="template-file-list">
@@ -859,18 +887,13 @@ export function CreateServicePanel() {
                       ))}
                       {(selectedServiceTemplate?.previewFiles ?? []).length === 0 && <li>no template files found</li>}
                     </ul>
-                    {selectedServiceTemplate?.previewNote && <p className="embed-note">{selectedServiceTemplate.previewNote}</p>}
                   </article>
 
                   <article className="create-template-card">
-                    <h3>GitOps Template Preview</h3>
-                    <p className="embed-note">
-                      <strong>{selectedGitopsTemplate?.name ?? "n/a"}</strong>
-                    </p>
-                    {selectedGitopsTemplate?.description && <p className="embed-note">{selectedGitopsTemplate.description}</p>}
+                    <h3>GitOps template files</h3>
                     {selectedGitopsTemplate?.path && (
                       <p className="embed-note">
-                        Path: <code>{selectedGitopsTemplate.path}</code>
+                        <code>{selectedGitopsTemplate.path}</code>
                       </p>
                     )}
                     <ul className="template-file-list">
@@ -891,47 +914,10 @@ export function CreateServicePanel() {
                       ))}
                       {(selectedGitopsTemplate?.previewFiles ?? []).length === 0 && <li>no template files found</li>}
                     </ul>
-                    {selectedGitopsTemplate?.previewNote && <p className="embed-note">{selectedGitopsTemplate.previewNote}</p>}
                   </article>
                 </section>
-              )}
-            </div>
-
-            <label>
-              Namespace
-              <select value={namespace} onChange={(event) => setNamespace(event.target.value)} required>
-                {options?.namespaces.map((item) => (
-                  <option key={item.name} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Environment (Kubernetes)
-              <select value={environment} onChange={(event) => setEnvironment(event.target.value)} required>
-                {options?.kubernetesEnvironments.map((item) => (
-                  <option key={item.name} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="field-span-2 create-toggle">
-              <label className="create-toggle-row">
-                <input
-                  type="checkbox"
-                  checked={gatewayEnabled}
-                  onChange={(event) => setGatewayEnabled(event.target.checked)}
-                />
-                <span>Enable Gateway</span>
-              </label>
-              <p className="create-toggle-help">
-                Expose this service through Gateway API at <code>https://&lt;service&gt;.calavelas.net</code>.
-              </p>
-            </div>
+              </div>
+            </details>
           </div>
 
           {formError && (
