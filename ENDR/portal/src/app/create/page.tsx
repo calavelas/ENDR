@@ -1,16 +1,12 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { PortalFrame } from "../components/portal-frame";
 import { PageHeader } from "../components/ui/page-header";
-import { loadSnapshot } from "../lib/platform";
 import { CreateServicePanel } from "./service-create-panel";
 
-export default async function CreatePage() {
-  const snapshot = await loadSnapshot();
-
+export default function CreatePage() {
   return (
-    <PortalFrame snapshot={snapshot}>
+    <>
       <section className="portal-main create-main">
         <PageHeader
           title="Create Service"
@@ -19,6 +15,6 @@ export default async function CreatePage() {
 
         <CreateServicePanel />
       </section>
-    </PortalFrame>
+    </>
   );
 }

@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { CatalogExplorer } from "../components/catalog-explorer";
-import { PortalFrame } from "../components/portal-frame";
 import { LinkButton } from "../components/ui/button";
 import { PageHeader } from "../components/ui/page-header";
 import { loadSnapshot, resolveArgoEmbedUrl, resolveGithubBranch, resolveGithubRepoUrl } from "../lib/platform";
@@ -14,7 +13,7 @@ export default async function CatalogPage() {
   const githubBranch = resolveGithubBranch();
 
   return (
-    <PortalFrame snapshot={snapshot}>
+    <>
       <section className="portal-main">
         <PageHeader
           title="Service Catalog"
@@ -50,6 +49,6 @@ export default async function CatalogPage() {
           githubBranch={githubBranch}
         />
       </section>
-    </PortalFrame>
+    </>
   );
 }

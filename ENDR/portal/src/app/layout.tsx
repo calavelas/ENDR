@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope } from "next/font/google";
 import { ReactNode } from "react";
 
+import { AppShell } from "./components/app-shell";
+import { NarrativeProvider } from "./lib/narrative";
+
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-body",
@@ -22,8 +25,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${manrope.variable} ${jetbrainsMono.variable}`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${manrope.variable} ${jetbrainsMono.variable}`}>
+        <NarrativeProvider>
+          <AppShell>{children}</AppShell>
+        </NarrativeProvider>
+      </body>
     </html>
   );
 }

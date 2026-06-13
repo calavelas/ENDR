@@ -1,17 +1,13 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { PortalFrame } from "../components/portal-frame";
 import { LinkButton } from "../components/ui/button";
 import { PageHeader } from "../components/ui/page-header";
-import { loadSnapshot } from "../lib/platform";
 import { HistoryPanel } from "./history-panel";
 
-export default async function HistoryPage() {
-  const snapshot = await loadSnapshot();
-
+export default function HistoryPage() {
   return (
-    <PortalFrame snapshot={snapshot}>
+    <>
       <section className="portal-main">
         <PageHeader
           title="History"
@@ -21,6 +17,6 @@ export default async function HistoryPage() {
 
         <HistoryPanel />
       </section>
-    </PortalFrame>
+    </>
   );
 }

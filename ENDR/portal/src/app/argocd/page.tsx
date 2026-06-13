@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { ArgoEmbedPanel } from "../components/argo-embed-panel";
-import { PortalFrame } from "../components/portal-frame";
 import { loadSnapshot, resolveArgoEmbedUrl } from "../lib/platform";
 
 export default async function ArgoCdPage() {
@@ -10,7 +9,7 @@ export default async function ArgoCdPage() {
   const embedUrl = resolveArgoEmbedUrl();
 
   return (
-    <PortalFrame snapshot={snapshot}>
+    <>
       <section className="portal-main">
         <section className="hero-row">
           <div>
@@ -36,6 +35,6 @@ export default async function ArgoCdPage() {
 
         <ArgoEmbedPanel embedUrl={embedUrl} linkOnly />
       </section>
-    </PortalFrame>
+    </>
   );
 }

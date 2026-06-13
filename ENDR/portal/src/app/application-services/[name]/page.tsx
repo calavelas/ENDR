@@ -7,7 +7,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { ArgoEmbedPanel } from "../../components/argo-embed-panel";
-import { PortalFrame } from "../../components/portal-frame";
 import { LinkButton } from "../../components/ui/button";
 import { PageHeader } from "../../components/ui/page-header";
 import { StatusPill } from "../../components/ui/status-pill";
@@ -174,7 +173,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   );
 
   return (
-    <PortalFrame snapshot={snapshot}>
+    <>
       <section className="portal-main">
         <PageHeader
           title={service.name}
@@ -220,6 +219,6 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
           </Link>
         </p>
       </section>
-    </PortalFrame>
+    </>
   );
 }

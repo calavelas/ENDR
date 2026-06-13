@@ -5,7 +5,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ArgoEmbedPanel } from "../../components/argo-embed-panel";
-import { PortalFrame } from "../../components/portal-frame";
 import { LinkButton } from "../../components/ui/button";
 import { PageHeader } from "../../components/ui/page-header";
 import { StatusPill } from "../../components/ui/status-pill";
@@ -122,7 +121,7 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
   );
 
   return (
-    <PortalFrame snapshot={snapshot}>
+    <>
       <section className="portal-main">
         <PageHeader
           title={platformService.name}
@@ -167,6 +166,6 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
           </Link>
         </p>
       </section>
-    </PortalFrame>
+    </>
   );
 }

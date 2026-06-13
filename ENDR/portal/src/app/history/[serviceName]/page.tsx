@@ -3,8 +3,6 @@ export const revalidate = 0;
 
 import Link from "next/link";
 
-import { PortalFrame } from "../../components/portal-frame";
-import { loadSnapshot } from "../../lib/platform";
 import { ServiceHistoryPanel } from "./service-history-panel";
 
 interface ServiceHistoryPageProps {
@@ -16,10 +14,9 @@ interface ServiceHistoryPageProps {
 export default async function ServiceHistoryPage({ params }: ServiceHistoryPageProps) {
   const { serviceName } = await params;
   const decodedServiceName = decodeURIComponent(serviceName);
-  const snapshot = await loadSnapshot();
 
   return (
-    <PortalFrame snapshot={snapshot}>
+    <>
       <section className="portal-main">
         <section className="hero-row">
           <div>
@@ -34,6 +31,6 @@ export default async function ServiceHistoryPage({ params }: ServiceHistoryPageP
 
         <ServiceHistoryPanel serviceName={decodedServiceName} />
       </section>
-    </PortalFrame>
+    </>
   );
 }
