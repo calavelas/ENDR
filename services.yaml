@@ -39,3 +39,21 @@ services:
       TRUST: '90'
       CATCHPHRASE: See you on the other side.
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
+- name: tryout-luna
+  namespace: edmunds
+  environments:
+  - gargantua
+  generator:
+    service:
+      template: endr-robot
+    gitops:
+      template: helm-service
+  overrides:
+    gateway:
+      enabled: true
+    env:
+      ROBOT_NAME: Luna
+      CATCHPHRASE: To the stars and back!
+      HUMOR: '80'
+      HONESTY: '95'
+      TRUST: '90'
