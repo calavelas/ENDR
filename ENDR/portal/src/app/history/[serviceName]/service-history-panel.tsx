@@ -169,6 +169,15 @@ function formatWorkflowRunStatus(run: TransactionWorkflowRun | null): string {
   return run.conclusion ? `completed (${run.conclusion})` : "completed";
 }
 
+function Badge({ label, tone }: { label: string; tone: "good" | "warn" | "bad" | "neutral" }) {
+  return (
+    <span className={`mc-badge ${tone}`}>
+      <span className="mc-badge-dot" />
+      {label}
+    </span>
+  );
+}
+
 export function ServiceHistoryPanel({ serviceName }: ServiceHistoryPanelProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -286,15 +295,15 @@ export function ServiceHistoryPanel({ serviceName }: ServiceHistoryPanelProps) {
 
   if (loading) {
     return (
-      <section className="panel">
-        <p className="embed-note">Loading service history...</p>
+      <section className="mc-panel">
+        <p className="mc-muted">Loading delivery history…</p>
       </section>
     );
   }
 
   if (error) {
     return (
-      <section className="panel">
+      <section className="mc-panel">
         <p className="form-error" role="alert">
           {error}
         </p>
@@ -304,199 +313,154 @@ export function ServiceHistoryPanel({ serviceName }: ServiceHistoryPanelProps) {
 
   if (!latest) {
     return (
-      <section className="panel">
-        <p className="embed-note">No create service history found for service <code>{serviceName}</code>.</p>
+      <section className="mc-panel">
+        <p className="mc-empty">
+          No delivery history found for <code>{serviceName}</code>.
+        </p>
       </section>
     );
   }
 
   return (
     <>
-      <section className="detail-grid" aria-label="service-history-summary">
-        <article className="panel detail-panel">
-          <h2>Latest Pull Request</h2>
-          <dl className="kv-list">
-            <div>
-              <dt>PR</dt>
-              <dd>
-                <a className="entity-link" href={latest.htmlUrl} target="_blank" rel="noreferrer">
-                  #{latest.number}
-                </a>
-              </dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>
-                <span className={`status-pill tone-${prTone(latest)}`}>{prLabel(latest)}</span>
-              </dd>
-            </div>
-            <div>
-              <dt>Author</dt>
-              <dd>{latest.author}</dd>
-            </div>
-            <div>
-              <dt>Created</dt>
-              <dd>{formatTimestamp(latest.createdAt)}</dd>
-            </div>
-            <div>
-              <dt>Updated</dt>
-              <dd>{formatTimestamp(latest.updatedAt)}</dd>
-            </div>
-            <div>
-              <dt>Merged</dt>
-              <dd>{formatTimestamp(latest.mergedAt)}</dd>
-            </div>
-            <div>
-              <dt>Branch</dt>
-              <dd>
-                <code>{latest.headRef}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>Head SHA</dt>
-              <dd>
-                <code>{latest.headSha.slice(0, 12)}</code>
-              </dd>
-            </div>
+      <div className="mc-detail-grid" aria-label="service-history-summary">
+        <article className="mc-panel">
+          <div className="mc-panel-head">
+            <h2 className="mc-panel-title">Latest pull request</h2>
+          </div>
+          <dl className="mc-kv">
+            <dt>PR</dt>
+            <dd>
+              <a className="mc-extlink" href={latest.htmlUrl} target="_blank" rel="noreferrer">
+                #{latest.number}
+              </a>
+            </dd>
+            <dt>Status</dt>
+            <dd>
+              <Badge label={prLabel(latest)} tone={prTone(latest)} />
+            </dd>
+            <dt>Author</dt>
+            <dd>{latest.author}</dd>
+            <dt>Created</dt>
+            <dd>{formatTimestamp(latest.createdAt)}</dd>
+            <dt>Merged</dt>
+            <dd>{formatTimestamp(latest.mergedAt)}</dd>
+            <dt>Branch</dt>
+            <dd className="mc-mono">{latest.headRef}</dd>
+            <dt>Head SHA</dt>
+            <dd className="mc-mono">{latest.headSha.slice(0, 12)}</dd>
           </dl>
         </article>
 
-        <article className="panel detail-panel">
-          <h2>Latest Pipeline</h2>
+        <article className="mc-panel" style={{ minWidth: 0 }}>
+          <div className="mc-panel-head">
+            <h2 className="mc-panel-title">Latest pipeline</h2>
+            {latestTransaction ? (
+              <Badge
+                label={formatPipelineStatus(latestTransaction.pipeline.status)}
+                tone={pipelineTone(latestTransaction.pipeline.status)}
+              />
+            ) : null}
+          </div>
           {latestTransaction ? (
             <>
-              <dl className="kv-list">
-                <div>
-                  <dt>State</dt>
-                  <dd>
-                    <span className={`status-pill tone-${pipelineTone(latestTransaction.pipeline.status)}`}>
-                      {formatPipelineStatus(latestTransaction.pipeline.status)}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Summary</dt>
-                  <dd>{latestTransaction.pipeline.message}</dd>
-                </div>
-              </dl>
-              <ul className="transaction-workflows">
+              <p className="mc-muted" style={{ marginTop: 0, fontSize: "0.84rem" }}>
+                {latestTransaction.pipeline.message}
+              </p>
+              <ul className="mc-run-list">
                 {[
                   { label: "PR Check", run: latestTransaction.pipeline.runs.prCheck },
                   { label: "Reconcile", run: latestTransaction.pipeline.runs.reconcileUpdate },
-                  { label: "Service build/deploy", run: latestTransaction.pipeline.runs.svcsBuildDeploy }
+                  { label: "Service build/deploy", run: latestTransaction.pipeline.runs.svcsBuildDeploy },
                 ].map(({ label, run }) => (
-                  <li key={label}>
-                    <span>{label}</span>
+                  <li key={label} className="mc-run-item">
+                    <span className="mc-run-name">{label}</span>
                     {run?.htmlUrl ? (
-                      <a className="entity-link" href={run.htmlUrl} target="_blank" rel="noreferrer">
+                      <a className="mc-extlink" href={run.htmlUrl} target="_blank" rel="noreferrer">
                         {formatWorkflowRunStatus(run)}
                       </a>
                     ) : (
-                      <span>{formatWorkflowRunStatus(run)}</span>
+                      <span className="mc-muted">{formatWorkflowRunStatus(run)}</span>
                     )}
-                    <span>{formatTimestamp(run?.updatedAt || null)}</span>
+                    <span className="mc-run-time">{formatTimestamp(run?.updatedAt || null)}</span>
                   </li>
                 ))}
               </ul>
-              {latestTransaction.pipeline.notifications.length > 0 && (
-                <ul className="transaction-notifications">
-                  {latestTransaction.pipeline.notifications.map((note) => (
-                    <li key={note}>{note}</li>
-                  ))}
-                </ul>
-              )}
-              {latestTransaction.timeline.length > 0 && (
-                <ul className="history-timeline-list">
-                  {latestTransaction.timeline.map((event) => (
-                    <li key={event.id}>
-                      <span className={`status-pill tone-${pipelineTone(event.status)}`}>{event.title}</span>
-                      <span>{event.detail}</span>
-                      <span>{formatTimestamp(event.timestamp)}</span>
-                      {event.url ? (
-                        <a className="entity-link" href={event.url} target="_blank" rel="noreferrer">
-                          Open
-                        </a>
-                      ) : (
-                        <span className="embed-note">n/a</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
             </>
           ) : (
-            <p className="embed-note">Pipeline detail is loading...</p>
+            <p className="mc-muted">Pipeline detail is loading…</p>
           )}
         </article>
-      </section>
+      </div>
 
       {transactionError && (
-        <section className="panel">
-          <p className="form-error" role="alert">
-            {transactionError}
-          </p>
-        </section>
+        <p className="form-error" role="alert">
+          {transactionError}
+        </p>
       )}
 
       {hasServiceMismatch && (
-        <section className="warning-box" aria-live="polite">
-          <h2>Warning</h2>
+        <section className="mc-warning" aria-live="polite">
+          <strong>Warning</strong>
           <ul>
             <li>Some results returned from GitHub do not match this service filter exactly.</li>
           </ul>
         </section>
       )}
 
-      <section className="panel service-table-wrap" aria-label="service-history-table">
-        <table className="service-table">
-          <thead>
-            <tr>
-              <th>PR</th>
-              <th>Title</th>
-              <th>PR Status</th>
-              <th>Pipeline</th>
-              <th>Author</th>
-              <th>Created</th>
-              <th>Updated</th>
-              <th>Merged</th>
-              <th>Head Branch</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => {
-              const status = transactionMap[item.number];
-              return (
-                <tr key={item.number}>
-                  <td>
-                    <a className="entity-link" href={item.htmlUrl} target="_blank" rel="noreferrer">
-                      #{item.number}
-                    </a>
-                  </td>
-                  <td>{item.title}</td>
-                  <td>
-                    <span className={`status-pill tone-${prTone(item)}`}>{prLabel(item)}</span>
-                  </td>
-                  <td>
-                    {status ? (
-                      <span className={`status-pill tone-${pipelineTone(status.pipeline.status)}`}>
-                        {formatPipelineStatus(status.pipeline.status)}
-                      </span>
-                    ) : (
-                      "loading..."
-                    )}
-                  </td>
-                  <td>{item.author}</td>
-                  <td>{formatTimestamp(item.createdAt)}</td>
-                  <td>{formatTimestamp(item.updatedAt)}</td>
-                  <td>{formatTimestamp(item.mergedAt)}</td>
-                  <td>
-                    <code>{item.headRef}</code>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <section className="mc-panel">
+        <div className="mc-panel-head">
+          <h2 className="mc-panel-title">Pull requests</h2>
+          <span className="mc-count-chip">{items.length}</span>
+        </div>
+        <div className="mc-table-wrap">
+          <table className="mc-table">
+            <thead>
+              <tr>
+                <th>PR</th>
+                <th>Title</th>
+                <th>PR Status</th>
+                <th>Pipeline</th>
+                <th>Author</th>
+                <th>Created</th>
+                <th>Merged</th>
+                <th>Branch</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => {
+                const status = transactionMap[item.number];
+                return (
+                  <tr key={item.number}>
+                    <td>
+                      <a className="mc-extlink" href={item.htmlUrl} target="_blank" rel="noreferrer">
+                        #{item.number}
+                      </a>
+                    </td>
+                    <td>{item.title}</td>
+                    <td>
+                      <Badge label={prLabel(item)} tone={prTone(item)} />
+                    </td>
+                    <td>
+                      {status ? (
+                        <Badge
+                          label={formatPipelineStatus(status.pipeline.status)}
+                          tone={pipelineTone(status.pipeline.status)}
+                        />
+                      ) : (
+                        <span className="mc-muted">loading…</span>
+                      )}
+                    </td>
+                    <td>{item.author}</td>
+                    <td>{formatTimestamp(item.createdAt)}</td>
+                    <td>{formatTimestamp(item.mergedAt)}</td>
+                    <td className="mc-mono">{item.headRef}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
     </>
   );

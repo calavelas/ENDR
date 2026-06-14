@@ -171,6 +171,15 @@ function pipelineForItem(item: CaseHistoryItem, transaction: TransactionStatusRe
   return item.pipelineStatus?.trim() || "unknown";
 }
 
+function Badge({ label, tone }: { label: string; tone: "good" | "warn" | "bad" | "neutral" }) {
+  return (
+    <span className={`mc-badge ${tone}`}>
+      <span className="mc-badge-dot" />
+      {label}
+    </span>
+  );
+}
+
 export function HistoryPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -297,15 +306,15 @@ export function HistoryPanel() {
 
   if (loading) {
     return (
-      <section className="panel">
-        <p className="embed-note">Loading create service history...</p>
+      <section className="mc-panel">
+        <p className="mc-muted">Loading delivery history…</p>
       </section>
     );
   }
 
   if (error) {
     return (
-      <section className="panel">
+      <section className="mc-panel">
         <p className="form-error" role="alert">
           {error}
         </p>
@@ -313,163 +322,154 @@ export function HistoryPanel() {
     );
   }
 
+  const mergedCount = items.filter((item) => item.merged).length;
+  const openCount = items.filter((item) => item.state === "open").length;
+
   return (
     <>
-      <section className="panel history-filter-panel">
-        <div className="history-filter-grid">
-          <label>
-            PR State
-            <select value={prStateFilter} onChange={(event) => setPrStateFilter(event.target.value)}>
-              <option value="all">all</option>
-              <option value="open">open</option>
-              <option value="merged">merged</option>
-              <option value="closed">closed (not merged)</option>
-            </select>
-          </label>
-
-          <label>
-            Pipeline Status
-            <select value={pipelineFilter} onChange={(event) => setPipelineFilter(event.target.value)}>
-              <option value="all">all</option>
-              <option value="success">success</option>
-              <option value="running">running</option>
-              <option value="pending">pending</option>
-              <option value="waiting-merge">waiting-merge</option>
-              <option value="failed">failed</option>
-              <option value="unknown">unknown</option>
-            </select>
-          </label>
-
-          <label>
-            Author
-            <select value={authorFilter} onChange={(event) => setAuthorFilter(event.target.value)}>
-              <option value="all">all</option>
-              {authors.map((author) => (
-                <option key={author} value={author}>
-                  {author}
-                </option>
-              ))}
-            </select>
-          </label>
+      <section className="mc-kpis">
+        <div className="mc-kpi neutral">
+          <span className="mc-kpi-value">{items.length}</span>
+          <span className="mc-kpi-label">Pull requests</span>
+          <span className="mc-kpi-sub">Portal-created</span>
         </div>
-
-        <p className="embed-note">
-          Showing <strong>{filteredItems.length}</strong> of <strong>{items.length}</strong> portal-created service PRs.
-        </p>
-
-        {transactionError && (
-          <p className="form-error" role="alert">
-            {transactionError}
-          </p>
-        )}
+        <div className="mc-kpi good">
+          <span className="mc-kpi-value">{mergedCount}</span>
+          <span className="mc-kpi-label">Merged</span>
+          <span className="mc-kpi-sub">Shipped</span>
+        </div>
+        <div className="mc-kpi warn">
+          <span className="mc-kpi-value">{openCount}</span>
+          <span className="mc-kpi-label">Open</span>
+          <span className="mc-kpi-sub">In flight</span>
+        </div>
       </section>
 
-      <section className="panel service-table-wrap" aria-label="history-table">
-        <table className="service-table history-table">
-          <thead>
-            <tr>
-              <th>Service</th>
-              <th>PR</th>
-              <th>PR Status</th>
-              <th>Pipeline</th>
-              <th>Author</th>
-              <th>Created</th>
-              <th>Updated</th>
-              <th>Merged</th>
-              <th>Workflows</th>
-              <th>Links</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.map((item) => {
-              const transaction = transactionMap[item.number];
-              const pipelineStatus = pipelineForItem(item, transaction);
-              const runs = transaction?.pipeline.runs;
-              return (
-                <tr key={item.number}>
-                  <td>
-                    {item.serviceName ? (
-                      <Link className="entity-link" href={`/history/${encodeURIComponent(item.serviceName)}`}>
-                        {item.serviceName}
-                      </Link>
-                    ) : (
-                      "n/a"
-                    )}
-                  </td>
-                  <td>
-                    <a className="entity-link" href={item.htmlUrl} target="_blank" rel="noreferrer">
-                      #{item.number}
-                    </a>
-                  </td>
-                  <td>
-                    <span className={`status-pill tone-${prTone(item)}`}>{prLabel(item)}</span>
-                  </td>
-                  <td>
-                    <span className={`status-pill tone-${pipelineTone(pipelineStatus)}`}>
-                      {formatPipelineStatus(pipelineStatus)}
-                    </span>
-                  </td>
-                  <td>{item.author}</td>
-                  <td>{formatTimestamp(item.createdAt)}</td>
-                  <td>{formatTimestamp(item.updatedAt)}</td>
-                  <td>{formatTimestamp(item.mergedAt)}</td>
-                  <td>
-                    <div className="history-link-set">
-                      {runs?.prCheck?.htmlUrl ? (
-                        <a className="entity-link" href={runs.prCheck.htmlUrl} target="_blank" rel="noreferrer">
-                          PR
-                        </a>
-                      ) : (
-                        <span className="embed-note">PR n/a</span>
-                      )}
-                      {runs?.reconcileUpdate?.htmlUrl ? (
-                        <a className="entity-link" href={runs.reconcileUpdate.htmlUrl} target="_blank" rel="noreferrer">
-                          Reconcile
-                        </a>
-                      ) : (
-                        <span className="embed-note">Rec n/a</span>
-                      )}
-                      {runs?.svcsBuildDeploy?.htmlUrl ? (
-                        <a className="entity-link" href={runs.svcsBuildDeploy.htmlUrl} target="_blank" rel="noreferrer">
-                          Build
-                        </a>
-                      ) : (
-                        <span className="embed-note">Build n/a</span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    {item.serviceName ? (
-                      <div className="history-link-set">
-                        <Link className="entity-link" href={`/application-services/${encodeURIComponent(item.serviceName)}`}>
-                          Service
-                        </Link>
-                        <a
-                          className="entity-link"
-                          href={`https://${encodeURIComponent(item.serviceName)}.calavelas.net`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Access
-                        </a>
-                      </div>
-                    ) : (
-                      "n/a"
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+      <div className="mc-toolbar">
+        <label className="mc-filter">
+          <span>PR state</span>
+          <select className="mc-select" value={prStateFilter} onChange={(event) => setPrStateFilter(event.target.value)}>
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="merged">Merged</option>
+            <option value="closed">Closed (not merged)</option>
+          </select>
+        </label>
+        <label className="mc-filter">
+          <span>Pipeline</span>
+          <select className="mc-select" value={pipelineFilter} onChange={(event) => setPipelineFilter(event.target.value)}>
+            <option value="all">All</option>
+            <option value="success">Success</option>
+            <option value="running">Running</option>
+            <option value="pending">Pending</option>
+            <option value="waiting-merge">Waiting-merge</option>
+            <option value="failed">Failed</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </label>
+        <label className="mc-filter">
+          <span>Author</span>
+          <select className="mc-select" value={authorFilter} onChange={(event) => setAuthorFilter(event.target.value)}>
+            <option value="all">All</option>
+            {authors.map((author) => (
+              <option key={author} value={author}>
+                {author}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className="mc-toolbar-note">
+          {filteredItems.length} of {items.length}
+        </span>
+      </div>
 
-            {filteredItems.length === 0 && (
-              <tr>
-                <td colSpan={10} className="empty-cell">
-                  No portal-created service pull requests match current filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {transactionError && (
+        <p className="form-error" role="alert">
+          {transactionError}
+        </p>
+      )}
+
+      <section className="mc-panel">
+        <div className="mc-panel-head">
+          <h2 className="mc-panel-title">Delivery history</h2>
+          <span className="mc-count-chip">{filteredItems.length}</span>
+        </div>
+        {filteredItems.length === 0 ? (
+          <p className="mc-empty">No portal-created pull requests match the current filters.</p>
+        ) : (
+          <div className="mc-table-wrap">
+            <table className="mc-table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>PR</th>
+                  <th>PR Status</th>
+                  <th>Pipeline</th>
+                  <th>Author</th>
+                  <th>Created</th>
+                  <th>Merged</th>
+                  <th>Workflows</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.map((item) => {
+                  const transaction = transactionMap[item.number];
+                  const pipelineStatus = pipelineForItem(item, transaction);
+                  const runs = transaction?.pipeline.runs;
+                  return (
+                    <tr key={item.number}>
+                      <td>
+                        {item.serviceName ? (
+                          <Link className="mc-table-name" href={`/history/${encodeURIComponent(item.serviceName)}`}>
+                            {item.serviceName}
+                          </Link>
+                        ) : (
+                          <span className="mc-muted">n/a</span>
+                        )}
+                      </td>
+                      <td>
+                        <a className="mc-extlink" href={item.htmlUrl} target="_blank" rel="noreferrer">
+                          #{item.number}
+                        </a>
+                      </td>
+                      <td>
+                        <Badge label={prLabel(item)} tone={prTone(item)} />
+                      </td>
+                      <td>
+                        <Badge label={formatPipelineStatus(pipelineStatus)} tone={pipelineTone(pipelineStatus)} />
+                      </td>
+                      <td>{item.author}</td>
+                      <td>{formatTimestamp(item.createdAt)}</td>
+                      <td>{formatTimestamp(item.mergedAt)}</td>
+                      <td>
+                        <span className="mc-link-set">
+                          {runs?.prCheck?.htmlUrl ? (
+                            <a className="mc-extlink" href={runs.prCheck.htmlUrl} target="_blank" rel="noreferrer">
+                              PR
+                            </a>
+                          ) : null}
+                          {runs?.reconcileUpdate?.htmlUrl ? (
+                            <a className="mc-extlink" href={runs.reconcileUpdate.htmlUrl} target="_blank" rel="noreferrer">
+                              Reconcile
+                            </a>
+                          ) : null}
+                          {runs?.svcsBuildDeploy?.htmlUrl ? (
+                            <a className="mc-extlink" href={runs.svcsBuildDeploy.htmlUrl} target="_blank" rel="noreferrer">
+                              Build
+                            </a>
+                          ) : null}
+                          {!runs?.prCheck?.htmlUrl && !runs?.reconcileUpdate?.htmlUrl && !runs?.svcsBuildDeploy?.htmlUrl ? (
+                            <span className="mc-muted">—</span>
+                          ) : null}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </>
   );

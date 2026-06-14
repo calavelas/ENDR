@@ -23,6 +23,11 @@ export default async function ServiceHistoryPage({ params }: ServiceHistoryPageP
         Back to delivery
       </Link>
 
+      <div className="mc-detail-head">
+        <h1 className="mc-detail-title">{decodedServiceName}</h1>
+        <span className="mc-detail-sub">Delivery history</span>
+      </div>
+
       <ServiceHistoryPanel serviceName={decodedServiceName} />
     </div>
   );

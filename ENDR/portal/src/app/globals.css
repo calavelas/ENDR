@@ -3381,6 +3381,18 @@ html[data-theme="light"] body { background: #f4f5f8; }
   cursor: pointer;
 }
 .mc-select:focus { border-color: var(--mc-line-bright); }
+/* Labelled filter (history toolbar) + a right-aligned count note. */
+.mc-filter { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--mc-muted); }
+.mc-filter > span { white-space: nowrap; }
+.mc-toolbar-note { margin-left: auto; color: var(--mc-muted); font-size: 0.8rem; }
+/* Inline link set (e.g. workflow links in the history table). */
+.mc-link-set { display: inline-flex; flex-wrap: wrap; gap: 0.5rem; }
+/* Pipeline run list (service delivery page). */
+.mc-run-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.mc-run-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.6rem; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--mc-line); font-size: 0.84rem; }
+.mc-run-item:last-child { border-bottom: 0; }
+.mc-run-name { color: var(--mc-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-run-time { color: var(--mc-muted); font-size: 0.74rem; font-family: var(--font-mono); white-space: nowrap; }
 .mc-seg { display: inline-flex; border: 1px solid var(--mc-line); border-radius: 999px; padding: 3px; background: var(--mc-surface); }
 .mc-seg-opt {
   border: 0;
