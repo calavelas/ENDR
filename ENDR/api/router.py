@@ -593,6 +593,27 @@ def _service_is_protected(entry: object) -> bool:
     return str(env.get(_PROTECT_ENV_KEY, "")).strip().lower() in ("false", "0", "no", "off")
 
 
+def _entry_status_in_raw(raw: bytes, name: str) -> tuple[bool, bool]:
+    """Return (exists, protected) for `name` in the given services.yaml bytes.
+    Used to re-validate against the exact content being modified (closes the TOCTOU
+    window between the eligibility check and the GitHub fetch)."""
+    import yaml
+
+    data = yaml.safe_load(raw.decode("utf-8")) or {}
+    services = data.get("services", []) if isinstance(data, dict) else []
+    if not isinstance(services, list):
+        return False, False
+    for service in services:
+        if not isinstance(service, dict) or service.get("name") != name:
+            continue
+        overrides = service.get("overrides")
+        env = overrides.get("env") if isinstance(overrides, dict) else None
+        env = env if isinstance(env, dict) else {}
+        protected = str(env.get(_PROTECT_ENV_KEY, "")).strip().lower() in ("false", "0", "no", "off")
+        return True, protected
+    return False, False
+
+
 def _decommission_eligibility(name: str) -> DecommissionEligibility:
     entry = _find_service_entry(name)
     if entry is None:
@@ -635,6 +656,16 @@ def decommission_service(name: str, payload: DecommissionServiceRequest) -> Deco
     current = client.get_file_content(base_branch, "services.yaml")
     if current is None:
         raise HTTPException(status_code=400, detail="services.yaml not found on the default branch")
+
+    # Re-validate against the exact content we're about to modify — the eligibility
+    # check above used a possibly-stale local snapshot. This closes the TOCTOU window
+    # where a service could become protected between the two reads.
+    exists, protected = _entry_status_in_raw(current, name.strip())
+    if not exists:
+        raise HTTPException(status_code=404, detail=f"service not found in services.yaml: {name}")
+    if protected:
+        raise HTTPException(status_code=403, detail=f"cannot decommission '{name}': protected core unit")
+
     try:
         updated = remove_service_entry_bytes(current, name.strip())
     except ValueError as exc:
