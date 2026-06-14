@@ -160,8 +160,14 @@ jobs:
         )
       ) &&
       startsWith(github.event.pull_request.head.ref, 'portal/') &&
-      startsWith(github.event.pull_request.title, 'portal - Adding service :') &&
-      contains(github.event.pull_request.body || '', 'Registered by the IDP portal.')
+      (
+        startsWith(github.event.pull_request.title, 'portal - Adding service :') ||
+        startsWith(github.event.pull_request.title, 'portal - Decommission service :')
+      ) &&
+      (
+        contains(github.event.pull_request.body || '', 'Registered by the IDP portal.') ||
+        contains(github.event.pull_request.body || '', 'Decommissioned from the ENDR portal.')
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Approve and merge service PR

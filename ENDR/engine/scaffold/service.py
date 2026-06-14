@@ -285,6 +285,31 @@ def _render_updated_services_config(services_config_path: Path, service: Service
     )
 
 
+def remove_service_entry_bytes(raw_services_config: bytes, name: str) -> bytes:
+    """Return services.yaml with the named entry removed (the decommission/destroy
+    path). Raises ValueError if the service is not present."""
+    try:
+        import yaml
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("PyYAML is required for services config updates") from exc
+
+    raw_data = yaml.safe_load(raw_services_config.decode("utf-8")) or {}
+    if not isinstance(raw_data, dict):
+        raise ValueError("services.yaml root must be a mapping")
+
+    existing_services = raw_data.get("services", [])
+    if not isinstance(existing_services, list):
+        raise ValueError("services.yaml services must be a list")
+
+    filtered = [s for s in existing_services if not (isinstance(s, dict) and s.get("name") == name)]
+    if len(filtered) == len(existing_services):
+        raise ValueError(f"service not found in services.yaml: {name}")
+
+    raw_data["services"] = filtered
+    rendered = yaml.safe_dump(raw_data, sort_keys=False, allow_unicode=False)
+    return rendered.encode("utf-8")
+
+
 def _collect_commit_files(
     stage_service_dir: Path,
     stage_gitops_dir: Path,

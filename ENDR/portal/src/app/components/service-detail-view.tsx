@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -42,7 +43,91 @@ export interface ServiceDetailViewProps {
   readme?: ReadmeData | null;
   argoUrl: string;
   argoDetail?: ServiceArgoDetail | null;
+  decommissionable?: boolean;
+  decommissionReason?: string;
   warnings: string[];
+}
+
+// Decommission (destroy) control. Active only for portal-managed, non-protected
+// services; greyed out (with a reason) for core platform apps and protected
+// robots like TARS/CASE. Confirm -> opens a removal PR (auto-merged) -> reconcile
+// prunes the chart + ArgoCD app.
+function DecommissionButton({
+  name,
+  decommissionable,
+  reason,
+}: {
+  name: string;
+  decommissionable: boolean;
+  reason?: string;
+}) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!decommissionable) {
+    return (
+      <button
+        type="button"
+        className="mc-btn mc-btn-sm mc-btn-soft"
+        disabled
+        title={reason ? `Protected — ${reason}` : "Protected — cannot be decommissioned"}
+      >
+        <Icon.AlertTriangle size={14} />
+        Decommission
+      </button>
+    );
+  }
+
+  const run = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/platform/services/${encodeURIComponent(name)}/decommission`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      });
+      const body = (await res.json().catch(() => ({}))) as { detail?: string; pullRequestNumber?: number };
+      if (!res.ok) {
+        throw new Error(typeof body.detail === "string" ? body.detail : `HTTP ${res.status}`);
+      }
+      const pr = body.pullRequestNumber ? `&pr=${body.pullRequestNumber}` : "";
+      router.replace(`/history/${encodeURIComponent(name)}?decommissioned=1${pr}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "decommission failed");
+      setBusy(false);
+    }
+  };
+
+  if (confirming) {
+    return (
+      <span className="mc-confirm">
+        <span className="mc-confirm-q">
+          Decommission <b>{name}</b>?
+        </span>
+        <button type="button" className="mc-btn mc-btn-sm mc-btn-danger" onClick={() => void run()} disabled={busy}>
+          {busy ? "Opening PR…" : "Confirm"}
+        </button>
+        <button type="button" className="mc-btn mc-btn-sm mc-btn-soft" onClick={() => setConfirming(false)} disabled={busy}>
+          Cancel
+        </button>
+        {error ? (
+          <span className="form-error" role="alert">
+            {error}
+          </span>
+        ) : null}
+      </span>
+    );
+  }
+
+  return (
+    <button type="button" className="mc-btn mc-btn-sm mc-btn-danger" onClick={() => setConfirming(true)}>
+      <Icon.AlertTriangle size={14} />
+      Decommission
+    </button>
+  );
 }
 
 // "Kanin Kongchatree <a@b.com>" -> "Kanin Kongchatree".
@@ -123,7 +208,7 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
             {environmentLabel(props.namespace, mode)}
           </span>
           <span className="mc-chip mc-mono">{props.imageTag ?? "n/a"}</span>
-          {props.githubFolderUrl || props.argoUrl ? (
+          {props.githubFolderUrl || props.argoUrl || props.kind === "application" ? (
             <span className="mc-detail-hero-actions">
               {props.githubFolderUrl ? (
                 <a className="mc-btn mc-btn-sm mc-btn-soft" href={props.githubFolderUrl} target="_blank" rel="noreferrer">
@@ -136,6 +221,13 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
                   Open in ArgoCD
                   <Icon.ExternalLink size={14} />
                 </a>
+              ) : null}
+              {props.kind === "application" ? (
+                <DecommissionButton
+                  name={props.name}
+                  decommissionable={props.decommissionable ?? false}
+                  reason={props.decommissionReason}
+                />
               ) : null}
             </span>
           ) : null}

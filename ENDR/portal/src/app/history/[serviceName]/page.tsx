@@ -12,15 +12,17 @@ interface ServiceHistoryPageProps {
   }>;
   searchParams: Promise<{
     created?: string;
+    decommissioned?: string;
     pr?: string;
   }>;
 }
 
 export default async function ServiceHistoryPage({ params, searchParams }: ServiceHistoryPageProps) {
   const { serviceName } = await params;
-  const { created, pr } = await searchParams;
+  const { created, decommissioned, pr } = await searchParams;
   const decodedServiceName = decodeURIComponent(serviceName);
   const justCreated = created === "1";
+  const justDecommissioned = decommissioned === "1";
 
   return (
     <div className="mc">
@@ -51,6 +53,26 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
               )}{" "}
               CI validates and merges it, then ArgoCD deploys it — this page tracks the rollout live.
               It&apos;s safe to refresh or bookmark.
+            </p>
+          </div>
+        </aside>
+      ) : justDecommissioned ? (
+        <aside className="mc-explain idp" role="status">
+          <span className="mc-explain-mark" aria-hidden="true">
+            ⚠
+          </span>
+          <div className="mc-explain-body">
+            <p>
+              <b>Decommission requested.</b>{" "}
+              {pr ? (
+                <>
+                  Pull request <b>#{pr}</b> is open.
+                </>
+              ) : (
+                "A pull request is open."
+              )}{" "}
+              On merge, reconcile removes its config and ArgoCD prunes the workload from the cluster.
+              This page tracks it live.
             </p>
           </div>
         </aside>

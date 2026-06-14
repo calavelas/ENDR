@@ -11,6 +11,7 @@ import {
   buildGithubRawFileUrl,
   buildServiceFolderPath,
   findServiceByName,
+  loadDecommissionEligibility,
   loadServiceArgoDetail,
   loadSnapshot,
   resolveArgoEmbedUrl,
@@ -45,6 +46,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const serviceAccessHost = `${service.name}.calavelas.net`;
   const serviceAccessUrl = `https://${serviceAccessHost}`;
   const argoDetail = await loadServiceArgoDetail(service.name);
+  const decommission = await loadDecommissionEligibility(service.name);
 
   let serviceReadmeContent = "";
   let serviceReadmeError = "";
@@ -88,6 +90,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
       }}
       argoUrl={serviceArgoUrl}
       argoDetail={argoDetail}
+      decommissionable={decommission.decommissionable}
+      decommissionReason={decommission.reason}
       warnings={snapshot.warnings}
     />
   );

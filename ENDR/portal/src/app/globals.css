@@ -2572,6 +2572,11 @@ html[data-theme="light"] body { background: #f4f5f8; }
 .mc-btn:hover { border-color: var(--mc-ink); background: var(--mc-surface-2); }
 .mc-btn-soft { border-color: var(--mc-line); color: var(--mc-ink-2); }
 .mc-btn-soft:hover { border-color: var(--mc-line-bright); color: var(--mc-ink); background: transparent; }
+.mc-btn-danger { border-color: color-mix(in srgb, var(--mc-bad) 45%, transparent); color: var(--mc-bad); background: color-mix(in srgb, var(--mc-bad) 8%, transparent); }
+.mc-btn-danger:hover { border-color: var(--mc-bad); color: var(--mc-bad); background: color-mix(in srgb, var(--mc-bad) 16%, transparent); }
+.mc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.mc-confirm { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.82rem; color: var(--mc-ink-2); }
+.mc-confirm-q { color: var(--mc-ink); }
 .mc-btn-lg { padding: 0.85rem 1.4rem; font-size: 0.88rem; }
 .mc-btn-sm { padding: 0.52rem 0.9rem; font-size: 0.72rem; }
 .mc-btn-block { display: flex; width: 100%; justify-content: center; }

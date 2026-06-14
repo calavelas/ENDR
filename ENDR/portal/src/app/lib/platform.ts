@@ -341,6 +341,32 @@ export async function loadServiceArgoDetail(name: string): Promise<ServiceArgoDe
   }
 }
 
+export interface DecommissionEligibility {
+  serviceName: string;
+  decommissionable: boolean;
+  protected: boolean;
+  reason: string;
+}
+
+export async function loadDecommissionEligibility(name: string): Promise<DecommissionEligibility> {
+  const apiBase = resolveApiBase();
+  const endpoint = `${apiBase}/api/platform/services/${encodeURIComponent(name)}/decommission`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SNAPSHOT_FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return (await response.json()) as DecommissionEligibility;
+  } catch {
+    // Fail safe: if eligibility can't be determined, treat as not decommissionable.
+    return { serviceName: name, decommissionable: false, protected: false, reason: "eligibility unavailable" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function sortByName(nodes: ServiceNode[]): ServiceNode[] {
   return [...nodes].sort((left, right) => left.name.localeCompare(right.name));
 }

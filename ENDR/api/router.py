@@ -7,7 +7,12 @@ from pydantic import BaseModel, Field
 from pathlib import Path
 
 from engine.scaffold.github_client import GitHubAPIError, GitHubClient
-from engine.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
+from engine.scaffold.service import (
+    CreateServiceRequest,
+    CreateServiceResponse,
+    create_service,
+    remove_service_entry_bytes,
+)
 from api.snapshot import (
     PlatformSnapshot,
     ServiceArgoDetail,
@@ -544,6 +549,134 @@ def edit_service_file(name: str, payload: EditServiceFileRequest) -> EditService
     return EditServiceFileResponse(
         serviceName=name,
         path=normalized,
+        dryRun=False,
+        branchName=branch_name,
+        pullRequestUrl=pr.html_url,
+        pullRequestNumber=pr.number,
+    )
+
+
+# ── Decommission (Phase E destroy) — remove a portal-created service via PR ────
+_PROTECT_ENV_KEY = "ENDR_ALLOW_SELF_DESTRUCT"
+
+
+class DecommissionEligibility(BaseModel):
+    serviceName: str
+    decommissionable: bool
+    protected: bool
+    reason: str = ""
+
+
+class DecommissionServiceRequest(BaseModel):
+    dryRun: bool = False
+
+
+class DecommissionServiceResponse(BaseModel):
+    serviceName: str
+    dryRun: bool
+    branchName: str | None = None
+    pullRequestUrl: str | None = None
+    pullRequestNumber: int | None = None
+
+
+def _find_service_entry(name: str) -> object | None:
+    _idp, services_config, _paths, _svcs_url = load_platform_configs()
+    target = name.strip()
+    for service in services_config.services:
+        if service.name == target:
+            return service
+    return None
+
+
+def _service_is_protected(entry: object) -> bool:
+    env = getattr(getattr(entry, "overrides", None), "env", None) or {}
+    return str(env.get(_PROTECT_ENV_KEY, "")).strip().lower() in ("false", "0", "no", "off")
+
+
+def _decommission_eligibility(name: str) -> DecommissionEligibility:
+    entry = _find_service_entry(name)
+    if entry is None:
+        # Platform/core services are not in services.yaml and cannot be removed here.
+        return DecommissionEligibility(
+            serviceName=name, decommissionable=False, protected=False,
+            reason="not a portal-managed service",
+        )
+    if _service_is_protected(entry):
+        return DecommissionEligibility(
+            serviceName=name, decommissionable=False, protected=True,
+            reason="protected core unit (self-destruct disabled)",
+        )
+    return DecommissionEligibility(serviceName=name, decommissionable=True, protected=False)
+
+
+@router.get("/api/platform/services/{name}/decommission", response_model=DecommissionEligibility)
+def get_decommission_eligibility(name: str) -> DecommissionEligibility:
+    return _decommission_eligibility(name)
+
+
+@router.post("/api/platform/services/{name}/decommission", response_model=DecommissionServiceResponse)
+def decommission_service(name: str, payload: DecommissionServiceRequest) -> DecommissionServiceResponse:
+    # Server-side enforcement (defends against a crafted request bypassing the UI):
+    # only portal-managed, non-protected services can be removed.
+    eligibility = _decommission_eligibility(name)
+    if not eligibility.decommissionable:
+        raise HTTPException(status_code=403, detail=f"cannot decommission '{name}': {eligibility.reason}")
+
+    if payload.dryRun:
+        return DecommissionServiceResponse(serviceName=name, dryRun=True)
+
+    if not os.environ.get("GITHUB_TOKEN", "").strip():
+        raise HTTPException(status_code=400, detail="GITHUB_TOKEN is required to open a pull request")
+
+    idp_config, _services_config, _paths, _svcs_url = load_platform_configs()
+    client = _github_client(idp_config)
+    base_branch = idp_config.config.git.defaultBranch
+
+    current = client.get_file_content(base_branch, "services.yaml")
+    if current is None:
+        raise HTTPException(status_code=400, detail="services.yaml not found on the default branch")
+    try:
+        updated = remove_service_entry_bytes(current, name.strip())
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S")
+    branch_name = f"portal/{name}-decommission-{timestamp}"
+    try:
+        base_sha = client.get_ref_sha(base_branch)
+        client.create_branch(branch_name, base_sha)
+        client.create_or_update_file(
+            branch=branch_name,
+            file_path="services.yaml",
+            content_bytes=updated,
+            commit_message=f"feat(idp): decommission service {name}",
+        )
+        pr = client.create_pull_request(
+            title=f"portal - Decommission service : {name}",
+            body=(
+                "Decommissioned from the ENDR portal.\n\n"
+                f"- service: `{name}`\n"
+                "- changed files in PR: `services.yaml` only\n"
+                "- on merge, reconcile prunes the chart + ArgoCD app and ArgoCD removes the workload"
+            ),
+            head=branch_name,
+            base=base_branch,
+        )
+    except GitHubAPIError as exc:
+        raise HTTPException(status_code=400, detail=f"github api failure during decommission PR: {exc}") from exc
+
+    try:
+        record_case_submission(
+            service_name=name,
+            pull_request_number=pr.number,
+            pull_request_url=pr.html_url,
+            branch_name=branch_name,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+    return DecommissionServiceResponse(
+        serviceName=name,
         dryRun=False,
         branchName=branch_name,
         pullRequestUrl=pr.html_url,
