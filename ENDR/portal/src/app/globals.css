@@ -3580,3 +3580,77 @@ select.wiz-input { cursor: pointer; }
   .wiz-step-label { display: none; }
   .wiz-step { padding: 0.5rem; }
 }
+
+/* Field label row (keeps the * / "locked" tag on the same line as the label) */
+.wiz-label { display: inline-flex; align-items: baseline; gap: 0.3rem; color: var(--mc-ink-2); }
+.wiz-lock { margin-left: auto; font-size: 0.66rem; letter-spacing: 0.04em; color: var(--mc-warn); }
+.wiz-input:disabled { opacity: 0.55; cursor: not-allowed; }
+.wiz-toggle-row input:disabled { cursor: not-allowed; }
+
+/* Syntax-highlighted code editor (overlay textarea + Prism <pre>) */
+.code-edit {
+  position: relative;
+  border: 1px solid var(--mc-line);
+  border-radius: 10px;
+  background: var(--mc-bg);
+  overflow: hidden;
+}
+.code-edit:focus-within { border-color: var(--mc-line-bright); }
+.code-edit-pre,
+.code-edit-ta {
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  tab-size: 2;
+  border: 0;
+}
+.code-edit-pre { min-height: 300px; color: var(--mc-ink-2); pointer-events: none; }
+.code-edit-pre code { font: inherit; background: none; border: 0; padding: 0; }
+.code-edit-ta {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--mc-ink);
+  outline: none;
+  resize: none;
+  overflow: hidden;
+}
+
+/* Prism token theme (mission-control palette) — for .code-edit + file viewer */
+.code-hl .token.comment,
+.code-hl .token.prolog,
+.code-hl .token.doctype,
+.code-hl .token.cdata { color: var(--mc-faint); font-style: italic; }
+.code-hl .token.punctuation { color: var(--mc-muted); }
+.code-hl .token.property,
+.code-hl .token.tag,
+.code-hl .token.key,
+.code-hl .token.atrule,
+.code-hl .token.attr-name,
+.code-hl .token.selector { color: var(--mc-info); }
+.code-hl .token.boolean,
+.code-hl .token.number,
+.code-hl .token.constant,
+.code-hl .token.symbol { color: var(--mc-warn); }
+.code-hl .token.string,
+.code-hl .token.char,
+.code-hl .token.attr-value,
+.code-hl .token.builtin,
+.code-hl .token.inserted { color: var(--mc-good); }
+.code-hl .token.operator,
+.code-hl .token.entity,
+.code-hl .token.url { color: var(--mc-ink-2); }
+.code-hl .token.keyword,
+.code-hl .token.function,
+.code-hl .token.class-name { color: #b18cf2; }
+.code-hl .token.important,
+.code-hl .token.bold { font-weight: 700; }
+.code-hl .token.italic { font-style: italic; }

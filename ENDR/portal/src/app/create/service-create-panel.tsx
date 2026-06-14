@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { CodeBlock } from "../components/code-block";
 import * as Icon from "../components/icons";
 import { useNarrative } from "../lib/narrative";
 import {
@@ -962,9 +963,7 @@ export function CreateServicePanel() {
             <p className="mc-muted" style={{ fontSize: "0.8rem" }}>
               <code>{fileViewer.path}</code> • {fileViewer.size} bytes
             </p>
-            <pre className="file-viewer-content">
-              <code>{fileViewer.content}</code>
-            </pre>
+            <CodeBlock content={fileViewer.content} filename={fileViewer.path} />
             {fileViewer.truncated ? <p className="mc-muted">Preview truncated to first 128 KB.</p> : null}
           </>
         ) : null}
@@ -1158,7 +1157,9 @@ export function CreateServicePanel() {
               <p className="wiz-step-sub">Define the core identity of your new {thing}.</p>
 
               <label className="wiz-field">
-                {mode === "interstellar" ? "Robot name" : "Service name"} <span className="wiz-req">*</span>
+                <span className="wiz-label">
+                  {mode === "interstellar" ? "Robot name" : "Service name"} <span className="wiz-req">*</span>
+                </span>
                 <input
                   type="text"
                   className="wiz-input"
@@ -1177,7 +1178,9 @@ export function CreateServicePanel() {
               </label>
 
               <label className="wiz-field">
-                {t.namespaceLabel} <span className="wiz-req">*</span>
+                <span className="wiz-label">
+                  {t.namespaceLabel} <span className="wiz-req">*</span>
+                </span>
                 <select className="wiz-input" value={namespace} onChange={(event) => setNamespace(event.target.value)}>
                   {options?.namespaces.map((item) => (
                     <option key={item.name} value={item.name}>
@@ -1196,7 +1199,9 @@ export function CreateServicePanel() {
               <p className="wiz-step-sub">Pick the template, delivery, and target environment.</p>
 
               <label className="wiz-field">
-                {mode === "interstellar" ? "Blueprint" : "Service template"} <span className="wiz-req">*</span>
+                <span className="wiz-label">
+                  {mode === "interstellar" ? "Blueprint" : "Service template"} <span className="wiz-req">*</span>
+                </span>
                 <select
                   className="wiz-input"
                   value={serviceTemplate}
@@ -1212,7 +1217,9 @@ export function CreateServicePanel() {
               </label>
 
               <label className="wiz-field">
-                Environment <span className="wiz-req">*</span>
+                <span className="wiz-label">
+                  Environment <span className="wiz-req">*</span>
+                </span>
                 <select
                   className="wiz-input"
                   value={environment}
@@ -1231,7 +1238,7 @@ export function CreateServicePanel() {
                 <summary>Advanced — delivery & template files</summary>
                 <div className="wiz-advanced-body">
                   <label className="wiz-field">
-                    GitOps template
+                    <span className="wiz-label">GitOps template</span>
                     <select
                       className="wiz-input"
                       value={gitopsTemplate}
@@ -1312,7 +1319,6 @@ export function CreateServicePanel() {
                 editorMode={editorMode}
                 onSetEditorMode={changeEditorMode}
                 serviceName={serviceName}
-                namespaceLabel={t.namespaceLabel}
                 gatewayEnabled={gatewayEnabled}
                 onGatewayChange={setGatewayEnabled}
                 imageOverride={imageOverride}

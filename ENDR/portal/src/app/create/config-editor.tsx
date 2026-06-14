@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeEditor } from "../components/code-editor";
 import * as Icon from "../components/icons";
 import type { EnvRow } from "../lib/service-entry";
 
@@ -7,7 +8,6 @@ interface ConfigEditorProps {
   editorMode: "form" | "yaml";
   onSetEditorMode: (mode: "form" | "yaml") => void;
   serviceName: string;
-  namespaceLabel: string;
   gatewayEnabled: boolean;
   onGatewayChange: (value: boolean) => void;
   imageOverride: string;
@@ -25,15 +25,13 @@ interface ConfigEditorProps {
 
 // Step-3 editor: tune the service's `overrides` block either through structured
 // fields (Form) or as raw YAML (the services.yaml entry) — kept in sync by the
-// wizard container. Grounded in real IDP config-override editing.
+// wizard container. Gateway + image are locked for the demo.
 export function ConfigEditor({
   editorMode,
   onSetEditorMode,
   serviceName,
   gatewayEnabled,
-  onGatewayChange,
   imageOverride,
-  onImageChange,
   envRows,
   onEnvRowsChange,
   yamlText,
@@ -77,25 +75,30 @@ export function ConfigEditor({
         <div className="wiz-form-fields">
           <div className="wiz-toggle">
             <label className="wiz-toggle-row">
-              <input type="checkbox" checked={gatewayEnabled} onChange={(e) => onGatewayChange(e.target.checked)} />
+              <input type="checkbox" checked={gatewayEnabled} disabled aria-disabled="true" readOnly />
               <span>Expose publicly (Gateway)</span>
+              <span className="wiz-lock">🔒 locked</span>
             </label>
             <p className="wiz-hint">
-              Serve at <code>https://{host}.calavelas.net</code>.
+              Serve at <code>https://{host}.calavelas.net</code>. Always on for this demo.
             </p>
           </div>
 
           <label className="wiz-field">
-            Image override <span className="wiz-optional">optional</span>
+            <span className="wiz-label">
+              Image override <span className="wiz-optional">locked</span>
+            </span>
             <input
               type="text"
               className="wiz-input mc-mono"
               value={imageOverride}
-              onChange={(e) => onImageChange(e.target.value)}
-              placeholder="leave blank to use the template default"
+              placeholder="managed by the template"
+              disabled
+              aria-disabled="true"
+              readOnly
               autoComplete="off"
             />
-            <span className="wiz-hint">Pin a specific image, e.g. <code>calavelas/endr-robot:latest</code>.</span>
+            <span className="wiz-hint">🔒 Pinned to the template default for this demo.</span>
           </label>
 
           <div className="wiz-env">
@@ -144,13 +147,12 @@ export function ConfigEditor({
         </div>
       ) : (
         <div className="wiz-yaml">
-          <textarea
-            className="wiz-yaml-text mc-mono"
-            spellCheck={false}
+          <CodeEditor
             value={yamlText}
-            onChange={(e) => onYamlChange(e.target.value)}
+            onChange={onYamlChange}
             onBlur={onYamlBlur}
-            aria-label="services.yaml entry"
+            language="yaml"
+            ariaLabel="services.yaml entry"
           />
           <div className="wiz-yaml-actions">
             <button type="button" className="mc-btn mc-btn-sm mc-btn-soft" onClick={onValidate} disabled={validating}>
