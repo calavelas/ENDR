@@ -73,15 +73,11 @@ Default local endpoints:
 ### Service List
 
 <!-- TARS:SVCS_TABLE_START -->
-Total Services Running: 7
+Total Services Running: 3
 
 | Service Name | Template |
 | --- | --- |
 | case | endr-robot |
-| cooper | python-fastapi |
-| finc | python-fastapi |
-| miller | python-fastapi |
 | sample | python-fastapi |
 | tars | endr-robot |
-| test1 | python-fastapi |
 <!-- TARS:SVCS_TABLE_END -->
