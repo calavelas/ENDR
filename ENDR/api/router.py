@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
@@ -247,14 +248,34 @@ def get_template_file(templateType: str, templateName: str, filePath: str) -> Te
     )
 
 
+_ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _sanitize_env(env: dict[str, str]) -> dict[str, str]:
+    """Only env is user-configurable. Keep it a flat map of safe keys -> string
+    values (defends against malformed/injected payloads bypassing the UI)."""
+    clean: dict[str, str] = {}
+    for key, value in (env or {}).items():
+        name = str(key).strip()
+        if not name:
+            continue
+        if not _ENV_KEY_RE.match(name):
+            raise HTTPException(status_code=400, detail=f"invalid env variable name: {name!r}")
+        if isinstance(value, (dict, list)):
+            raise HTTPException(status_code=400, detail=f"env value for {name!r} must be a scalar")
+        clean[name] = str(value)
+    return clean
+
+
 @router.post("/api/platform/services", response_model=CreateServiceResponse)
 def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> CreateServiceResponse:
-    image = payload.image.strip() if payload.image and payload.image.strip() else None
-    env = {
-        str(key).strip(): str(value)
-        for key, value in payload.env.items()
-        if str(key).strip()
-    }
+    # Image is platform-controlled — the only developer-configurable override is env.
+    if payload.image and payload.image.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="image is platform-controlled and cannot be set from the portal; only environment variables are configurable",
+        )
+    env = _sanitize_env(payload.env)
     request = CreateServiceRequest(
         name=payload.serviceName.strip(),
         namespace=payload.namespace.strip(),
@@ -262,7 +283,7 @@ def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> Creat
         serviceTemplate=payload.serviceTemplate.strip(),
         gitopsTemplate=payload.gitopsTemplate.strip(),
         gatewayEnabled=payload.gatewayEnabled,
-        image=image,
+        image=None,
         env=env,
         dryRun=payload.dryRun,
         branchName=payload.branchName.strip() if payload.branchName and payload.branchName.strip() else None,
@@ -370,6 +391,51 @@ def _github_client(idp_config: object) -> GitHubClient:
     return GitHubClient(token=token, owner=git.owner, repo=git.repo)
 
 
+def _assert_values_only_env_changed(client: GitHubClient, branch: str, path: str, proposed_text: str) -> None:
+    """Enforce that an edit to a chart values.yaml changes ONLY the env block. All
+    platform-owned fields (image, service, resources, httpRoute, …) are locked —
+    defends against a crafted payload bypassing the read-only UI."""
+    try:
+        import yaml
+    except ModuleNotFoundError:
+        return
+
+    try:
+        proposed = yaml.safe_load(proposed_text)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"invalid YAML: {exc}") from exc
+    if not isinstance(proposed, dict):
+        raise HTTPException(status_code=400, detail="values.yaml must be a YAML mapping")
+
+    env = proposed.get("env")
+    if env is not None:
+        if not isinstance(env, dict):
+            raise HTTPException(status_code=400, detail="env must be a mapping of variable -> value")
+        for key, value in env.items():
+            if not isinstance(key, str) or not _ENV_KEY_RE.match(key):
+                raise HTTPException(status_code=400, detail=f"invalid env variable name: {key!r}")
+            if isinstance(value, (dict, list)):
+                raise HTTPException(status_code=400, detail=f"env value for {key!r} must be a scalar")
+
+    current_raw = client.get_file_content(branch, path)
+    if current_raw is None:
+        raise HTTPException(status_code=400, detail="cannot validate edit: current values.yaml not found")
+    current = yaml.safe_load(current_raw.decode("utf-8")) or {}
+    if not isinstance(current, dict):
+        raise HTTPException(status_code=400, detail="current values.yaml is malformed")
+
+    current_locked = {key: value for key, value in current.items() if key != "env"}
+    proposed_locked = {key: value for key, value in proposed.items() if key != "env"}
+    if proposed_locked != current_locked:
+        changed = sorted(
+            key for key in set(current_locked) | set(proposed_locked) if current_locked.get(key) != proposed_locked.get(key)
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"only the 'env' block is editable; these platform-owned fields cannot change: {', '.join(changed) or 'structure'}",
+        )
+
+
 @router.get("/api/platform/services/{name}/files", response_model=ServiceFilesResponse)
 def get_service_files(name: str) -> ServiceFilesResponse:
     idp_config, base, branch = _resolve_app_service(name)
@@ -430,27 +496,18 @@ def edit_service_file(name: str, payload: EditServiceFileRequest) -> EditService
     if not _is_editable_service_path(base, normalized):
         raise HTTPException(status_code=400, detail="only the chart values.yaml is editable from the portal")
 
-    try:
-        import yaml
-
-        yaml.safe_load(payload.content)
-    except ModuleNotFoundError:
-        pass
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=400, detail=f"invalid YAML: {exc}") from exc
+    client = _github_client(idp_config)
+    _assert_values_only_env_changed(client, branch, normalized, payload.content)
 
     if payload.dryRun:
         return EditServiceFileResponse(serviceName=name, path=normalized, dryRun=True)
 
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    if not token:
+    if not os.environ.get("GITHUB_TOKEN", "").strip():
         raise HTTPException(status_code=400, detail="GITHUB_TOKEN is required to open a pull request")
 
-    git = idp_config.config.git  # type: ignore[attr-defined]
-    client = GitHubClient(token=token, owner=git.owner, repo=git.repo)
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S")
     branch_name = (payload.branchName.strip() if payload.branchName and payload.branchName.strip() else None) or f"portal/{name}-edit-{timestamp}"
-    base_branch = git.defaultBranch
+    base_branch = branch
     try:
         base_sha = client.get_ref_sha(base_branch)
         client.create_branch(branch_name, base_sha)

@@ -146,7 +146,14 @@ def _build_template_context(
     github_repo: str,
     argocd_namespace: str,
 ) -> dict[str, object]:
-    image = service.overrides.image or f"{github_owner}/{service.name}:0.1.0"
+    # Image is platform-controlled. The endr-robot template runs the shared robot
+    # image; everything else gets a per-service default. A pre-set override (e.g. a
+    # pinned tag in services.yaml) still wins.
+    if service.generator.service.template == "endr-robot":
+        default_image = f"{github_owner}/endr-robot:latest"
+    else:
+        default_image = f"{github_owner}/{service.name}:0.1.0"
+    image = service.overrides.image or default_image
     image_repository, image_tag = _split_image(image)
 
     requests_cpu = "100m"
