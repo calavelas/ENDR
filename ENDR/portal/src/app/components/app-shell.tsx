@@ -26,7 +26,7 @@ interface HeaderInfo {
 // fully-redesigned page; the rest show their section title here while their
 // inner content is migrated in a later pass.
 function resolveHeader(pathname: string, t: NarrativeLabels, mode: NarrativeMode): HeaderInfo {
-  if (pathname === "/") {
+  if (pathname === "/dashboard") {
     return { title: t.pageTitle, subtitle: t.platformName };
   }
   const routes: Array<{ prefix: string; idp: HeaderInfo; interstellar: HeaderInfo }> = [
@@ -121,19 +121,29 @@ interface NavItem {
   isActive: (pathname: string) => boolean;
 }
 
+// Routes that render their own full-page chrome (landing, architecture) — the
+// app sidebar/header would only get in the way, so the shell steps aside and
+// renders children directly. Providers stay mounted (they wrap AppShell), so the
+// theme + narrative toggles still work on these pages.
+const CHROMELESS_ROUTES = new Set(["/", "/architecture"]);
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/";
   const { mode, setMode, t } = useNarrative();
   const { theme, toggle: toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
+  if (CHROMELESS_ROUTES.has(pathname)) {
+    return <>{children}</>;
+  }
+
   const navItems: NavItem[] = [
     {
       key: "dashboard",
       label: t.nav.dashboard,
-      href: "/",
+      href: "/dashboard",
       icon: <Icon.MissionControl />,
-      isActive: (p) => p === "/",
+      isActive: (p) => p === "/dashboard",
     },
     {
       key: "services",
@@ -184,9 +194,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="app-header-actions">
           <NarrativeToggle mode={mode} setMode={setMode} />
           <ThemeToggle theme={theme} toggle={toggleTheme} />
-          <button type="button" className="app-icon-btn" aria-label="Help">
+          <Link href="/architecture" className="app-icon-btn" aria-label="Under the hood" title="Under the hood — how ENDR works">
             <Icon.HelpCircle />
-          </button>
+          </Link>
           <button type="button" className="app-icon-btn" aria-label="Notifications">
             <Icon.Bell />
           </button>

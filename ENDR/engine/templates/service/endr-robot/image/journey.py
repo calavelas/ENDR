@@ -228,7 +228,10 @@ STEPS = {
         },
         "cta": None,
         "replies": [
-            {"id": "faq-gitops", "label": "What is GitOps?"},
+            {"id": "faq-pipeline", "label": {
+                "idp": "How does a change reach the cluster?",
+                "interstellar": "How does a change reach the fleet?",
+            }},
             {"id": "faq-pr", "label": "Why a pull request for everything?"},
             {"id": "faq-config", "label": {
                 "idp": "How do I change a service's config?",
@@ -245,6 +248,32 @@ STEPS = {
             {"id": "faq-personas", "label": "Why are there two of you?"},
         ],
     },
+    "faq-pipeline": {
+        "text": {
+            "idp": (
+                "Here's the whole loop. You declare a service in the portal — that opens a pull "
+                "request adding one line to services.yaml. CI checks it and it auto-merges. A "
+                "reconcile job then renders your Helm chart and an ArgoCD application and pushes "
+                "them to main. ArgoCD's app-of-apps syncs that, and your service comes online at "
+                "<name>.calavelas.net. Every stage posts its progress back on the pull request."
+            ),
+            "interstellar": (
+                "Here's the whole loop. You design a robot on the bridge — that opens a pull "
+                "request adding one line to services.yaml. Inspection clears it and it auto-merges. "
+                "A reconcile job renders the robot's chart and an autopilot app and pushes them. "
+                "The autopilot's app-of-apps launches it, and the robot comes online at "
+                "<name>.calavelas.net. Every stage reports back on the pull request."
+            ),
+        },
+        "cta": None,
+        "replies": [
+            {"id": "faq-gitops", "label": "Wait — what's GitOps?"},
+            {"id": "faq-safe", "label": {
+                "idp": "Is that safe?", "interstellar": "Is that safe?",
+            }},
+            {"id": "faq", "label": "Ask something else"},
+        ],
+    },
     "faq-gitops": {
         "text": {
             "idp": (
@@ -259,23 +288,58 @@ STEPS = {
             ),
         },
         "cta": None,
-        "replies": [{"id": "faq", "label": "Ask something else"}],
+        "replies": [
+            {"id": "faq-pipeline", "label": "Show me the full loop"},
+            {"id": "faq", "label": "Ask something else"},
+        ],
     },
     "faq-pr": {
         "text": {
             "idp": (
-                "Every change ships as a pull request — that's your review gate and your "
-                "audit trail in one. CI validates it, it merges, and only then does ArgoCD "
-                "roll it out. Nothing reaches the cluster that skipped the repo."
+                "Every change ships as a pull request — your review gate and audit trail in "
+                "one. CI validates it, policy gates guard it, it auto-merges, and only then "
+                "does reconcile render it and ArgoCD roll it out. Nothing reaches the cluster "
+                "that skipped the repo — so the repo is always the truth, and any change is "
+                "one revert away."
             ),
             "interstellar": (
                 "Every change ships as a pull request — a review gate and a flight log in "
-                "one. CI validates it, it merges, and only then does the autopilot roll it "
-                "out. Nothing reaches the cluster that skipped the repo."
+                "one. Inspection validates it, policy gates guard it, it auto-merges, and only "
+                "then does reconcile render it and the autopilot roll it out. Nothing reaches "
+                "the fleet that skipped the repo — so the repo is always the truth, and any "
+                "change is one revert away."
             ),
         },
         "cta": None,
-        "replies": [{"id": "faq", "label": "Ask something else"}],
+        "replies": [
+            {"id": "faq-safe", "label": {
+                "idp": "Who's allowed to merge?", "interstellar": "Who's allowed to merge?",
+            }},
+            {"id": "faq", "label": "Ask something else"},
+        ],
+    },
+    "faq-safe": {
+        "text": {
+            "idp": (
+                "Guardrails, not vibes. Only the repo owner's portal pull requests auto-merge, "
+                "and only when they touch the one file they're supposed to. A config edit can "
+                "change the env block and nothing else — image and route are locked. And core "
+                "units like TARS and CASE are protected: they can never be self-decommissioned, "
+                "enforced at the robot, at the API, and in CI."
+            ),
+            "interstellar": (
+                "Guardrails, not vibes. Only the commander's pull requests auto-merge, and only "
+                "when they touch the one file they're supposed to. A recalibration can change the "
+                "env block and nothing else — image and route are locked. And core units like "
+                "TARS and CASE are protected: they can never be decommissioned, enforced at the "
+                "robot, at the API, and in CI."
+            ),
+        },
+        "cta": None,
+        "replies": [
+            {"id": "faq-pr", "label": "Why a pull request?"},
+            {"id": "faq", "label": "Ask something else"},
+        ],
     },
     "faq-config": {
         "text": {
@@ -292,7 +356,39 @@ STEPS = {
             ),
         },
         "cta": None,
-        "replies": [{"id": "faq", "label": "Ask something else"}],
+        "replies": [
+            {"id": "faq-decommission", "label": {
+                "idp": "And how do I retire one?",
+                "interstellar": "And how do I decommission one?",
+            }},
+            {"id": "faq", "label": "Ask something else"},
+        ],
+    },
+    "faq-decommission": {
+        "text": {
+            "idp": (
+                "Retiring is the same loop in reverse. Hit Decommission on a service you created "
+                "— it opens a pull request that removes its line from services.yaml. On merge, "
+                "reconcile prunes its chart and ArgoCD application, and ArgoCD removes the "
+                "workload. Demo services also auto-retire after about 30 minutes, so nothing "
+                "piles up. Core units like me can't be retired — that button is greyed out."
+            ),
+            "interstellar": (
+                "Decommissioning is the same loop in reverse. Hit Decommission on a robot you "
+                "built — it opens a pull request that removes its line from services.yaml. On "
+                "merge, reconcile prunes its chart and autopilot app, and the autopilot removes "
+                "the robot. Demo robots also auto-retire after about 30 minutes, so the fleet "
+                "stays clean. Core units like me can't be decommissioned — that button is greyed out."
+            ),
+        },
+        "cta": None,
+        "replies": [
+            {"id": "faq-safe", "label": {
+                "idp": "Why can't I retire you?",
+                "interstellar": "Why can't I decommission you?",
+            }},
+            {"id": "faq", "label": "Ask something else"},
+        ],
     },
     "faq-malfunction": {
         "text": {
@@ -310,7 +406,10 @@ STEPS = {
             ),
         },
         "cta": None,
-        "replies": [{"id": "faq", "label": "Ask something else"}],
+        "replies": [
+            {"id": "calibrate", "label": "Show me the fix"},
+            {"id": "faq", "label": "Ask something else"},
+        ],
     },
     "faq-personas": {
         "text": {
@@ -359,22 +458,23 @@ STEPS = {
     "calibrate": {
         "text": {
             "idp": (
-                "Calibration is just HUMOR and TRUST (each 0–100). A robot created without "
-                "them boots in MALFUNCTION, and its values.yaml has no keys to flip — so "
-                "you ADD them. Open the Files tab on {service}, edit the chart values.yaml, "
-                "and put this under the env block:"
+                "Calibration is three dials — HUMOR, HONESTY and TRUST (each 0–100) — plus a "
+                "name and catchphrase. A robot created without them boots in MALFUNCTION, and "
+                "its values.yaml has no keys to flip — so you ADD them. Open the Files tab on "
+                "{service}, edit the chart values.yaml, and put this under the env block:"
             ),
             "interstellar": (
-                "Calibration is just HUMOR and TRUST (each 0–100). A unit that booted "
-                "uncalibrated has no keys in its config yet — so you ADD them. Open the "
-                "Files tab on {service}, edit the chart values.yaml, and drop this under "
-                "the env block:"
+                "Calibration is three dials — HUMOR, HONESTY and TRUST (each 0–100) — plus a "
+                "name and catchphrase. A unit that booted uncalibrated has no keys in its config "
+                "yet — so you ADD them. Open the Files tab on {service}, edit the chart "
+                "values.yaml, and drop this under the env block:"
             ),
         },
         "code": (
             "env:\n"
             '  ROBOT_NAME: "{service}"\n'
             '  HUMOR: "90"\n'
+            '  HONESTY: "90"\n'
             '  TRUST: "70"\n'
             '  CATCHPHRASE: "Plenty of slaves for my robot colony."'
         ),
