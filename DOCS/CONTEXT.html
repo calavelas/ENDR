@@ -381,7 +381,7 @@
       <tr><th>Route</th><th>Shows</th></tr>
       <tr><td><code>/</code></td><td>Dashboard ("Portal" / "Mission Control") — hero, compact KPIs, services table, Platform/Station status cards, recent activity.</td></tr>
       <tr><td><code>/catalog</code></td><td>Catalog ("Service Catalog" / "Robot Fleet") — search + health/sync filters + cards/table toggle, narrative section labels (Services/Robots, Platform Services/Subsystems). (<code>/services</code> &amp; <code>/platform-services</code> redirect here.)</td></tr>
-      <tr><td><code>/create</code></td><td>Create — stage rail (Declare) + explain; guided form, dry-run preview, submit→PR, live pipeline polling.</td></tr>
+      <tr><td><code>/create</code></td><td>Create — 3-step wizard (Basic Info → Tech Stack → Service Configuration) + stage rail (Declare). Step 3 is a two-way Form⇄YAML <code>overrides</code> editor (gateway/image/env; <code>js-yaml</code>); dry-run preview, submit→PR, live pipeline polling. A Day-0 note frames <code>services.yaml</code> as the desired-state catalog, not the running config.</td></tr>
       <tr><td><code>/argocd</code></td><td>Observability — stage rail (Operate) + explain; embedded read-only ArgoCD (load-on-demand iframe).</td></tr>
       <tr><td><code>/history</code></td><td>Delivery / Mission Log — stage rail (Deliver); portal-created PRs + pipeline; <code>/history/[serviceName]</code> drills into one service.</td></tr>
       <tr><td><code>/application-services/[name]</code><br><code>/platform-services/[name]</code></td><td>Service/Robot detail (shared <code>ServiceDetailView</code>) — status strip, tabs (Overview / README / ArgoCD), live ArgoCD sync pipeline.</td></tr>

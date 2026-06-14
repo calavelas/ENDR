@@ -185,9 +185,17 @@
       (create/history) were harmonized to the mc darks via a <code>:root</code> token retune rather than rewritten.
       Redundant in-page PageHeaders dropped (the shell shows the route title). Verified tsc + build (19 routes) +
       screenshots in both narratives.</li>
+    <li><b>Phase 10 ✅ — create wizard.</b> <code>/create</code> split from one dense form into a 3-step wizard
+      (Basic Info → Tech Stack → Service Configuration), matching the "Scaffold new Service" mock. Step 3 is a
+      two-way <b>Form ⇄ YAML</b> override editor (<code>lib/service-entry.ts</code> via <code>js-yaml</code>):
+      structured gateway/image/env-rows or the raw <code>services.yaml</code> entry, kept in sync, with a Validate that
+      reuses the dry-run. <code>endr-robot</code> pre-seeds the calibration env as ordinary overrides (delivers robot
+      Phase C). A Day-0 note frames <code>services.yaml</code> as the desired-state catalog, not the running config.
+      New <code>create/wizard-stepper.tsx</code> + <code>create/config-editor.tsx</code>; payload now sends
+      <code>image</code>/<code>env</code>. All dry-run/submit/transaction/catalog logic preserved.</li>
     <li><b>Next:</b> Phase 6 polish — remove the now-dead finc-style CSS (<code>.portal-*</code>, <code>.service-card</code>,
-      <code>.top-nav</code>, unused <code>components/ui/*</code>), responsive + a11y sweep, and (optional) deeper
-      per-field FormField hints on create.</li>
+      <code>.top-nav</code>, unused <code>components/ui/*</code>), responsive + a11y sweep; and a <b>Day-2 edit-config
+      flow</b> on the service detail page (edit the generated chart's Deployment via PR — robot-lifecycle Phase D).</li>
   </ul>
 
   <div class="callout"><b>Visual reference — finc dashboard</b> (<code>finc.calavelas.net/?demo=1</code>):
