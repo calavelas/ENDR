@@ -5,17 +5,15 @@ import * as Icon from "../components/icons";
 import type { EnvRow } from "../lib/service-entry";
 
 interface ConfigEditorProps {
-  editorMode: "form" | "yaml";
-  onSetEditorMode: (mode: "form" | "yaml") => void;
   serviceName: string;
   gatewayEnabled: boolean;
-  onGatewayChange: (value: boolean) => void;
   imageOverride: string;
-  onImageChange: (value: string) => void;
   envRows: EnvRow[];
   onEnvRowsChange: (rows: EnvRow[]) => void;
+  onFormFocus: () => void;
   yamlText: string;
   onYamlChange: (value: string) => void;
+  onYamlFocus: () => void;
   onYamlBlur: () => void;
   onValidate: () => void;
   validating: boolean;
@@ -23,19 +21,20 @@ interface ConfigEditorProps {
   unknownKeysWarning: string;
 }
 
-// Step-3 editor: tune the service's `overrides` block either through structured
-// fields (Form) or as raw YAML (the services.yaml entry) — kept in sync by the
-// wizard container. Gateway + image are locked for the demo.
+// Step-3 editor: structured override fields (left) beside the live, editable
+// services.yaml entry (right) — both visible and kept in sync, like the mockup.
+// The form is the source of truth; the YAML is a live projection you can also
+// hand-edit (parsed back on blur). Gateway + image are locked for the demo.
 export function ConfigEditor({
-  editorMode,
-  onSetEditorMode,
   serviceName,
   gatewayEnabled,
   imageOverride,
   envRows,
   onEnvRowsChange,
+  onFormFocus,
   yamlText,
   onYamlChange,
+  onYamlFocus,
   onYamlBlur,
   onValidate,
   validating,
@@ -51,28 +50,13 @@ export function ConfigEditor({
 
   return (
     <div className="wiz-editor">
-      <div className="wiz-editor-bar">
-        <div className="mc-seg" role="group" aria-label="Editor mode">
-          <button
-            type="button"
-            className={`mc-seg-opt${editorMode === "form" ? " on" : ""}`}
-            onClick={() => onSetEditorMode("form")}
-          >
-            Form
-          </button>
-          <button
-            type="button"
-            className={`mc-seg-opt${editorMode === "yaml" ? " on" : ""}`}
-            onClick={() => onSetEditorMode("yaml")}
-          >
-            YAML
-          </button>
-        </div>
-        <span className="wiz-editor-hint">Edit the service&apos;s config overrides.</span>
-      </div>
+      <div className="wiz-editor-split">
+        {/* Left — structured overrides */}
+        <div className="wiz-editor-pane" onFocusCapture={onFormFocus}>
+          <div className="wiz-editor-col-head">
+            <span>Overrides — form</span>
+          </div>
 
-      {editorMode === "form" ? (
-        <div className="wiz-form-fields">
           <div className="wiz-toggle">
             <label className="wiz-toggle-row">
               <input type="checkbox" checked={gatewayEnabled} disabled aria-disabled="true" readOnly />
@@ -145,28 +129,34 @@ export function ConfigEditor({
             </button>
           </div>
         </div>
-      ) : (
-        <div className="wiz-yaml">
+
+        {/* Right — live YAML (editable) */}
+        <div className="wiz-editor-pane">
+          <div className="wiz-editor-col-head">
+            <span>
+              <code>services.yaml</code> entry
+            </span>
+            <button type="button" className="mc-btn mc-btn-sm mc-btn-soft" onClick={onValidate} disabled={validating}>
+              {validating ? "Validating…" : "Validate"}
+            </button>
+          </div>
           <CodeEditor
             value={yamlText}
             onChange={onYamlChange}
+            onFocus={onYamlFocus}
             onBlur={onYamlBlur}
             language="yaml"
             ariaLabel="services.yaml entry"
           />
-          <div className="wiz-yaml-actions">
-            <button type="button" className="mc-btn mc-btn-sm mc-btn-soft" onClick={onValidate} disabled={validating}>
-              {validating ? "Validating…" : "Validate"}
-            </button>
-            <span className="wiz-hint">Runs the same dry-run check the platform uses.</span>
-          </div>
           {yamlError ? (
             <p className="form-error" role="alert">
               {yamlError}
             </p>
-          ) : null}
+          ) : (
+            <p className="wiz-hint">Edit the form or this YAML — they stay in sync. Validate runs the dry-run check.</p>
+          )}
         </div>
-      )}
+      </div>
 
       {unknownKeysWarning ? <p className="wiz-warn">{unknownKeysWarning}</p> : null}
     </div>

@@ -8,6 +8,7 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
+  onFocus?: () => void;
   language?: string;
   ariaLabel?: string;
 }
@@ -15,7 +16,7 @@ interface CodeEditorProps {
 // Lightweight syntax-highlighted editor: a transparent <textarea> overlaid on a
 // Prism-highlighted <pre>. No external editor dependency, React 19-safe. The
 // <pre> sits in flow and defines the height; the textarea fills it.
-export function CodeEditor({ value, onChange, onBlur, language = "yaml", ariaLabel }: CodeEditorProps) {
+export function CodeEditor({ value, onChange, onBlur, onFocus, language = "yaml", ariaLabel }: CodeEditorProps) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const html = highlight(value, language);
 
@@ -49,6 +50,7 @@ export function CodeEditor({ value, onChange, onBlur, language = "yaml", ariaLab
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
+        onFocus={onFocus}
         onKeyDown={onKeyDown}
         aria-label={ariaLabel}
       />

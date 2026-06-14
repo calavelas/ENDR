@@ -3654,3 +3654,36 @@ select.wiz-input { cursor: pointer; }
 .code-hl .token.important,
 .code-hl .token.bold { font-weight: 700; }
 .code-hl .token.italic { font-style: italic; }
+
+/* Step-3 side-by-side: structured form (left) + live YAML (right), like the mockup */
+.wiz-editor-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.wiz-editor-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  border: 1px solid var(--mc-line);
+  border-radius: 12px;
+  background: var(--mc-surface);
+  padding: 0.9rem 1rem;
+}
+.wiz-editor-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mc-muted);
+}
+.wiz-editor-col-head code { font-family: var(--font-mono); text-transform: none; color: var(--mc-ink-2); }
+@media (max-width: 900px) {
+  .wiz-editor-split { grid-template-columns: 1fr; }
+}

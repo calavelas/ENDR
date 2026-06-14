@@ -365,10 +365,12 @@ export function CreateServicePanel() {
   // Wizard state.
   const [step, setStep] = useState<StepId>(1);
   const [furthestStep, setFurthestStep] = useState<StepId>(1);
-  const [editorMode, setEditorMode] = useState<"form" | "yaml">("form");
   const [yamlText, setYamlText] = useState("");
   const [yamlError, setYamlError] = useState("");
   const [unknownKeysWarning, setUnknownKeysWarning] = useState("");
+  // Which pane the user last touched — gates the form→YAML projection so live
+  // form edits regenerate the YAML, but YAML typing isn't clobbered.
+  const lastEditedRef = useRef<"form" | "yaml">("form");
 
   useEffect(() => {
     let cancelled = false;
@@ -414,6 +416,27 @@ export function CreateServicePanel() {
     }
     setEnvRows((prev) => (prev.length === 0 ? ROBOT_ENV_SEED.map((row) => ({ ...row })) : prev));
   }, [serviceTemplate]);
+
+  // Project the form onto the YAML pane (form is the source of truth). Skipped
+  // while the user is editing the YAML directly so their text isn't overwritten;
+  // those edits flow back into the form on blur.
+  useEffect(() => {
+    if (lastEditedRef.current !== "form") {
+      return;
+    }
+    setYamlText(
+      formToYaml({
+        serviceName,
+        namespace,
+        environment,
+        serviceTemplate,
+        gitopsTemplate,
+        gatewayEnabled,
+        imageOverride,
+        envRows,
+      }),
+    );
+  }, [serviceName, namespace, environment, serviceTemplate, gitopsTemplate, gatewayEnabled, imageOverride, envRows]);
 
   useEffect(() => {
     const prNumber = result?.pullRequestNumber;
@@ -633,22 +656,17 @@ export function CreateServicePanel() {
     };
   }
 
-  function changeEditorMode(next: "form" | "yaml") {
-    if (next === editorMode) {
-      return;
-    }
-    if (next === "yaml") {
-      setYamlText(formToYaml(currentFormState()));
-      setYamlError("");
-      setEditorMode("yaml");
-    } else {
-      const merged = parseAndMerge();
-      if (!merged) {
-        return; // stay in YAML with the error shown
-      }
-      applyFormState(merged);
-      setEditorMode("form");
-    }
+  function onYamlChange(value: string) {
+    lastEditedRef.current = "yaml";
+    setYamlText(value);
+  }
+
+  function onYamlFocus() {
+    lastEditedRef.current = "yaml";
+  }
+
+  function onFormFocus() {
+    lastEditedRef.current = "form";
   }
 
   function onYamlBlur() {
@@ -660,7 +678,7 @@ export function CreateServicePanel() {
 
   // Effective form for preview/submit — synced from YAML when in YAML mode.
   function resolveForm(): ServiceFormState | null {
-    if (editorMode === "yaml") {
+    if (lastEditedRef.current === "yaml") {
       const merged = parseAndMerge();
       if (!merged) {
         setFormError("Fix the YAML configuration before continuing.");
@@ -726,7 +744,7 @@ export function CreateServicePanel() {
     if (target === step || target > furthestStep) {
       return;
     }
-    if (step === 3 && editorMode === "yaml") {
+    if (step === 3 && lastEditedRef.current === "yaml") {
       const merged = parseAndMerge();
       if (merged) {
         applyFormState(merged);
@@ -749,7 +767,7 @@ export function CreateServicePanel() {
   }
 
   function goBack() {
-    if (step === 3 && editorMode === "yaml") {
+    if (step === 3 && lastEditedRef.current === "yaml") {
       const merged = parseAndMerge();
       if (merged) {
         applyFormState(merged);
@@ -1139,7 +1157,7 @@ export function CreateServicePanel() {
                 setServiceName("");
                 setEnvRows([]);
                 setImageOverride("");
-                setEditorMode("form");
+                lastEditedRef.current = "form";
                 setStep(1);
                 setFurthestStep(1);
               }}
@@ -1316,17 +1334,15 @@ export function CreateServicePanel() {
               </p>
 
               <ConfigEditor
-                editorMode={editorMode}
-                onSetEditorMode={changeEditorMode}
                 serviceName={serviceName}
                 gatewayEnabled={gatewayEnabled}
-                onGatewayChange={setGatewayEnabled}
                 imageOverride={imageOverride}
-                onImageChange={setImageOverride}
                 envRows={envRows}
                 onEnvRowsChange={setEnvRows}
+                onFormFocus={onFormFocus}
                 yamlText={yamlText}
-                onYamlChange={setYamlText}
+                onYamlChange={onYamlChange}
+                onYamlFocus={onYamlFocus}
                 onYamlBlur={onYamlBlur}
                 onValidate={onGeneratePreview}
                 validating={previewing}
