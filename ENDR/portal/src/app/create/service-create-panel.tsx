@@ -15,6 +15,7 @@ import {
 } from "../lib/service-entry";
 import { ConfigEditor } from "./config-editor";
 import { WizardStepper } from "./wizard-stepper";
+import { YamlPane } from "./yaml-pane";
 
 interface TemplateOption {
   name: string;
@@ -1169,214 +1170,211 @@ export function CreateServicePanel() {
         </section>
       ) : (
         <form className="wiz-form" onSubmit={onSubmit}>
-          {step === 1 && (
-            <section className="mc-panel wiz-step-panel">
-              <h2 className="wiz-step-title">{mode === "interstellar" ? "Robot basics" : "Basic service info"}</h2>
-              <p className="wiz-step-sub">Define the core identity of your new {thing}.</p>
+          <div className="wiz-cols">
+            {/* Left — the current step (just swaps this box) */}
+            <div className="wiz-col-left" onFocusCapture={onFormFocus}>
+              {step === 1 && (
+                <section className="mc-panel wiz-step-panel">
+                  <h2 className="wiz-step-title">{mode === "interstellar" ? "Robot basics" : "Basic service info"}</h2>
+                  <p className="wiz-step-sub">Define the core identity of your new {thing}.</p>
 
-              <label className="wiz-field">
-                <span className="wiz-label">
-                  {mode === "interstellar" ? "Robot name" : "Service name"} <span className="wiz-req">*</span>
-                </span>
-                <input
-                  type="text"
-                  className="wiz-input"
-                  value={serviceName}
-                  onChange={(event) => setServiceName(event.target.value)}
-                  placeholder={mode === "interstellar" ? "tars-9" : "payment-001"}
-                  autoComplete="off"
-                />
-                {step1NameError ? (
-                  <span className="wiz-field-error">{step1NameError}</span>
-                ) : (
-                  <span className="wiz-hint">
-                    Lowercase letters, numbers, dashes. Becomes <code>{(trimmedName || "<name>") + ".calavelas.net"}</code>.
-                  </span>
-                )}
-              </label>
-
-              <label className="wiz-field">
-                <span className="wiz-label">
-                  {t.namespaceLabel} <span className="wiz-req">*</span>
-                </span>
-                <select className="wiz-input" value={namespace} onChange={(event) => setNamespace(event.target.value)}>
-                  {options?.namespaces.map((item) => (
-                    <option key={item.name} value={item.name}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="wiz-hint">Where this {thing} lives in the cluster.</span>
-              </label>
-            </section>
-          )}
-
-          {step === 2 && (
-            <section className="mc-panel wiz-step-panel">
-              <h2 className="wiz-step-title">{mode === "interstellar" ? "Chassis & stack" : "Tech stack"}</h2>
-              <p className="wiz-step-sub">Pick the template, delivery, and target environment.</p>
-
-              <label className="wiz-field">
-                <span className="wiz-label">
-                  {mode === "interstellar" ? "Blueprint" : "Service template"} <span className="wiz-req">*</span>
-                </span>
-                <select
-                  className="wiz-input"
-                  value={serviceTemplate}
-                  onChange={(event) => setServiceTemplate(event.target.value)}
-                >
-                  {options?.serviceTemplates.map((template) => (
-                    <option key={template.name} value={template.name}>
-                      {template.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="wiz-hint">{selectedServiceTemplate?.description || "What kind of service to scaffold."}</span>
-              </label>
-
-              <label className="wiz-field">
-                <span className="wiz-label">
-                  Environment <span className="wiz-req">*</span>
-                </span>
-                <select
-                  className="wiz-input"
-                  value={environment}
-                  onChange={(event) => setEnvironment(event.target.value)}
-                >
-                  {options?.kubernetesEnvironments.map((item) => (
-                    <option key={item.name} value={item.name}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="wiz-hint">Target cluster.</span>
-              </label>
-
-              <details className="wiz-advanced">
-                <summary>Advanced — delivery & template files</summary>
-                <div className="wiz-advanced-body">
                   <label className="wiz-field">
-                    <span className="wiz-label">GitOps template</span>
+                    <span className="wiz-label">
+                      {mode === "interstellar" ? "Robot name" : "Service name"} <span className="wiz-req">*</span>
+                    </span>
+                    <input
+                      type="text"
+                      className="wiz-input"
+                      value={serviceName}
+                      onChange={(event) => setServiceName(event.target.value)}
+                      placeholder={mode === "interstellar" ? "tars-9" : "payment-001"}
+                      autoComplete="off"
+                    />
+                    {step1NameError ? (
+                      <span className="wiz-field-error">{step1NameError}</span>
+                    ) : (
+                      <span className="wiz-hint">
+                        Lowercase letters, numbers, dashes. Becomes{" "}
+                        <code>{(trimmedName || "<name>") + ".calavelas.net"}</code>.
+                      </span>
+                    )}
+                  </label>
+
+                  <label className="wiz-field">
+                    <span className="wiz-label">
+                      {t.namespaceLabel} <span className="wiz-req">*</span>
+                    </span>
+                    <select className="wiz-input" value={namespace} onChange={(event) => setNamespace(event.target.value)}>
+                      {options?.namespaces.map((item) => (
+                        <option key={item.name} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="wiz-hint">Where this {thing} lives in the cluster.</span>
+                  </label>
+                </section>
+              )}
+
+              {step === 2 && (
+                <section className="mc-panel wiz-step-panel">
+                  <h2 className="wiz-step-title">{mode === "interstellar" ? "Chassis & stack" : "Tech stack"}</h2>
+                  <p className="wiz-step-sub">Pick the template, delivery, and target environment.</p>
+
+                  <label className="wiz-field">
+                    <span className="wiz-label">
+                      {mode === "interstellar" ? "Blueprint" : "Service template"} <span className="wiz-req">*</span>
+                    </span>
                     <select
                       className="wiz-input"
-                      value={gitopsTemplate}
-                      onChange={(event) => setGitopsTemplate(event.target.value)}
+                      value={serviceTemplate}
+                      onChange={(event) => setServiceTemplate(event.target.value)}
                     >
-                      {options?.gitopsTemplates.map((template) => (
+                      {options?.serviceTemplates.map((template) => (
                         <option key={template.name} value={template.name}>
                           {template.name}
                         </option>
                       ))}
                     </select>
-                    <span className="wiz-hint">How the {thing} is packaged &amp; deployed. The default is usually right.</span>
+                    <span className="wiz-hint">
+                      {selectedServiceTemplate?.description || "What kind of service to scaffold."}
+                    </span>
                   </label>
 
-                  <div className="mc-detail-grid">
-                    <article className="wiz-template-card">
-                      <h3>Service template files</h3>
-                      <ul className="wiz-file-list">
-                        {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
-                          <li key={`service-${file}`}>
-                            <code>{file}</code>
-                            <button
-                              type="button"
-                              className="mc-link-all"
-                              onClick={() => void onOpenTemplateFile("service", selectedServiceTemplate?.name ?? "", file)}
-                              disabled={fileViewerLoading}
-                            >
-                              View
-                            </button>
-                          </li>
-                        ))}
-                        {(selectedServiceTemplate?.previewFiles ?? []).length === 0 && <li className="mc-muted">no files</li>}
-                      </ul>
-                    </article>
-                    <article className="wiz-template-card">
-                      <h3>GitOps template files</h3>
-                      <ul className="wiz-file-list">
-                        {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
-                          <li key={`gitops-${file}`}>
-                            <code>{file}</code>
-                            <button
-                              type="button"
-                              className="mc-link-all"
-                              onClick={() => void onOpenTemplateFile("gitops", selectedGitopsTemplate?.name ?? "", file)}
-                              disabled={fileViewerLoading}
-                            >
-                              View
-                            </button>
-                          </li>
-                        ))}
-                        {(selectedGitopsTemplate?.previewFiles ?? []).length === 0 && <li className="mc-muted">no files</li>}
-                      </ul>
-                    </article>
-                  </div>
-                </div>
-              </details>
+                  <label className="wiz-field">
+                    <span className="wiz-label">
+                      Environment <span className="wiz-req">*</span>
+                    </span>
+                    <select
+                      className="wiz-input"
+                      value={environment}
+                      onChange={(event) => setEnvironment(event.target.value)}
+                    >
+                      {options?.kubernetesEnvironments.map((item) => (
+                        <option key={item.name} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="wiz-hint">Target cluster.</span>
+                  </label>
 
-              {fileViewerPanel}
-            </section>
-          )}
+                  <details className="wiz-advanced">
+                    <summary>Advanced — delivery & template files</summary>
+                    <div className="wiz-advanced-body">
+                      <label className="wiz-field">
+                        <span className="wiz-label">GitOps template</span>
+                        <select
+                          className="wiz-input"
+                          value={gitopsTemplate}
+                          onChange={(event) => setGitopsTemplate(event.target.value)}
+                        >
+                          {options?.gitopsTemplates.map((template) => (
+                            <option key={template.name} value={template.name}>
+                              {template.name}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="wiz-hint">
+                          How the {thing} is packaged &amp; deployed. The default is usually right.
+                        </span>
+                      </label>
 
-          {step === 3 && (
-            <section className="mc-panel wiz-step-panel">
-              <h2 className="wiz-step-title">{mode === "interstellar" ? "Calibration" : "Service configuration"}</h2>
-              <p className="wiz-step-sub">
-                Tune the <code>overrides</code> for this {thing} — gateway, image and env. Edit as a form or as raw YAML.
-              </p>
-
-              <p className="wiz-note">
-                <strong>Day-0 bootstrap only.</strong> These overrides seed the initial{" "}
-                <code>services.yaml</code> entry — the platform&apos;s <strong>desired-state catalog</strong>, not the
-                running configuration. Once created, the {thing} is configured through its own generated GitOps config
-                (<code>services/{trimmedName || "<name>"}/chart</code>): <code>services.yaml</code> tracks <em>what
-                should exist</em>; the chart is <em>how it actually runs</em>.
-              </p>
-
-              <ConfigEditor
-                serviceName={serviceName}
-                gatewayEnabled={gatewayEnabled}
-                imageOverride={imageOverride}
-                envRows={envRows}
-                onEnvRowsChange={setEnvRows}
-                onFormFocus={onFormFocus}
-                yamlText={yamlText}
-                onYamlChange={onYamlChange}
-                onYamlFocus={onYamlFocus}
-                onYamlBlur={onYamlBlur}
-                onValidate={onGeneratePreview}
-                validating={previewing}
-                yamlError={yamlError}
-                unknownKeysWarning={unknownKeysWarning}
-              />
-
-              {previewResult ? (
-                <section className="wiz-preview">
-                  <div className="mc-panel-head">
-                    <h3 className="mc-panel-title">Preview</h3>
-                    <span className="mc-count-chip">{previewResult.generatedFiles.length} files</span>
-                  </div>
-                  <ul className="wiz-file-list">
-                    {previewResult.generatedFiles.map((file) => (
-                      <li key={file.path}>
-                        <code>{file.path}</code>
-                        <span className="mc-muted">{file.size} b</span>
-                        {typeof file.content === "string" ? (
-                          <button type="button" className="mc-link-all" onClick={() => onOpenGeneratedFile(file)}>
-                            View
-                          </button>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
+                      <article className="wiz-template-card">
+                        <h3>Template files</h3>
+                        <ul className="wiz-file-list">
+                          {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
+                            <li key={`service-${file}`}>
+                              <code>{file}</code>
+                              <button
+                                type="button"
+                                className="mc-link-all"
+                                onClick={() => void onOpenTemplateFile("service", selectedServiceTemplate?.name ?? "", file)}
+                                disabled={fileViewerLoading}
+                              >
+                                View
+                              </button>
+                            </li>
+                          ))}
+                          {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
+                            <li key={`gitops-${file}`}>
+                              <code>{file}</code>
+                              <button
+                                type="button"
+                                className="mc-link-all"
+                                onClick={() => void onOpenTemplateFile("gitops", selectedGitopsTemplate?.name ?? "", file)}
+                                disabled={fileViewerLoading}
+                              >
+                                View
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </article>
+                    </div>
+                  </details>
                 </section>
-              ) : (
-                <p className="mc-muted wiz-preview-hint">Generate a preview to inspect the files before creating.</p>
               )}
 
-              {fileViewerPanel}
-            </section>
-          )}
+              {step === 3 && (
+                <section className="mc-panel wiz-step-panel">
+                  <h2 className="wiz-step-title">{mode === "interstellar" ? "Calibration" : "Service configuration"}</h2>
+                  <p className="wiz-step-sub">
+                    Tune the <code>overrides</code> for this {thing} — or edit the YAML on the right directly.
+                  </p>
+
+                  <p className="wiz-note">
+                    <strong>Day-0 bootstrap only.</strong> These overrides seed the initial{" "}
+                    <code>services.yaml</code> entry — the platform&apos;s <strong>desired-state catalog</strong>, not
+                    the running configuration. Once created, the {thing} is configured through its own generated GitOps
+                    config (<code>services/{trimmedName || "<name>"}/chart</code>): <code>services.yaml</code> tracks{" "}
+                    <em>what should exist</em>; the chart is <em>how it actually runs</em>.
+                  </p>
+
+                  <ConfigEditor
+                    serviceName={serviceName}
+                    gatewayEnabled={gatewayEnabled}
+                    imageOverride={imageOverride}
+                    envRows={envRows}
+                    onEnvRowsChange={setEnvRows}
+                  />
+                </section>
+              )}
+
+              <div className="wiz-step-nav">
+                {step > 1 ? (
+                  <button type="button" className="mc-btn mc-btn-soft" onClick={goBack}>
+                    <Icon.ChevronLeft size={15} />
+                    Back
+                  </button>
+                ) : (
+                  <span />
+                )}
+                {step < 3 ? (
+                  <button type="button" className="mc-btn" onClick={goNext} disabled={step === 1 && !step1Valid}>
+                    Next
+                    <Icon.ArrowRight size={14} />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Right — the live services.yaml, always present */}
+            <YamlPane
+              yamlText={yamlText}
+              onYamlChange={onYamlChange}
+              onYamlFocus={onYamlFocus}
+              onYamlBlur={onYamlBlur}
+              onValidate={onGeneratePreview}
+              validating={previewing}
+              yamlError={yamlError}
+              unknownKeysWarning={unknownKeysWarning}
+              previewFiles={previewResult ? previewResult.generatedFiles : null}
+              onOpenFile={onOpenGeneratedFile}
+            />
+          </div>
+
+          {fileViewerPanel}
 
           {formError && (
             <p className="form-error" role="alert">
@@ -1385,38 +1383,21 @@ export function CreateServicePanel() {
           )}
 
           <div className="wiz-nav">
-            {step > 1 ? (
-              <button type="button" className="mc-btn mc-btn-soft" onClick={goBack}>
-                <Icon.ChevronLeft size={15} />
-                Back
-              </button>
-            ) : null}
+            <span className="wiz-nav-hint">{isPreviewCurrent ? "Ready to create." : "Generate a preview, then create."}</span>
             <span className="wiz-nav-spacer" />
-            {step < 3 ? (
-              <button type="button" className="mc-btn" onClick={goNext} disabled={step === 1 && !step1Valid}>
-                Next
-                <Icon.ArrowRight size={14} />
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="mc-btn mc-btn-soft"
-                  onClick={onGeneratePreview}
-                  disabled={previewing || submitting}
-                >
-                  {previewing ? "Generating…" : "Generate preview"}
-                </button>
-                <button type="submit" className="mc-btn" disabled={submitting || previewing || !isPreviewCurrent}>
-                  <Icon.Plus size={15} />
-                  {submitting ? "Creating…" : t.createCta}
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              className="mc-btn mc-btn-soft"
+              onClick={onGeneratePreview}
+              disabled={previewing || submitting}
+            >
+              {previewing ? "Generating…" : "Generate preview"}
+            </button>
+            <button type="submit" className="mc-btn" disabled={submitting || previewing || !isPreviewCurrent}>
+              <Icon.Plus size={15} />
+              {submitting ? "Creating…" : t.createCta}
+            </button>
           </div>
-          {step === 3 && !isPreviewCurrent ? (
-            <p className="mc-muted wiz-preview-hint">Generate a preview of the current values before creating.</p>
-          ) : null}
         </form>
       )}
     </div>
