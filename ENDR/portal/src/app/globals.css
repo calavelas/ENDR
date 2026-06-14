@@ -2983,6 +2983,10 @@ code {
   from { opacity: 0; transform: translateX(18px); }
   to { opacity: 1; transform: translateX(0); }
 }
+@keyframes asst-slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 /* Collapsed = tucked away to the bubble. Stays mounted (state preserved), just
    removed from layout so the page reflows full-width and reopening doesn't
    re-type the message. */
@@ -3176,9 +3180,28 @@ code {
 }
 
 @media (max-width: 680px) {
+  .app-shell { --asst-sheet-h: min(52dvh, 440px); }
   .asst-launcher { right: 1rem; bottom: 1rem; }
-  /* Full-width overlay drawer on phones. */
-  .asst-panel { width: 100vw; }
+  /* On phones the assistant is a bottom sheet, not a side drawer. */
+  .asst-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--asst-sheet-h);
+    border-left: 0;
+    border-top: 1px solid var(--mc-line);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.5);
+    animation: asst-slide-up 0.2s ease;
+  }
+  /* Keep page actions reachable: while the sheet is open, reserve its height at
+     the bottom of the scroll area so the last buttons (e.g. Review) sit flush
+     above it instead of behind it when scrolled to the bottom. */
+  .app-shell:has(.asst-panel:not(.asst-collapsed)) .app-content {
+    padding-bottom: var(--asst-sheet-h);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -3623,6 +3646,9 @@ select.wiz-input { cursor: pointer; }
   .wiz-env-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .wiz-step-label { display: none; }
   .wiz-step { padding: 0.5rem; }
+  /* Clear the closed assistant bubble (bottom-right) so it never sits on the
+     Review/Back row when scrolled to the bottom. */
+  .wiz { padding-bottom: 6rem; }
 }
 
 /* Field label row (keeps the * / "locked" tag on the same line as the label) */
