@@ -233,7 +233,7 @@ function advance(step: string | null | undefined, delta: number): string {
 }
 
 function routeToStep(route: string): string {
-  if (!route || route === "/") return "welcome";
+  if (!route || route === "/" || route === "/dashboard") return "welcome";
   if (route.startsWith("/create")) return "create";
   if (route.startsWith("/argocd")) return "deploy";
   if (route.startsWith("/history")) return "history";
