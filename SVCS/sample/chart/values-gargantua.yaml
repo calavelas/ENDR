@@ -1,3 +1,0 @@
-# Cluster-specific Helm overrides for gargantua.
-# Add only values that differ from values.yaml.
-{}
