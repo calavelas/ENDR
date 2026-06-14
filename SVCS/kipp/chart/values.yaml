@@ -11,6 +11,9 @@ service:
 env:
   ROBOT_NAME: "kipp"
   CATCHPHRASE: "Are you ready for my robot colony?"
+  HUMOR: "30"
+  HONESTY: "95"
+  TRUST: "90"
 
 resources:
   requests:
