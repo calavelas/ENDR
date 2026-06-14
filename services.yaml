@@ -12,58 +12,6 @@ services:
     gateway:
       enabled: true
     image: calavelas/sample:47e65d3
-- name: cooper
-  namespace: demo
-  environments:
-  - mac-lab
-  generator:
-    service:
-      template: python-fastapi
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    image: calavelas/cooper:f04d84a
-- name: miller
-  namespace: demo
-  environments:
-  - mac-lab
-  generator:
-    service:
-      template: python-fastapi
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    image: calavelas/miller:adcfff3
-- name: test1
-  namespace: demo
-  environments:
-  - mac-lab
-  generator:
-    service:
-      template: python-fastapi
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    image: calavelas/test1:0d39140
-- name: finc
-  namespace: demo
-  environments:
-  - mac-lab
-  generator:
-    service:
-      template: python-fastapi
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    image: calavelas/finc:416205d
 - name: tars
   namespace: demo
   environments:
