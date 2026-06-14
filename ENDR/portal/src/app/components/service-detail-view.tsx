@@ -15,6 +15,7 @@ import {
   type ServiceArgoDetail,
 } from "../lib/platform";
 import { ArgoEmbedPanel } from "./argo-embed-panel";
+import { ServiceDeliveryPanel } from "./service-delivery-panel";
 import * as Icon from "./icons";
 import { ServiceFilesTab } from "./service-files-tab";
 
@@ -343,6 +344,8 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
               </article>
             </>
           ) : null}
+
+          {props.kind === "application" ? <ServiceDeliveryPanel serviceName={props.name} /> : null}
         </div>
 
         {argo?.available && argo.conditions.length ? (
