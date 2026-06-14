@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { FileTree, type TreeFile } from "../create/file-tree";
@@ -49,9 +50,154 @@ function readErr(body: unknown): string {
 
 const base = (name: string) => `/api/platform/services/${encodeURIComponent(name)}`;
 
+interface TxRun {
+  htmlUrl: string;
+  status: string;
+  conclusion: string | null;
+  updatedAt: string;
+}
+
+interface TxStatus {
+  pipeline: {
+    status: "pending" | "running" | "success" | "failed" | "waiting-merge";
+    message: string;
+    runs: {
+      prCheck: TxRun | null;
+      reconcileUpdate: TxRun | null;
+      svcsBuildDeploy: TxRun | null;
+    };
+  };
+}
+
+function pipelineTone(status: string): "good" | "warn" | "bad" | "neutral" {
+  const s = status.trim().toLowerCase();
+  if (s === "success") return "good";
+  if (s === "running" || s === "waiting-merge") return "warn";
+  if (s === "failed") return "bad";
+  return "neutral";
+}
+
+function fmtPipeline(status: string): string {
+  const s = status.trim().toLowerCase();
+  if (s === "waiting-merge") return "Waiting merge";
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function runStatus(run: TxRun | null): string {
+  if (!run) return "not started";
+  if (run.status !== "completed") return run.status;
+  return run.conclusion ? `completed (${run.conclusion})` : "completed";
+}
+
+function fmtTime(value: string | null): string {
+  if (!value) return "";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString();
+}
+
+// Live status for the PR the edit just opened: validate -> merge -> reconcile ->
+// ArgoCD deploy. Polls the same transaction endpoint the delivery page uses, and
+// stops once the pipeline reaches a terminal state.
+function EditPrStatus({ prNumber }: { prNumber: number }) {
+  const [status, setStatus] = useState<TxStatus | null>(null);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const stop = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+    const load = async () => {
+      try {
+        const response = await fetch(`/api/platform/transactions/${prNumber}`, { cache: "no-store" });
+        const body = (await response.json().catch(() => ({}))) as unknown;
+        if (!response.ok) throw new Error(readErr(body));
+        if (cancelled) return;
+        const data = body as TxStatus;
+        setStatus(data);
+        setErr("");
+        if (data.pipeline?.status === "success" || data.pipeline?.status === "failed") stop();
+      } catch (error) {
+        if (!cancelled) setErr(error instanceof Error ? error.message : "unable to load pipeline status");
+      }
+    };
+    void load();
+    timer = setInterval(load, 8000);
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [prNumber]);
+
+  if (err) {
+    return (
+      <p className="form-error" role="alert" style={{ marginTop: "0.8rem" }}>
+        {err}
+      </p>
+    );
+  }
+  if (!status) {
+    return (
+      <p className="mc-muted" style={{ marginTop: "0.8rem", fontSize: "0.82rem" }}>
+        Checking pipeline status…
+      </p>
+    );
+  }
+
+  const rows = [
+    { label: "PR Check", run: status.pipeline.runs.prCheck },
+    { label: "Reconcile", run: status.pipeline.runs.reconcileUpdate },
+    { label: "Service build/deploy", run: status.pipeline.runs.svcsBuildDeploy },
+  ];
+
+  return (
+    <div style={{ marginTop: "1rem" }}>
+      <div className="mc-panel-head" style={{ marginBottom: 0 }}>
+        <h3 className="mc-panel-title" style={{ fontSize: "0.72rem" }}>
+          Pipeline
+        </h3>
+        <span className={`mc-badge ${pipelineTone(status.pipeline.status)}`}>
+          <span className="mc-badge-dot" />
+          {fmtPipeline(status.pipeline.status)}
+        </span>
+      </div>
+      <p className="mc-muted" style={{ margin: "0.35rem 0 0", fontSize: "0.82rem" }}>
+        {status.pipeline.message}
+      </p>
+      <ul className="mc-run-list">
+        {rows.map(({ label, run }) => (
+          <li key={label} className="mc-run-item">
+            <span className="mc-run-name">{label}</span>
+            {run?.htmlUrl ? (
+              <a className="mc-extlink" href={run.htmlUrl} target="_blank" rel="noreferrer">
+                {runStatus(run)}
+              </a>
+            ) : (
+              <span className="mc-muted">{runStatus(run)}</span>
+            )}
+            <span className="mc-run-time">{fmtTime(run?.updatedAt ?? null)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // The "Files" tab: the service's GitOps source tree (from GitHub) + a viewer. The
 // chart values.yaml is editable; saving opens a PR (Phase D — the FIX flow).
-export function ServiceFilesTab({ serviceName, thing }: { serviceName: string; thing: string }) {
+export function ServiceFilesTab({
+  serviceName,
+  thing,
+  argoUrl,
+}: {
+  serviceName: string;
+  thing: string;
+  argoUrl?: string;
+}) {
   const [files, setFiles] = useState<FileNode[] | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loadError, setLoadError] = useState("");
@@ -197,7 +343,7 @@ export function ServiceFilesTab({ serviceName, thing }: { serviceName: string; t
         ) : result ? (
           <>
             <div className="mc-warning" style={{ borderColor: "color-mix(in srgb, var(--mc-good) 40%, transparent)", background: "color-mix(in srgb, var(--mc-good) 8%, transparent)" }}>
-              <strong>Pull request opened</strong> — merge it and ArgoCD rolls out the change.
+              <strong>Pull request opened</strong> — CI validates it, it auto-merges, then ArgoCD rolls out the change.
               <dl className="mc-kv" style={{ marginTop: "0.6rem" }}>
                 <dt>Branch</dt>
                 <dd className="mc-mono">{result.branchName ?? "n/a"}</dd>
@@ -212,6 +358,36 @@ export function ServiceFilesTab({ serviceName, thing }: { serviceName: string; t
                   )}
                 </dd>
               </dl>
+
+              {result.pullRequestNumber ? <EditPrStatus prNumber={result.pullRequestNumber} /> : null}
+
+              <div className="mc-files-actions" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "1rem" }}>
+                {result.pullRequestUrl ? (
+                  <a className="mc-btn mc-btn-sm mc-btn-soft" href={result.pullRequestUrl} target="_blank" rel="noreferrer">
+                    View PR
+                    <Icon.ExternalLink size={13} />
+                  </a>
+                ) : null}
+                {argoUrl ? (
+                  <a className="mc-btn mc-btn-sm mc-btn-soft" href={argoUrl} target="_blank" rel="noreferrer">
+                    Open in ArgoCD
+                    <Icon.ExternalLink size={13} />
+                  </a>
+                ) : null}
+                <Link
+                  className="mc-btn mc-btn-sm mc-btn-soft"
+                  href={`/history/${encodeURIComponent(serviceName)}${result.pullRequestNumber ? `?pr=${result.pullRequestNumber}` : ""}`}
+                >
+                  Track in Delivery
+                  <Icon.ChevronRight size={13} />
+                </Link>
+              </div>
+
+              {argoUrl ? (
+                <p className="mc-muted" style={{ fontSize: "0.76rem", margin: "0.65rem 0 0" }}>
+                  Already merged? Hit <b>Refresh</b> (then <b>Sync</b>) in ArgoCD to roll the change out immediately.
+                </p>
+              ) : null}
             </div>
             <CodeBlock content={content.content} filename={content.path} />
           </>

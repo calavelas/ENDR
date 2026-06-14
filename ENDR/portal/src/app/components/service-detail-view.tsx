@@ -383,7 +383,7 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
       ) : null}
 
       {tab === "files" && props.kind === "application" ? (
-        <ServiceFilesTab serviceName={props.name} thing={kindLabel} />
+        <ServiceFilesTab serviceName={props.name} thing={kindLabel} argoUrl={props.argoUrl} />
       ) : null}
 
       {tab === "argocd" ? (
