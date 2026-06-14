@@ -10,9 +10,6 @@ service:
 # Edit these via the portal; the deployment template renders them from here.
 env:
   ROBOT_NAME: "kipp"
-  HUMOR: "99"
-  HONESTY: "9"
-  TRUST: "9"
   CATCHPHRASE: "Are you ready for my robot colony?"
 
 resources:

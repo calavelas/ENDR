@@ -18,6 +18,7 @@ runs the shared `calavelas/endr-robot:afe8048` image.
 | `TRUST` | `90` |
 | `CATCHPHRASE` | `See you on the other side.` |
 | `ACCENT` | `#9aa7bd` |
+| `ENDR_ALLOW_SELF_DESTRUCT` | `false` |
 
 
 The robot comes **ONLINE** when `HUMOR` / `HONESTY` / `TRUST` are set (sum > 0);

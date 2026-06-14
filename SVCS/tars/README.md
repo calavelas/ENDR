@@ -18,6 +18,7 @@ runs the shared `calavelas/endr-robot:afe8048` image.
 | `TRUST` | `70` |
 | `CATCHPHRASE` | `Plenty of slaves for my robot colony.` |
 | `ACCENT` | `#37d3c3` |
+| `ENDR_ALLOW_SELF_DESTRUCT` | `false` |
 
 
 The robot comes **ONLINE** when `HUMOR` / `HONESTY` / `TRUST` are set (sum > 0);
