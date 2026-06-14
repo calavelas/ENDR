@@ -79,6 +79,9 @@ def _decommission_self() -> tuple[bool, str]:
         with urllib.request.urlopen(request_obj, timeout=20) as resp:  # noqa: S310
             return True, resp.read().decode("utf-8", "replace")
     except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            # Already removed (e.g. an operator decommissioned it first) — benign.
+            return True, "already decommissioned"
         return False, f"HTTP {exc.code}: {exc.read().decode('utf-8', 'replace')[:200]}"
     except Exception as exc:  # noqa: BLE001
         return False, str(exc)
@@ -280,7 +283,7 @@ _ROBOT_CHAT_JS = """
   var scenario=repEl.getAttribute('data-scenario')||'none';
   var mode=repEl.getAttribute('data-mode')||'interstellar';
   var portal=(repEl.getAttribute('data-portal')||'').replace(/\\/$/,'');
-  var step='',busy=false,raf=0;
+  var step='',busy=false,raf=0,destructing=false;
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function type(text){
     cancelAnimationFrame(raf);msgEl.classList.remove('done');
@@ -316,6 +319,7 @@ _ROBOT_CHAT_JS = """
   }
   // 15s countdown -> the pod files its own teardown via /api/self-destruct.
   function destruct(){
+    if(destructing)return;destructing=true;
     repEl.innerHTML='';cancelAnimationFrame(raf);msgEl.classList.add('done');
     var n=15;
     function show(){msgEl.textContent='Self-destruct engaged — standard procedure for a completed mission. Decommissioning in T-minus '+n+'.';}
@@ -323,9 +327,11 @@ _ROBOT_CHAT_JS = """
     var iv=setInterval(function(){
       n--;
       if(n<=0){clearInterval(iv);msgEl.textContent='Filing my own teardown pull request\\u2026';
-        fetch('/api/self-destruct',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
-          msgEl.textContent=(d&&d.ok)?"Done. GitOps will prune me shortly. It's been a pleasure \\u2014 mostly.":('Self-destruct failed: '+((d&&d.detail)||'unknown')+'. Use the Decommission button on my ENDR page.');
-        }).catch(function(){msgEl.textContent='Self-destruct failed \\u2014 use the Decommission button on my ENDR page.';});
+        fetch('/api/self-destruct',{method:'POST'})
+          .then(function(r){return r.json().catch(function(){return {ok:false,detail:'unexpected response'};});})
+          .then(function(d){
+            msgEl.textContent=(d&&d.ok)?"Done. GitOps will prune me shortly. It's been a pleasure \\u2014 mostly.":('Self-destruct failed: '+((d&&d.detail)||'unknown')+'. Use the Decommission button on my ENDR page.');
+          }).catch(function(){msgEl.textContent='Self-destruct failed \\u2014 use the Decommission button on my ENDR page.';});
         return;}
       show();
     },1000);
