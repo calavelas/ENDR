@@ -1,0 +1,202 @@
+name: Validate & merge config-edit PRs
+#
+# Runs on PRs that change a service chart values.yaml (the portal "edit config" / FIX
+# flow). The gate enforces that ONLY the env block changed — image, service.port,
+# resources, httpRoute and every other platform-owned field are locked, so a PR
+# (portal-made OR hand-crafted) cannot swap the image to a malicious registry or
+# change the route. Valid portal edits are then auto-approved + squash-merged.
+#
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - 'SVCS/**/chart/values.yaml'
+
+concurrency:
+  group: config-edit-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Validate env-only change
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml
+
+      - name: Enforce values.yaml changes are env-only
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          import re
+          import subprocess
+          import sys
+          import yaml
+
+          base = os.environ["BASE_SHA"].strip()
+          env_key = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+          changed = subprocess.run(
+              ["git", "diff", "--name-only", f"{base}", "HEAD"],
+              capture_output=True, text=True, check=True,
+          ).stdout.split()
+          targets = [p for p in changed if p.startswith("SVCS/") and p.endswith("/chart/values.yaml")]
+
+          violations: list[str] = []
+          for path in targets:
+              base_show = subprocess.run(["git", "show", f"{base}:{path}"], capture_output=True, text=True)
+              if base_show.returncode != 0:
+                  # New chart values (a create/reconcile artefact), not an edit — out of scope.
+                  print(f"skip (new file): {path}")
+                  continue
+              base_doc = yaml.safe_load(base_show.stdout) or {}
+              head_doc = yaml.safe_load(open(path, encoding="utf-8").read()) or {}
+              if not isinstance(head_doc, dict):
+                  violations.append(f"{path}: values.yaml must be a mapping")
+                  continue
+
+              base_locked = {k: v for k, v in (base_doc.items() if isinstance(base_doc, dict) else []) if k != "env"}
+              head_locked = {k: v for k, v in head_doc.items() if k != "env"}
+              if head_locked != base_locked:
+                  fields = sorted(k for k in set(base_locked) | set(head_locked) if base_locked.get(k) != head_locked.get(k))
+                  violations.append(f"{path}: platform-owned fields changed (only 'env' is allowed): {', '.join(fields)}")
+
+              env = head_doc.get("env")
+              if env is not None:
+                  if not isinstance(env, dict):
+                      violations.append(f"{path}: env must be a mapping of variable -> value")
+                  else:
+                      for key, value in env.items():
+                          if not isinstance(key, str) or not env_key.match(key):
+                              violations.append(f"{path}: invalid env variable name: {key!r}")
+                          if isinstance(value, (dict, list)):
+                              violations.append(f"{path}: env value for {key!r} must be a scalar")
+
+          if violations:
+              print("::error title=Config-edit gate::values.yaml edits may only change the env block")
+              for item in violations:
+                  print(f"  - {item}")
+              sys.exit(1)
+          print(f"Config-edit gate passed ({len(targets)} values.yaml file(s); only env changed).")
+          PY
+
+  auto-merge:
+    name: Auto-merge config-edit PR
+    needs:
+      - validate
+    if: >
+      needs.validate.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.type == 'User' &&
+      (
+        (
+          vars.CASE_PR_AUTHOR != '' &&
+          github.event.pull_request.user.login == vars.CASE_PR_AUTHOR
+        ) ||
+        (
+          vars.CASE_PR_AUTHOR == '' &&
+          github.event.pull_request.user.login == github.repository_owner
+        )
+      ) &&
+      startsWith(github.event.pull_request.head.ref, 'portal/') &&
+      startsWith(github.event.pull_request.title, 'portal - update config :') &&
+      contains(github.event.pull_request.body || '', 'Edited from the ENDR portal.')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve and merge config-edit PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.CASE_AUTOMERGE_TOKEN != '' && secrets.CASE_AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const deleteSourceBranch = `${{ vars.TARS_DELETE_SOURCE_BRANCH_ON_MERGE }}` !== "false";
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            // Only auto-merge PRs that touch chart values.yaml files (the edit surface).
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number: pr.number, per_page: 100,
+            });
+            const paths = files.map((f) => f.filename);
+            const onlyValues = paths.length > 0 && paths.every((p) => p.startsWith("SVCS/") && p.endsWith("/chart/values.yaml"));
+            if (!onlyValues) {
+              core.notice(`Skipping auto-merge: expected only chart values.yaml changes, got [${paths.join(", ")}]`);
+              return;
+            }
+
+            try {
+              await github.rest.pulls.createReview({
+                owner, repo, pull_number: pr.number,
+                event: "APPROVE",
+                body: "Auto-approved by portal policy (env-only values.yaml change).",
+              });
+              core.notice(`Approved PR #${pr.number}.`);
+            } catch (error) {
+              core.warning(`Approval step failed: ${error.message}`);
+            }
+
+            let latestPr = null;
+            for (let attempt = 0; attempt < 8; attempt += 1) {
+              const result = await github.rest.pulls.get({ owner, repo, pull_number: pr.number });
+              latestPr = result.data;
+              if (latestPr.mergeable !== null) break;
+              await sleep(2000);
+            }
+            if (!latestPr) throw new Error(`Unable to load PR state for #${pr.number}`);
+
+            let merged = false;
+            if (latestPr.merged) {
+              core.notice(`PR #${pr.number} already merged.`);
+              merged = true;
+            } else {
+              try {
+                await github.rest.pulls.merge({
+                  owner, repo, pull_number: pr.number,
+                  merge_method: "squash", sha: latestPr.head.sha,
+                });
+                core.notice(`Merged PR #${pr.number}.`);
+                merged = true;
+              } catch (error) {
+                core.notice(`Direct merge not ready: ${error.message}; enabling auto-merge.`);
+                await github.graphql(
+                  `mutation($pullRequestId: ID!, $expectedHeadOid: GitObjectID!) {
+                    enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: SQUASH, expectedHeadOid: $expectedHeadOid }) { pullRequest { number } }
+                  }`,
+                  { pullRequestId: latestPr.node_id, expectedHeadOid: latestPr.head.sha },
+                );
+                core.notice(`Enabled auto-merge for PR #${pr.number}.`);
+              }
+            }
+
+            if (merged && deleteSourceBranch) {
+              try {
+                await github.rest.git.deleteRef({ owner, repo, ref: `heads/${pr.head.ref}` });
+                core.notice(`Deleted merged branch: ${pr.head.ref}`);
+              } catch (error) {
+                if (!error || (error.status !== 404 && error.status !== 422)) throw error;
+              }
+            }
