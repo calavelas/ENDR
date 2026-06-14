@@ -2962,7 +2962,9 @@ html[data-theme="light"] body { background: #f4f5f8; }
   .mc-welcome-title { font-size: 1.95rem; }
   .mc-welcome-tagline { font-size: 1.05rem; }
   .mc-welcome-copy { font-size: 0.95rem; }
-  .mc-welcome-actions { padding-top: 1.4rem; }
+  /* Full-width, stacked, consistent hero buttons on mobile. */
+  .mc-welcome-actions { padding-top: 1.4rem; flex-direction: column; align-items: stretch; gap: 0.6rem; }
+  .mc-welcome-actions .mc-btn { width: 100%; justify-content: center; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
