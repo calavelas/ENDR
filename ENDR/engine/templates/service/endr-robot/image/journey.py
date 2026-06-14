@@ -93,16 +93,19 @@ STEPS = {
     "deploy": {
         "text": {
             "idp": (
-                "Here's the trick: creating a service opens a pull request. Merge "
-                "it and ArgoCD takes over — it syncs the deployment to the cluster "
-                "and self-heals it. GitOps, no kubectl. You watch it go green under "
-                "Observability."
+                "Here's the trick: creating a service opens a pull request — and on "
+                "this platform it auto-merges once CI is green, so there's nothing to "
+                "merge by hand. Then ArgoCD takes over, syncs it to the cluster, and "
+                "self-heals it. No kubectl. Give it a minute or two and your new "
+                "service appears on the dashboard, healthy; you can watch the rollout "
+                "under Observability."
             ),
             "interstellar": (
-                "Here's the trick: building a robot opens a pull request. Merge it "
-                "and the autopilot — ArgoCD — launches it to the cluster and keeps "
-                "it alive. GitOps, no kubectl. Watch it go green under Deep-Space "
-                "Telemetry."
+                "Here's the trick: building a robot opens a pull request — and here it "
+                "auto-merges once inspection is green, so there's nothing to merge by "
+                "hand. Then the autopilot (ArgoCD) launches it and keeps it alive. No "
+                "kubectl. Give it a minute or two and your robot shows up in the fleet, "
+                "healthy; watch the launch under Deep-Space Telemetry."
             ),
         },
         "cta": {"href": "/argocd", "label": {
@@ -112,6 +115,10 @@ STEPS = {
             {"id": "next", "label": {
                 "idp": "Where do I see all my services?",
                 "interstellar": "Where do I see the whole fleet?",
+            }},
+            {"id": "where-is-it", "label": {
+                "idp": "I created one but don't see it",
+                "interstellar": "I built one but don't see it",
             }},
             {"id": "back", "label": "Back"},
         ],
@@ -432,16 +439,18 @@ STEPS = {
     "service": {
         "text": {
             "idp": (
-                "This is the page for {service} — a live service. You don't SSH into the "
-                "pod to change it; you edit its GitOps config. Open the Files tab, edit the "
-                "chart values.yaml, and saving opens a pull request. Merge it and ArgoCD "
-                "rolls the change out."
+                "This is the page for {service}. If it's showing 'not found', it just "
+                "hasn't finished launching yet — give it a minute and refresh. Once it's "
+                "live, you don't SSH into the pod to change it; you edit its GitOps "
+                "config: open the Files tab, edit the chart values.yaml, and saving opens "
+                "a pull request that auto-merges. ArgoCD then rolls the change out."
             ),
             "interstellar": (
-                "This is {service}'s page — a live unit. You don't crack it open to change "
-                "it; you edit its deployment config. Open the Files tab, edit the chart "
-                "values.yaml, and saving opens a pull request. Merge it and the autopilot "
-                "rolls the change out."
+                "This is {service}'s page. If it's showing 'not found', it just hasn't "
+                "finished launching yet — give it a minute and refresh. Once it's online, "
+                "you don't crack it open to change it; you edit its config: open the Files "
+                "tab, edit the chart values.yaml, and saving opens a pull request that "
+                "auto-merges. The autopilot then rolls the change out."
             ),
         },
         "cta": None,
@@ -450,8 +459,10 @@ STEPS = {
                 "idp": "How do I calibrate {service}?",
                 "interstellar": "How do I recalibrate {service}?",
             }},
+            {"id": "where-is-it", "label": {
+                "idp": "It says 'not found'", "interstellar": "It says 'not found'",
+            }},
             {"id": "faq-config", "label": "How does editing config work?"},
-            {"id": "faq-pr", "label": "Why a pull request?"},
             {"id": "faq", "label": "Ask something else"},
         ],
     },
@@ -555,20 +566,51 @@ STEPS = {
     "create-submitted": {
         "text": {
             "idp": (
-                "Pull request opened. Merge it and ArgoCD takes over — it syncs the "
-                "deployment to the cluster and self-heals it. Watch the pipeline "
-                "below, or jump to Observability."
+                "Pull request opened — and it auto-merges itself once CI passes, so "
+                "there's nothing for you to click. In a minute or two your new service "
+                "appears on the dashboard, healthy. Watch the pipeline below, or jump "
+                "to Observability to see it sync."
             ),
             "interstellar": (
-                "Pull request away. Merge it and the autopilot — ArgoCD — launches "
-                "your robot and keeps it alive. Watch the pipeline below, or jump to "
-                "telemetry."
+                "Pull request away — and it auto-merges itself once inspection passes, "
+                "so there's nothing for you to click. In a minute or two your robot "
+                "shows up in the fleet, healthy. Watch the pipeline below, or jump to "
+                "telemetry to see it launch."
             ),
         },
         "cta": {"href": "/argocd", "label": {
             "idp": "Open Observability", "interstellar": "Open telemetry",
         }},
-        "replies": [],
+        "replies": [
+            {"id": "where-is-it", "label": {
+                "idp": "I don't see it yet", "interstellar": "I don't see it yet",
+            }},
+        ],
+    },
+    "where-is-it": {
+        "text": {
+            "idp": (
+                "Don't see your new service yet? That's normal — give it a minute or "
+                "two. The pull request has to auto-merge, then reconcile renders it and "
+                "ArgoCD launches it. Until it's synced, its own page may say 'not "
+                "found' — that's expected, not an error. Watch the dashboard: it shows "
+                "up there, healthy, the moment it's ready."
+            ),
+            "interstellar": (
+                "Don't see your robot yet? That's normal — give it a minute or two. The "
+                "pull request has to auto-merge, then reconcile builds it and the "
+                "autopilot launches it. Until it's online, its page may say 'not found' "
+                "— that's expected, not a fault. Watch the fleet: it shows up there, "
+                "healthy, the moment it's ready."
+            ),
+        },
+        "cta": {"href": "/dashboard", "label": {
+            "idp": "Open the dashboard", "interstellar": "Open mission control",
+        }},
+        "replies": [
+            {"id": "resume", "label": "Back to the tour"},
+            {"id": "faq", "label": "How does the platform work?"},
+        ],
     },
 }
 
@@ -718,10 +760,13 @@ def _flavor(base, c, idx):
         parts.append(WITTY_ASIDES[idx % len(WITTY_ASIDES)])
     elif humor <= 25:
         parts.append(TERSE_ASIDES[idx % len(TERSE_ASIDES)])
-    if c.get("honesty", 0) >= 90:
-        parts.append(HONEST_CLOSER)
-    elif c.get("trust", 0) >= 80 and humor <= 40:
-        parts.append(TRUST_CLOSER)
+    # Closers are flavour, not a verbal tic — only add them on some turns so they
+    # don't tail every single message (cold-eval feedback: "grating on every reply").
+    if idx % 3 == 0:
+        if c.get("honesty", 0) >= 90:
+            parts.append(HONEST_CLOSER)
+        elif c.get("trust", 0) >= 80 and humor <= 40:
+            parts.append(TRUST_CLOSER)
     return " ".join(parts)
 
 

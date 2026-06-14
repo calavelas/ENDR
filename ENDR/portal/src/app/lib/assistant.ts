@@ -123,8 +123,8 @@ const STEPS: Record<string, FallbackStep> = {
   },
   deploy: {
     text: {
-      idp: "Creating a service opens a pull request. Merge it and ArgoCD syncs it to the cluster and self-heals it — GitOps, no kubectl. Watch it go green under Observability.",
-      interstellar: "Building a robot opens a pull request. Merge it and the autopilot (ArgoCD) launches it and keeps it alive — GitOps, no kubectl. Watch it go green under Telemetry.",
+      idp: "Creating a service opens a pull request — and it auto-merges once CI is green, so there's nothing to merge by hand. ArgoCD then syncs it and self-heals it. Give it a minute or two and it appears on the dashboard, healthy; watch the rollout under Observability.",
+      interstellar: "Building a robot opens a pull request — and it auto-merges once inspection is green, so there's nothing to merge by hand. The autopilot (ArgoCD) then launches it and keeps it alive. Give it a minute or two and it shows up in the fleet, healthy; watch the launch under Telemetry.",
     },
     cta: { href: "/argocd", label: { idp: "Open Observability", interstellar: "Open telemetry" } },
     replies: [
@@ -206,8 +206,8 @@ const STEPS: Record<string, FallbackStep> = {
   },
   "create-submitted": {
     text: {
-      idp: "Pull request opened. Merge it and ArgoCD takes over — it syncs the deployment to the cluster and self-heals it. Watch the pipeline below, or jump to Observability.",
-      interstellar: "Pull request away. Merge it and the autopilot — ArgoCD — launches your robot and keeps it alive. Watch the pipeline below, or jump to telemetry.",
+      idp: "Pull request opened — and it auto-merges itself once CI passes, so there's nothing for you to click. In a minute or two your new service appears on the dashboard, healthy. Don't see it yet? That's normal — the PR has to merge and ArgoCD has to sync; its own page may say 'not found' until then. Watch the dashboard.",
+      interstellar: "Pull request away — and it auto-merges itself once inspection passes, so there's nothing for you to click. In a minute or two your robot shows up in the fleet, healthy. Don't see it yet? That's normal — the PR has to merge and the autopilot has to launch it; its page may say 'not found' until then. Watch the fleet.",
     },
     cta: { href: "/argocd", label: { idp: "Open Observability", interstellar: "Open telemetry" } },
     replies: [],
