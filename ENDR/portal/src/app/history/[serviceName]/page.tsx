@@ -36,6 +36,8 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
   const prUrl = pr && repoUrl ? `${repoUrl}/pull/${encodeURIComponent(pr)}` : null;
   const argoUrl = buildArgoApplicationUrl(resolveArgoEmbedUrl(), decodedServiceName);
   const servicePath = `/application-services/${encodeURIComponent(decodedServiceName)}`;
+  const accessHost = `${decodedServiceName}.calavelas.net`;
+  const accessUrl = `https://${accessHost}`;
 
   return (
     <div className="mc">
@@ -100,10 +102,21 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
               </p>
               {action === "create" ? (
                 <Link className="mc-step-link" href={servicePath}>
-                  Open service <Icon.ChevronRight size={12} />
+                  Open service page <Icon.ChevronRight size={12} />
                 </Link>
               ) : null}
             </li>
+            {action === "create" ? (
+              <li>
+                <span className="mc-step-title">Visit the live service</span>
+                <p className="mc-step-body">
+                  Once it&apos;s deployed and synced, it serves at <code>{accessHost}</code>.
+                </p>
+                <a className="mc-step-link" href={accessUrl} target="_blank" rel="noreferrer">
+                  Open {accessHost} <Icon.ExternalLink size={12} />
+                </a>
+              </li>
+            ) : null}
           </ol>
         </section>
       ) : null}
