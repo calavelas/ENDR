@@ -1,6 +1,6 @@
 image:
   repository: calavelas/endr-robot
-  tag: 26fab67
+  tag: afe8048
   pullPolicy: IfNotPresent
 
 service:

@@ -24,7 +24,7 @@ services:
   overrides:
     gateway:
       enabled: true
-    image: calavelas/endr-robot:26fab67
+    image: calavelas/endr-robot:afe8048
     env:
       ROBOT_NAME: TARS
       HUMOR: '90'
@@ -44,7 +44,7 @@ services:
   overrides:
     gateway:
       enabled: true
-    image: calavelas/endr-robot:26fab67
+    image: calavelas/endr-robot:afe8048
     env:
       ROBOT_NAME: CASE
       HUMOR: '30'
@@ -64,6 +64,7 @@ services:
   overrides:
     gateway:
       enabled: true
+    image: calavelas/endr-robot:afe8048
     env:
       ROBOT_NAME: kipp
       CATCHPHRASE: Are you ready for my robot colony?
