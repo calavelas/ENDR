@@ -73,10 +73,11 @@ Default local endpoints:
 ### Service List
 
 <!-- TARS:SVCS_TABLE_START -->
-Total Services Running: 5
+Total Services Running: 6
 
 | Service Name | Template |
 | --- | --- |
+| aaa | python-fastapi |
 | case | endr-robot |
 | kipp | endr-robot |
 | plex | endr-robot |
