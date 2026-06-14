@@ -73,11 +73,10 @@ Default local endpoints:
 ### Service List
 
 <!-- TARS:SVCS_TABLE_START -->
-Total Services Running: 3
+Total Services Running: 2
 
 | Service Name | Template |
 | --- | --- |
 | case | endr-robot |
 | tars | endr-robot |
-| tryout-luna | endr-robot |
 <!-- TARS:SVCS_TABLE_END -->
