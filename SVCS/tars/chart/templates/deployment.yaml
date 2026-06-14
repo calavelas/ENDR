@@ -19,13 +19,16 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: 8080
-          {{- if .Values.env }}
           env:
           {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
           {{- end }}
-          {{- end }}
+            # Platform-injected: the real service name, so a service always knows
+            # its own identity (used for the robot's ENDR link + self-decommission)
+            # regardless of ROBOT_NAME. Last entry wins, so it can't be overridden.
+            - name: SERVICE_NAME
+              value: "tars"
           readinessProbe:
             httpGet:
               path: /healthz
