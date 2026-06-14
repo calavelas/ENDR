@@ -222,6 +222,30 @@ configs:
     ## Ref: https://argo-cd.readthedocs.io/en/stable/user-guide/status-badge/
     statusbadge.enabled: false
 
+    # -- Custom health check for Gateway API HTTPRoutes.
+    # The cloudflare-kubernetes-gateway controller wires the tunnel but does not
+    # populate status.parents, so ArgoCD's built-in check sits on "Waiting for
+    # HTTPRoute status" forever. Treat a route as Healthy unless a parent reports
+    # an explicit Accepted=False / ResolvedRefs=False.
+    resource.customizations.health.gateway.networking.k8s.io_HTTPRoute: |
+      local hs = {}
+      if obj.status ~= nil and obj.status.parents ~= nil then
+        for _, parent in ipairs(obj.status.parents) do
+          if parent.conditions ~= nil then
+            for _, condition in ipairs(parent.conditions) do
+              if (condition.type == "Accepted" or condition.type == "ResolvedRefs") and condition.status == "False" then
+                hs.status = "Degraded"
+                hs.message = condition.message
+                return hs
+              end
+            end
+          end
+        end
+      end
+      hs.status = "Healthy"
+      hs.message = "HTTPRoute configured (gateway controller may not report status)."
+      return hs
+
     # Dex configuration
     # dex.config: |
     #   connectors:
