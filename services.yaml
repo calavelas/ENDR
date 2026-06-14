@@ -39,18 +39,3 @@ services:
       TRUST: '90'
       CATCHPHRASE: See you on the other side.
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
-- name: tryout-svc
-  namespace: miller
-  environments:
-  - gargantua
-  generator:
-    service:
-      template: endr-robot
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    env:
-      ROBOT_NAME: TRYOUT
-      CATCHPHRASE: Just here for the evaluation.
