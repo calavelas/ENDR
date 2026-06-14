@@ -16,6 +16,9 @@ interface ServiceProvisioningViewProps {
   decommissionable: boolean;
   decommissionReason?: string;
   protectedUnit?: boolean;
+  // pending = the create PR may not have merged yet (not in the catalog), so we
+  // can't yet confirm it's a real service. Softer copy, and no teardown action.
+  pending?: boolean;
 }
 
 // Shown for a service that's in the catalog (services.yaml) but hasn't been
@@ -30,6 +33,7 @@ export function ServiceProvisioningView({
   decommissionable,
   decommissionReason,
   protectedUnit,
+  pending,
 }: ServiceProvisioningViewProps) {
   const router = useRouter();
   const { mode } = useNarrative();
@@ -61,12 +65,25 @@ export function ServiceProvisioningView({
         <div className="mc-prov">
           <span className="mc-prov-spin" aria-hidden="true" />
           <div className="mc-prov-text">
-            <h2 className="mc-prov-title">This {unit} is on its way</h2>
+            <h2 className="mc-prov-title">
+              {pending ? `This ${unit} is being created` : `This ${unit} is on its way`}
+            </h2>
             <p className="mc-prov-body">
-              It&apos;s in the catalog and the pull request has merged — ArgoCD is
-              syncing it into the cluster now. This page turns into the live {unit}
-              view automatically once it&apos;s up (usually a minute or two); it&apos;s
-              refreshing on its own, no need to reload.
+              {pending ? (
+                <>
+                  Your pull request just opened and is merging now. The {unit} appears
+                  here a minute or two after that — this page refreshes itself, so just
+                  hang on, no need to reload. (If you didn&apos;t just create{" "}
+                  <code>{name}</code>, it may not exist or may have been removed.)
+                </>
+              ) : (
+                <>
+                  It&apos;s in the catalog and the pull request has merged — ArgoCD is
+                  syncing it into the cluster now. This page turns into the live {unit}{" "}
+                  view automatically once it&apos;s up (usually a minute or two); it&apos;s
+                  refreshing on its own, no need to reload.
+                </>
+              )}
             </p>
           </div>
         </div>

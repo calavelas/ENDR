@@ -1,8 +1,6 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { notFound } from "next/navigation";
-
 import { ServiceDetailView } from "../../components/service-detail-view";
 import { ServiceProvisioningView } from "../../components/service-provisioning-view";
 import {
@@ -32,14 +30,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const service = findServiceByName(snapshot.services, serviceName);
 
   if (!service) {
-    // Not live yet. If it's in the catalog (services.yaml) it's just provisioning —
-    // show a friendly "on its way" state (with Decommission) instead of a hard 404.
-    // Only a name that's in neither the cluster nor the catalog is a true 404.
+    // Not live yet. Never hard-404 a service route: a just-created service isn't in
+    // the catalog for ~30-60s (until its PR merges), then it provisions, then it goes
+    // live. Show a friendly auto-refreshing state across that whole window instead of
+    // a bare 404 (which reads as "I broke it"). In-catalog -> provisioning (+ teardown);
+    // not-yet-in-catalog -> "being created" pending copy.
     const eligibility = await loadDecommissionEligibility(serviceName);
     const inCatalog = eligibility.decommissionable || eligibility.protected;
-    if (!inCatalog) {
-      notFound();
-    }
     const provisioningArgoUrl = buildArgoApplicationUrl(resolveArgoEmbedUrl(), "services");
     const host = `${serviceName}.calavelas.net`;
     return (
@@ -51,6 +48,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
         decommissionable={eligibility.decommissionable}
         decommissionReason={eligibility.reason}
         protectedUnit={eligibility.protected}
+        pending={!inCatalog}
       />
     );
   }

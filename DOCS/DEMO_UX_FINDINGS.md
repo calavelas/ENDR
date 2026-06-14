@@ -101,6 +101,27 @@ lands in IDP.
 Rollback UX · secrets management · multi-env promotion · real RBAC/SSO ·
 observability depth (logs/metrics/traces) · more templates · org policy/quotas.
 
+## Round 2 — re-eval after fixes (layperson, full lifecycle)
+A fresh naive layperson re-ran the whole journey and **completed it end to end**:
+created `tryout-nova` → watched it go **Provisioning → live/HEALTHY** → talked to the
+assistant → **decommissioned it easily** (one confirm). Confirmed fixed/working:
+- Concurrency (#1): no conflict.
+- Provisioning state (#2): once the create PR merged, the service page showed
+  _"PROVISIONING — This robot is on its way"_ and auto-refreshed to live, instead of 404.
+- Assistant (#3/#4): context-aware — _"if it's showing 'not found', it just hasn't
+  finished launching… watch the fleet… healthy, the moment it's ready,"_ with a button
+  to the dashboard. No longer claims a missing page is live.
+- Decommission: clear button → confirm → PR. "Smoothest part."
+- Stale pipeline badge (#7): gone.
+
+**Residual closed after round 2:** clicking "Open service page" in the first ~30–60s
+(before the create PR merges, so it's not in the catalog yet) still hit a hard 404.
+Fixed: the service route now **never hard-404s** — it shows a "being created → on its
+way → live" auto-refreshing gradient across the whole window.
+
+Remaining (lower priority): jargon on the default IDP landing (Interstellar mode is
+much clearer); the assistant panel can overlap the create form on narrow viewports.
+
 ## Scenario completion
 | Step | Layperson (Interstellar) | DevOps (IDP) |
 |---|---|---|
