@@ -106,6 +106,24 @@ jobs:
           set -euo pipefail
           python3 ENDR/engine/engine.py services-check --repo-root .
 
+      - name: Robot validate
+        id: robot_validate
+        env:
+          # Pass via env (not direct ${{ }} interpolation into the script) to avoid
+          # the GitHub Actions shell-injection class.
+          CHANGED_SERVICES: ${{ steps.svcs_check.outputs.changed_services }}
+        run: |
+          set -euo pipefail
+          # Policy-as-code guardrail (Phase B): for any changed robot service, the
+          # services.yaml calibration env must be well-formed (HUMOR/HONESTY/TRUST
+          # integers 0-100, ACCENT a hex colour, etc). An uncalibrated robot that
+          # boots MALFUNCTION is allowed (a notice, not a failure) — only malformed
+          # config blocks the merge. Scoped to the services this PR actually changes.
+          python3 ENDR/engine/engine.py robot-validate \
+            --repo-root . \
+            --surface services \
+            --services "$CHANGED_SERVICES"
+
       - name: Reconcile summary
         run: |
           set -euo pipefail

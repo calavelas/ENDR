@@ -36,11 +36,11 @@
     <li><span class="pill done">done</span> Phase A — <code>endr-robot</code> service template</li>
     <li><span class="pill done">done</span> TARS/CASE guidance assistant</li>
     <li><span class="pill done">done</span> Phase C — create wizard seeds personality env (<code>overrides.env</code>)</li>
-    <li><span class="pill now">now</span> <b>Phase D — the FIX flow</b> (this doc)</li>
-    <li><span class="pill next">next</span> Phase B — <code>robot-validate</code> CI gate</li>
-    <li><span class="pill later">later</span> Phase E — end-to-end run + image-tag/ops hardening</li>
+    <li><span class="pill done">done</span> <b>Phase D — the FIX flow</b> (this doc) — Files tab + edit→PR, env-only locked server-side + in CI</li>
+    <li><span class="pill done">done</span> Phase B — <code>robot-validate</code> CI gate (well-formed calibration; MALFUNCTION allowed, malformed blocked; wired into both PR gates)</li>
+    <li><span class="pill now">now</span> Phase E — end-to-end run + image-tag/ops hardening</li>
   </ul>
-  <p class="muted">The payoff loop is <b>half-built</b>: a developer can create a robot that boots MALFUNCTION, but there is <em>no in-product way to fix it</em>. There is no edit page or edit API route today — only create.</p>
+  <p class="muted">The payoff loop is <b>closed</b>: create a robot that boots MALFUNCTION → open its Files tab → edit the chart <code>values.yaml</code> <code>env:</code> → values-only PR (gated by the env-only check + <code>robot-validate</code>) → auto-merge → ArgoCD rolls out → robot comes ONLINE. Remaining work is Phase E (image-tag pinning, local end-to-end, docs).</p>
 
   <h2>Phase D — plan</h2>
   <p>Reframed per the latest decision: Phase D <b>starts on the service page</b> with a file tree + viewer of the service's GitOps files, then layers editing on top.</p>

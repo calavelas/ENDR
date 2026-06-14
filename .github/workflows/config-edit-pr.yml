@@ -102,6 +102,25 @@ jobs:
           print(f"Config-edit gate passed ({len(targets)} values.yaml file(s); only env changed).")
           PY
 
+      - name: Robot validate (chart calibration)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          # Policy-as-code guardrail (Phase B): the env block the FIX flow just
+          # edited must be well-formed robot calibration (HUMOR/HONESTY/TRUST
+          # integers 0-100, ACCENT a hex colour, ...). Uncalibrated -> MALFUNCTION
+          # is allowed (notice), malformed values block the merge. Scoped to the
+          # robot charts this PR changes; non-robot values.yaml edits are ignored.
+          services="$(git diff --name-only "$BASE_SHA" HEAD \
+            | sed -n 's#^SVCS/\([^/]*\)/chart/values\.yaml$#\1#p' \
+            | paste -sd, -)"
+          echo "Changed chart services: ${services:-<none>}"
+          python3 ENDR/engine/engine.py robot-validate \
+            --repo-root . \
+            --surface chart \
+            --services "$services"
+
   auto-merge:
     name: Auto-merge config-edit PR
     needs:

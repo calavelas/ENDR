@@ -16,8 +16,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from engine.cli.services_check import main as services_check_main
-
 
 def run(cmd: list[str], cwd: Path) -> str:
     completed = subprocess.run(  # noqa: S603
@@ -380,14 +378,30 @@ def update_image_tags_main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _run_services_check(sub_args: list[str]) -> int:
+    # Imported lazily: it pulls in pydantic/jinja2; the lighter subcommands
+    # (e.g. robot-validate, which needs only pyyaml) must not pay that cost.
+    from engine.cli.services_check import main as services_check_main
+
+    return services_check_main(sub_args)
+
+
+def _run_robot_validate(sub_args: list[str]) -> int:
+    from engine.cli.robot_validate import main as robot_validate_main
+
+    return robot_validate_main(sub_args)
+
+
 def print_help() -> None:
     print(
         "Usage:\n"
         "  python3 ENDR/engine/engine.py services-check [SERVICES_CHECK_ARGS...]\n"
+        "  python3 ENDR/engine/engine.py robot-validate [ROBOT_VALIDATE_ARGS...]\n"
         "  python3 ENDR/engine/engine.py discover-changed-services [DISCOVER_ARGS...]\n"
         "  python3 ENDR/engine/engine.py update-image-tags [TAG_ARGS...]\n\n"
         "Examples:\n"
         "  python3 ENDR/engine/engine.py services-check --repo-root . --open-pr\n"
+        "  python3 ENDR/engine/engine.py robot-validate --repo-root . --surface chart --services kipp\n"
         "  python3 ENDR/engine/engine.py discover-changed-services --repo-root . --before <sha> --after <sha> --registry dockerhub --image-owner <owner>\n"
         "  python3 ENDR/engine/engine.py update-image-tags --repo-root . --services svc-a,svc-b --tag git-abcdef1\n"
     )
@@ -396,7 +410,7 @@ def print_help() -> None:
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if not args:
-        return services_check_main([])
+        return _run_services_check([])
 
     subcommand = args[0]
     sub_args = args[1:]
@@ -406,7 +420,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if subcommand in {"services-check", "check"}:
-        return services_check_main(sub_args)
+        return _run_services_check(sub_args)
+
+    if subcommand in {"robot-validate", "robots", "validate-robots"}:
+        return _run_robot_validate(sub_args)
 
     if subcommand in {"discover-changed-services", "discover"}:
         return discover_changed_services_main(sub_args)
@@ -416,7 +433,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Allow calling with only services-check flags.
     if subcommand.startswith("-"):
-        return services_check_main(args)
+        return _run_services_check(args)
 
     print(f"unknown subcommand: {subcommand}", file=sys.stderr)
     print_help()
