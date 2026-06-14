@@ -2,6 +2,19 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import * as Icon from "../components/icons";
+import { useNarrative } from "../lib/narrative";
+import {
+  envRowsToMap,
+  formToYaml,
+  parseYamlToForm,
+  ROBOT_ENV_SEED,
+  type EnvRow,
+  type ServiceFormState,
+} from "../lib/service-entry";
+import { ConfigEditor } from "./config-editor";
+import { WizardStepper } from "./wizard-stepper";
+
 interface TemplateOption {
   name: string;
   description?: string;
@@ -25,6 +38,8 @@ interface CreateServicePayload {
   serviceTemplate: string;
   gitopsTemplate: string;
   gatewayEnabled: boolean;
+  image?: string;
+  env?: Record<string, string>;
   dryRun?: boolean;
 }
 
@@ -119,6 +134,7 @@ interface FileViewerState {
 }
 
 type PipelineStageStatus = "pending" | "running" | "success" | "failed";
+type StepId = 1 | 2 | 3;
 
 interface PipelineStageView {
   key: "pr-check" | "reconcile" | "services-build";
@@ -142,7 +158,6 @@ function readErrorMessage(payload: unknown): string {
   if (typeof payload === "string") {
     return payload;
   }
-
   if (payload && typeof payload === "object" && "detail" in payload) {
     const detail = (payload as { detail: unknown }).detail;
     if (typeof detail === "string") {
@@ -150,7 +165,6 @@ function readErrorMessage(payload: unknown): string {
     }
     return JSON.stringify(detail);
   }
-
   return "request failed";
 }
 
@@ -275,27 +289,9 @@ function buildPipelineStages(status: TransactionStatusResult): PipelineStageView
   }
 
   return [
-    {
-      key: "pr-check",
-      label: "PR Check",
-      status: prStage,
-      detail: prDetail,
-      run: prRun
-    },
-    {
-      key: "reconcile",
-      label: "Reconcile",
-      status: reconcileStage,
-      detail: reconcileDetail,
-      run: reconcileRun
-    },
-    {
-      key: "services-build",
-      label: "Service build/deploy",
-      status: svcsStage,
-      detail: svcsDetail,
-      run: svcsRun
-    }
+    { key: "pr-check", label: "PR Check", status: prStage, detail: prDetail, run: prRun },
+    { key: "reconcile", label: "Reconcile", status: reconcileStage, detail: reconcileDetail, run: reconcileRun },
+    { key: "services-build", label: "Service build/deploy", status: svcsStage, detail: svcsDetail, run: svcsRun },
   ];
 }
 
@@ -328,11 +324,14 @@ function buildPreviewSignature(payload: CreateServicePayload): string {
     environment: payload.environment.trim(),
     serviceTemplate: payload.serviceTemplate.trim(),
     gitopsTemplate: payload.gitopsTemplate.trim(),
-    gatewayEnabled: payload.gatewayEnabled
+    gatewayEnabled: payload.gatewayEnabled,
+    image: payload.image ?? "",
+    env: payload.env ?? {},
   });
 }
 
 export function CreateServicePanel() {
+  const { mode, t } = useNarrative();
   const resultSectionRef = useRef<HTMLElement | null>(null);
   const [options, setOptions] = useState<CreateOptionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -343,6 +342,8 @@ export function CreateServicePanel() {
   const [serviceTemplate, setServiceTemplate] = useState("");
   const [gitopsTemplate, setGitopsTemplate] = useState("");
   const [gatewayEnabled, setGatewayEnabled] = useState(true);
+  const [imageOverride, setImageOverride] = useState("");
+  const [envRows, setEnvRows] = useState<EnvRow[]>([]);
   const [previewing, setPreviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
@@ -351,9 +352,6 @@ export function CreateServicePanel() {
   const [fileViewer, setFileViewer] = useState<FileViewerState | null>(null);
   const [fileViewerLoading, setFileViewerLoading] = useState(false);
   const [fileViewerError, setFileViewerError] = useState("");
-  const [templatePreviewCollapsed, setTemplatePreviewCollapsed] = useState(false);
-  const [previewCollapsed, setPreviewCollapsed] = useState(false);
-  const [fileViewerCollapsed, setFileViewerCollapsed] = useState(false);
   const [result, setResult] = useState<CreateServiceResult | null>(null);
   const [transactionStatus, setTransactionStatus] = useState<TransactionStatusResult | null>(null);
   const [transactionStatusError, setTransactionStatusError] = useState("");
@@ -362,6 +360,14 @@ export function CreateServicePanel() {
   const [catalogRefreshNote, setCatalogRefreshNote] = useState("");
   const [catalogRefreshAttempts, setCatalogRefreshAttempts] = useState(0);
   const [serviceVisibleInCatalog, setServiceVisibleInCatalog] = useState(false);
+
+  // Wizard state.
+  const [step, setStep] = useState<StepId>(1);
+  const [furthestStep, setFurthestStep] = useState<StepId>(1);
+  const [editorMode, setEditorMode] = useState<"form" | "yaml">("form");
+  const [yamlText, setYamlText] = useState("");
+  const [yamlError, setYamlError] = useState("");
+  const [unknownKeysWarning, setUnknownKeysWarning] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -398,6 +404,15 @@ export function CreateServicePanel() {
       cancelled = true;
     };
   }, []);
+
+  // Seed suggested robot env overrides when the endr-robot template is chosen
+  // (they are ordinary, editable env rows — just a head start).
+  useEffect(() => {
+    if (serviceTemplate !== "endr-robot") {
+      return;
+    }
+    setEnvRows((prev) => (prev.length === 0 ? ROBOT_ENV_SEED.map((row) => ({ ...row })) : prev));
+  }, [serviceTemplate]);
 
   useEffect(() => {
     const prNumber = result?.pullRequestNumber;
@@ -524,11 +539,11 @@ export function CreateServicePanel() {
 
   const selectedServiceTemplate = useMemo(
     () => options?.serviceTemplates.find((template) => template.name === serviceTemplate) ?? null,
-    [options, serviceTemplate]
+    [options, serviceTemplate],
   );
   const selectedGitopsTemplate = useMemo(
     () => options?.gitopsTemplates.find((template) => template.name === gitopsTemplate) ?? null,
-    [options, gitopsTemplate]
+    [options, gitopsTemplate],
   );
   const currentPreviewSignature = useMemo(
     () =>
@@ -538,54 +553,208 @@ export function CreateServicePanel() {
         environment: environment.trim(),
         serviceTemplate: serviceTemplate.trim(),
         gitopsTemplate: gitopsTemplate.trim(),
-        gatewayEnabled
+        gatewayEnabled,
+        image: imageOverride.trim(),
+        env: envRowsToMap(envRows),
       }),
-    [environment, gatewayEnabled, gitopsTemplate, namespace, serviceName, serviceTemplate]
+    [environment, gatewayEnabled, gitopsTemplate, imageOverride, envRows, namespace, serviceName, serviceTemplate],
   );
   const isPreviewCurrent = Boolean(previewResult && lastPreviewSignature && lastPreviewSignature === currentPreviewSignature);
   const pipelineStages = useMemo(
     () => (transactionStatus ? buildPipelineStages(transactionStatus) : []),
-    [transactionStatus]
+    [transactionStatus],
   );
 
-  function buildPayloadFromForm(): CreateServicePayload | null {
-    const normalizedServiceName = serviceName.trim();
-    if (!normalizedServiceName) {
-      setFormError("Service name is required.");
-      return null;
+  const trimmedName = serviceName.trim();
+  const step1NameError = (() => {
+    if (!trimmedName) {
+      return "";
     }
-    if (normalizedServiceName.length > 48 || !DNS_LABEL_RE.test(normalizedServiceName)) {
-      setFormError("Service name must match Kubernetes DNS label format.");
-      return null;
+    if (trimmedName.length > 48 || !DNS_LABEL_RE.test(trimmedName)) {
+      return "Must be a Kubernetes DNS label — lowercase letters, numbers, dashes.";
     }
-    if (existingServices.has(normalizedServiceName.toLowerCase())) {
-      setFormError(`Service '${normalizedServiceName}' already exists.`);
-      return null;
+    if (existingServices.has(trimmedName.toLowerCase())) {
+      return `'${trimmedName}' already exists.`;
     }
-    if (!serviceTemplate) {
-      setFormError("Service template is required.");
-      return null;
-    }
-    if (!namespace) {
-      setFormError("Namespace is required.");
-      return null;
-    }
-    if (!environment) {
-      setFormError("Environment is required.");
-      return null;
-    }
-    if (!gitopsTemplate) {
-      setFormError("GitOps template is required.");
-      return null;
-    }
+    return "";
+  })();
+  const step1Valid = Boolean(trimmedName) && !step1NameError && Boolean(namespace);
+
+  function currentFormState(): ServiceFormState {
     return {
-      serviceName: normalizedServiceName,
+      serviceName,
       namespace,
       environment,
       serviceTemplate,
       gitopsTemplate,
-      gatewayEnabled
+      gatewayEnabled,
+      imageOverride,
+      envRows,
     };
+  }
+
+  function applyFormState(form: ServiceFormState) {
+    setServiceName(form.serviceName);
+    setNamespace(form.namespace);
+    setEnvironment(form.environment);
+    setServiceTemplate(form.serviceTemplate);
+    setGitopsTemplate(form.gitopsTemplate);
+    setGatewayEnabled(form.gatewayEnabled);
+    setImageOverride(form.imageOverride);
+    setEnvRows(form.envRows);
+  }
+
+  // Parse the YAML editor back into a full form state (filling gaps with current
+  // values). Sets yamlError + unknownKeysWarning; returns null on parse failure.
+  function parseAndMerge(): ServiceFormState | null {
+    let parsed;
+    try {
+      parsed = parseYamlToForm(yamlText);
+    } catch (error) {
+      setYamlError(error instanceof Error ? error.message : "invalid YAML");
+      return null;
+    }
+    setYamlError("");
+    setUnknownKeysWarning(
+      parsed.unknownOverrideKeys.length > 0
+        ? `Overrides not sent by the portal yet (edit them in the repo): ${parsed.unknownOverrideKeys.join(", ")}.`
+        : "",
+    );
+    return {
+      serviceName: parsed.serviceName ?? serviceName,
+      namespace: parsed.namespace ?? namespace,
+      environment: parsed.environment ?? environment,
+      serviceTemplate: parsed.serviceTemplate ?? serviceTemplate,
+      gitopsTemplate: parsed.gitopsTemplate ?? gitopsTemplate,
+      gatewayEnabled: parsed.gatewayEnabled ?? gatewayEnabled,
+      imageOverride: parsed.imageOverride,
+      envRows: parsed.envRows,
+    };
+  }
+
+  function changeEditorMode(next: "form" | "yaml") {
+    if (next === editorMode) {
+      return;
+    }
+    if (next === "yaml") {
+      setYamlText(formToYaml(currentFormState()));
+      setYamlError("");
+      setEditorMode("yaml");
+    } else {
+      const merged = parseAndMerge();
+      if (!merged) {
+        return; // stay in YAML with the error shown
+      }
+      applyFormState(merged);
+      setEditorMode("form");
+    }
+  }
+
+  function onYamlBlur() {
+    const merged = parseAndMerge();
+    if (merged) {
+      applyFormState(merged);
+    }
+  }
+
+  // Effective form for preview/submit — synced from YAML when in YAML mode.
+  function resolveForm(): ServiceFormState | null {
+    if (editorMode === "yaml") {
+      const merged = parseAndMerge();
+      if (!merged) {
+        setFormError("Fix the YAML configuration before continuing.");
+        return null;
+      }
+      applyFormState(merged);
+      return merged;
+    }
+    return currentFormState();
+  }
+
+  function buildPayload(form: ServiceFormState): CreateServicePayload | null {
+    const name = form.serviceName.trim();
+    if (!name) {
+      setFormError("Service name is required.");
+      return null;
+    }
+    if (name.length > 48 || !DNS_LABEL_RE.test(name)) {
+      setFormError("Service name must match Kubernetes DNS label format.");
+      return null;
+    }
+    if (existingServices.has(name.toLowerCase())) {
+      setFormError(`Service '${name}' already exists.`);
+      return null;
+    }
+    if (!form.serviceTemplate) {
+      setFormError("Service template is required.");
+      return null;
+    }
+    if (!form.namespace) {
+      setFormError("Namespace is required.");
+      return null;
+    }
+    if (!form.environment) {
+      setFormError("Environment is required.");
+      return null;
+    }
+    if (!form.gitopsTemplate) {
+      setFormError("GitOps template is required.");
+      return null;
+    }
+
+    const payload: CreateServicePayload = {
+      serviceName: name,
+      namespace: form.namespace,
+      environment: form.environment,
+      serviceTemplate: form.serviceTemplate,
+      gitopsTemplate: form.gitopsTemplate,
+      gatewayEnabled: form.gatewayEnabled,
+    };
+    const image = form.imageOverride.trim();
+    if (image) {
+      payload.image = image;
+    }
+    const env = envRowsToMap(form.envRows);
+    if (Object.keys(env).length > 0) {
+      payload.env = env;
+    }
+    return payload;
+  }
+
+  function goToStep(target: StepId) {
+    if (target === step || target > furthestStep) {
+      return;
+    }
+    if (step === 3 && editorMode === "yaml") {
+      const merged = parseAndMerge();
+      if (merged) {
+        applyFormState(merged);
+      }
+    }
+    setStep(target);
+  }
+
+  function goNext() {
+    if (step === 1) {
+      if (!step1Valid) {
+        return;
+      }
+      setStep(2);
+      setFurthestStep((value) => (value < 2 ? 2 : value));
+    } else if (step === 2) {
+      setStep(3);
+      setFurthestStep((value) => (value < 3 ? 3 : value));
+    }
+  }
+
+  function goBack() {
+    if (step === 3 && editorMode === "yaml") {
+      const merged = parseAndMerge();
+      if (merged) {
+        applyFormState(merged);
+      }
+    }
+    setStep((value) => (value > 1 ? ((value - 1) as StepId) : value));
   }
 
   function onOpenGeneratedFile(file: CreateServiceResult["generatedFiles"][number]) {
@@ -601,15 +770,11 @@ export function CreateServicePanel() {
       size: file.size,
       content: file.content,
       contentEncoding: file.contentEncoding,
-      truncated: file.contentTruncated
+      truncated: file.contentTruncated,
     });
   }
 
-  async function onOpenTemplateFile(
-    templateType: "service" | "gitops",
-    templateName: string,
-    filePath: string
-  ) {
+  async function onOpenTemplateFile(templateType: "service" | "gitops", templateName: string, filePath: string) {
     const normalizedTemplateName = templateName.trim();
     const normalizedFilePath = filePath.trim();
     if (!normalizedTemplateName || !normalizedFilePath) {
@@ -622,7 +787,7 @@ export function CreateServicePanel() {
       const params = new URLSearchParams({
         templateType,
         templateName: normalizedTemplateName,
-        filePath: normalizedFilePath
+        filePath: normalizedFilePath,
       });
       const response = await fetch(`/api/platform/template-file?${params.toString()}`, { cache: "no-store" });
       const body = (await response.json().catch(() => ({}))) as unknown;
@@ -637,7 +802,7 @@ export function CreateServicePanel() {
         size: file.size,
         content: file.content,
         contentEncoding: file.contentEncoding,
-        truncated: file.truncated
+        truncated: file.truncated,
       });
     } catch (error) {
       const detail = error instanceof Error ? error.message : "unable to load template file";
@@ -662,7 +827,11 @@ export function CreateServicePanel() {
     setFileViewerLoading(false);
     setFileViewerError("");
 
-    const payload = buildPayloadFromForm();
+    const form = resolveForm();
+    if (!form) {
+      return;
+    }
+    const payload = buildPayload(form);
     if (!payload) {
       return;
     }
@@ -671,13 +840,8 @@ export function CreateServicePanel() {
     try {
       const response = await fetch("/api/platform/services", {
         method: "POST",
-        headers: {
-          "content-type": "application/json"
-        },
-        body: JSON.stringify({
-          ...payload,
-          dryRun: true
-        })
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...payload, dryRun: true }),
       });
 
       const body = (await response.json().catch(() => ({}))) as unknown;
@@ -697,6 +861,11 @@ export function CreateServicePanel() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (step !== 3) {
+      goNext();
+      return;
+    }
+
     resultSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     setFormError("");
     setResult(null);
@@ -708,13 +877,17 @@ export function CreateServicePanel() {
     setCatalogRefreshAttempts(0);
     setServiceVisibleInCatalog(false);
 
-    const payload = buildPayloadFromForm();
+    const form = resolveForm();
+    if (!form) {
+      return;
+    }
+    const payload = buildPayload(form);
     if (!payload) {
       return;
     }
     const payloadSignature = buildPreviewSignature(payload);
     if (!previewResult || lastPreviewSignature !== payloadSignature) {
-      setFormError("Generate Preview for current form values before creating service.");
+      setFormError("Generate Preview for current values before creating the service.");
       return;
     }
 
@@ -722,10 +895,8 @@ export function CreateServicePanel() {
     try {
       const response = await fetch("/api/platform/services", {
         method: "POST",
-        headers: {
-          "content-type": "application/json"
-        },
-        body: JSON.stringify(payload)
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
       const body = (await response.json().catch(() => ({}))) as unknown;
@@ -736,7 +907,6 @@ export function CreateServicePanel() {
       const created = body as CreateServiceResult;
       setResult(created);
       resultSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      setServiceName("");
       setPreviewResult(null);
       setLastPreviewSignature(null);
       setFileViewer(null);
@@ -752,15 +922,15 @@ export function CreateServicePanel() {
 
   if (loading) {
     return (
-      <section className="panel create-panel">
-        <p className="embed-note">Loading template options...</p>
+      <section className="mc-panel">
+        <p className="mc-muted">Loading template options…</p>
       </section>
     );
   }
 
   if (loadError) {
     return (
-      <section className="panel create-panel">
+      <section className="mc-panel">
         <p className="form-error" role="alert">
           {loadError}
         </p>
@@ -768,157 +938,423 @@ export function CreateServicePanel() {
     );
   }
 
+  const thing = mode === "interstellar" ? "robot" : "service";
+
+  const fileViewerPanel =
+    fileViewerLoading || fileViewerError || fileViewer ? (
+      <section className="mc-panel wiz-fileviewer" aria-live="polite">
+        <div className="mc-panel-head">
+          <h2 className="mc-panel-title">File viewer</h2>
+          {fileViewer ? (
+            <button type="button" className="mc-link-all" onClick={() => setFileViewer(null)}>
+              Close
+            </button>
+          ) : null}
+        </div>
+        {fileViewerLoading ? (
+          <p className="mc-muted">Fetching selected file content…</p>
+        ) : fileViewerError ? (
+          <p className="form-error" role="alert">
+            {fileViewerError}
+          </p>
+        ) : fileViewer ? (
+          <>
+            <p className="mc-muted" style={{ fontSize: "0.8rem" }}>
+              <code>{fileViewer.path}</code> • {fileViewer.size} bytes
+            </p>
+            <pre className="file-viewer-content">
+              <code>{fileViewer.content}</code>
+            </pre>
+            {fileViewer.truncated ? <p className="mc-muted">Preview truncated to first 128 KB.</p> : null}
+          </>
+        ) : null}
+      </section>
+    ) : null;
+
   return (
-    <section className="create-layout">
-      <section className="panel create-panel">
-        <h2 className="section-header-brand">Create Service</h2>
-        <p className="embed-note">
-          This updates only <code>services.yaml</code>; when gateway is enabled, the route is generated as{" "}
-          <code>&lt;service&gt;.calavelas.net</code>.
-        </p>
+    <div className="wiz">
+      <WizardStepper step={step} furthest={furthestStep} onGo={goToStep} />
 
-        <form className="create-form" onSubmit={onSubmit}>
-          <div className="create-form-grid">
-            <label className="field-span-2">
-              Service name
-              <input
-                type="text"
-                value={serviceName}
-                onChange={(event) => setServiceName(event.target.value)}
-                placeholder="cooper"
-                autoComplete="off"
-                required
-              />
-              <span className="field-hint">
-                Lowercase letters, numbers, and dashes. Becomes the URL <code>{(serviceName || "<name>")}.calavelas.net</code>.
-              </span>
-            </label>
+      {result ? (
+        <section ref={resultSectionRef} className="mc-panel transaction-panel" aria-live="polite">
+          <div className="mc-panel-head">
+            <h2 className="mc-panel-title">Result</h2>
+          </div>
+          <p className="mc-muted" style={{ fontSize: "0.85rem", marginTop: 0 }}>
+            The portal opened a branch and PR to append your {thing} to <code>services.yaml</code>. Track the pipeline
+            below.
+          </p>
 
-            <label className="field-span-2">
-              Service template
-              <select value={serviceTemplate} onChange={(event) => setServiceTemplate(event.target.value)} required>
-                {options?.serviceTemplates.map((template) => (
-                  <option key={template.name} value={template.name}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-              <span className="field-hint">
-                {selectedServiceTemplate?.description || "What kind of service to scaffold."}
-              </span>
-            </label>
-
-            <label>
-              Namespace
-              <select value={namespace} onChange={(event) => setNamespace(event.target.value)} required>
-                {options?.namespaces.map((item) => (
-                  <option key={item.name} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-              <span className="field-hint">Kubernetes namespace to deploy into.</span>
-            </label>
-
-            <label>
-              Environment
-              <select value={environment} onChange={(event) => setEnvironment(event.target.value)} required>
-                {options?.kubernetesEnvironments.map((item) => (
-                  <option key={item.name} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-              <span className="field-hint">Target cluster.</span>
-            </label>
-
-            <div className="field-span-2 create-toggle">
-              <label className="create-toggle-row">
-                <input
-                  type="checkbox"
-                  checked={gatewayEnabled}
-                  onChange={(event) => setGatewayEnabled(event.target.checked)}
-                />
-                <span>Expose publicly (Gateway)</span>
-              </label>
-              <p className="create-toggle-help">
-                Serve this service at <code>https://{(serviceName || "<service>")}.calavelas.net</code>.
-              </p>
+          <dl className="kv-list">
+            <div>
+              <dt>Service</dt>
+              <dd>{result.serviceName}</dd>
             </div>
+            <div>
+              <dt>Branch</dt>
+              <dd>
+                <code>{result.branchName ?? "n/a"}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Generated Files</dt>
+              <dd>{result.generatedFiles.length}</dd>
+            </div>
+            <div>
+              <dt>Service Page</dt>
+              <dd>
+                {serviceVisibleInCatalog ? (
+                  <a className="mc-extlink" href={buildServicePagePath(result.serviceName)} target="_blank" rel="noreferrer">
+                    {buildServicePagePath(result.serviceName)}
+                  </a>
+                ) : isSvcsBuildSuccessful(transactionStatus) ? (
+                  <>waiting for catalog refresh…</>
+                ) : (
+                  <>available after Service build/deploy succeeds</>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Service URL</dt>
+              <dd>
+                <a className="mc-extlink" href={buildServicePublicUrl(result.serviceName)} target="_blank" rel="noreferrer">
+                  {buildServicePublicUrl(result.serviceName)}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt>Pull Request</dt>
+              <dd>
+                {result.pullRequestUrl ? (
+                  <a className="mc-extlink" href={result.pullRequestUrl} target="_blank" rel="noreferrer">
+                    {result.pullRequestUrl}
+                  </a>
+                ) : (
+                  "n/a"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>PR Status</dt>
+              <dd>
+                {transactionStatus
+                  ? transactionStatus.pullRequest.merged
+                    ? "merged"
+                    : transactionStatus.pullRequest.state
+                  : "loading…"}
+              </dd>
+            </div>
+            <div>
+              <dt>Pipeline</dt>
+              <dd>
+                {transactionStatus ? (
+                  <span className={`status-pill tone-${pipelineTone(transactionStatus.pipeline.status)}`}>
+                    {formatPipelineStatus(transactionStatus.pipeline.status)}
+                  </span>
+                ) : (
+                  "loading…"
+                )}
+              </dd>
+            </div>
+          </dl>
 
-            <details className="field-span-2 create-advanced">
-              <summary>Advanced options</summary>
-              <div className="create-advanced-body">
-                <label>
-                  GitOps template
-                  <select value={gitopsTemplate} onChange={(event) => setGitopsTemplate(event.target.value)} required>
-                    {options?.gitopsTemplates.map((template) => (
-                      <option key={template.name} value={template.name}>
-                        {template.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="field-hint">How the service is packaged &amp; deployed. The default is usually right.</span>
-                </label>
+          {transactionStatus && (
+            <section className="transaction-live">
+              <p className="mc-muted">{transactionStatus.pipeline.message}</p>
+              {isSvcsBuildSuccessful(transactionStatus) && (
+                <p className="mc-muted">
+                  {catalogRefreshStatus === "refreshing" && catalogRefreshNote}
+                  {catalogRefreshStatus === "success" && catalogRefreshNote}
+                  {catalogRefreshStatus === "failed" && (catalogRefreshNote || "Service catalog refresh did not complete yet.")}
+                  {catalogRefreshStatus === "idle" && "Waiting to refresh service catalog."}
+                  {catalogRefreshAttempts > 0 && catalogRefreshStatus === "refreshing" && ` Attempts: ${catalogRefreshAttempts}.`}
+                </p>
+              )}
+              {catalogRefreshError && (
+                <p className="form-error" role="alert">
+                  {catalogRefreshError}
+                </p>
+              )}
+              {catalogRefreshStatus === "failed" && (
+                <div className="wiz-nav">
+                  <button
+                    type="button"
+                    className="mc-btn mc-btn-sm mc-btn-soft"
+                    onClick={() => {
+                      setCatalogRefreshStatus("idle");
+                      setCatalogRefreshError("");
+                      setCatalogRefreshNote("");
+                      setCatalogRefreshAttempts(0);
+                    }}
+                  >
+                    Retry catalog refresh
+                  </button>
+                </div>
+              )}
+              {transactionStatus.pipeline.notifications.length > 0 && (
+                <ul className="transaction-notifications">
+                  {transactionStatus.pipeline.notifications.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              )}
+              <div className="pipeline-stages" role="list" aria-label="pipeline-stages">
+                {pipelineStages.map((stage) => {
+                  const runTimestamp = stage.run?.updatedAt || stage.run?.createdAt || null;
+                  return (
+                    <article key={stage.key} className="pipeline-stage-item" role="listitem">
+                      <div className="pipeline-stage-header">
+                        <strong>{stage.label}</strong>
+                        <span className={`status-pill tone-${stageTone(stage.status)}`}>{formatStageStatus(stage.status)}</span>
+                      </div>
+                      <p className="mc-muted">{stage.detail}</p>
+                      <div className="pipeline-stage-meta">
+                        {stage.run?.htmlUrl ? (
+                          <a className="mc-extlink" href={stage.run.htmlUrl} target="_blank" rel="noreferrer">
+                            {formatWorkflowRunStatus(stage.run)}
+                          </a>
+                        ) : (
+                          <span className="mc-muted">run link available after workflow starts</span>
+                        )}
+                        <span className="mc-muted">{runTimestamp ? formatTimestamp(runTimestamp) : "not started"}</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-                <section className="create-template-preview">
-                  <article className="create-template-card">
-                    <h3>Service template files</h3>
-                    {selectedServiceTemplate?.path && (
-                      <p className="embed-note">
-                        <code>{selectedServiceTemplate.path}</code>
-                      </p>
-                    )}
-                    <ul className="template-file-list">
-                      {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
-                        <li key={`service-${file}`} className="template-file-item">
-                          <div className="template-file-row">
+          {transactionStatusError && (
+            <p className="form-error" role="alert">
+              {transactionStatusError}
+            </p>
+          )}
+
+          <div className="wiz-nav">
+            <button
+              type="button"
+              className="mc-btn mc-btn-soft"
+              onClick={() => {
+                setResult(null);
+                setServiceName("");
+                setEnvRows([]);
+                setImageOverride("");
+                setEditorMode("form");
+                setStep(1);
+                setFurthestStep(1);
+              }}
+            >
+              <Icon.Plus size={14} />
+              Create another
+            </button>
+          </div>
+        </section>
+      ) : (
+        <form className="wiz-form" onSubmit={onSubmit}>
+          {step === 1 && (
+            <section className="mc-panel wiz-step-panel">
+              <h2 className="wiz-step-title">{mode === "interstellar" ? "Robot basics" : "Basic service info"}</h2>
+              <p className="wiz-step-sub">Define the core identity of your new {thing}.</p>
+
+              <label className="wiz-field">
+                {mode === "interstellar" ? "Robot name" : "Service name"} <span className="wiz-req">*</span>
+                <input
+                  type="text"
+                  className="wiz-input"
+                  value={serviceName}
+                  onChange={(event) => setServiceName(event.target.value)}
+                  placeholder={mode === "interstellar" ? "tars-9" : "payment-001"}
+                  autoComplete="off"
+                />
+                {step1NameError ? (
+                  <span className="wiz-field-error">{step1NameError}</span>
+                ) : (
+                  <span className="wiz-hint">
+                    Lowercase letters, numbers, dashes. Becomes <code>{(trimmedName || "<name>") + ".calavelas.net"}</code>.
+                  </span>
+                )}
+              </label>
+
+              <label className="wiz-field">
+                {t.namespaceLabel} <span className="wiz-req">*</span>
+                <select className="wiz-input" value={namespace} onChange={(event) => setNamespace(event.target.value)}>
+                  {options?.namespaces.map((item) => (
+                    <option key={item.name} value={item.name}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="wiz-hint">Where this {thing} lives in the cluster.</span>
+              </label>
+            </section>
+          )}
+
+          {step === 2 && (
+            <section className="mc-panel wiz-step-panel">
+              <h2 className="wiz-step-title">{mode === "interstellar" ? "Chassis & stack" : "Tech stack"}</h2>
+              <p className="wiz-step-sub">Pick the template, delivery, and target environment.</p>
+
+              <label className="wiz-field">
+                {mode === "interstellar" ? "Blueprint" : "Service template"} <span className="wiz-req">*</span>
+                <select
+                  className="wiz-input"
+                  value={serviceTemplate}
+                  onChange={(event) => setServiceTemplate(event.target.value)}
+                >
+                  {options?.serviceTemplates.map((template) => (
+                    <option key={template.name} value={template.name}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="wiz-hint">{selectedServiceTemplate?.description || "What kind of service to scaffold."}</span>
+              </label>
+
+              <label className="wiz-field">
+                Environment <span className="wiz-req">*</span>
+                <select
+                  className="wiz-input"
+                  value={environment}
+                  onChange={(event) => setEnvironment(event.target.value)}
+                >
+                  {options?.kubernetesEnvironments.map((item) => (
+                    <option key={item.name} value={item.name}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="wiz-hint">Target cluster.</span>
+              </label>
+
+              <details className="wiz-advanced">
+                <summary>Advanced — delivery & template files</summary>
+                <div className="wiz-advanced-body">
+                  <label className="wiz-field">
+                    GitOps template
+                    <select
+                      className="wiz-input"
+                      value={gitopsTemplate}
+                      onChange={(event) => setGitopsTemplate(event.target.value)}
+                    >
+                      {options?.gitopsTemplates.map((template) => (
+                        <option key={template.name} value={template.name}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="wiz-hint">How the {thing} is packaged &amp; deployed. The default is usually right.</span>
+                  </label>
+
+                  <div className="mc-detail-grid">
+                    <article className="wiz-template-card">
+                      <h3>Service template files</h3>
+                      <ul className="wiz-file-list">
+                        {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
+                          <li key={`service-${file}`}>
                             <code>{file}</code>
                             <button
                               type="button"
-                              className="open-link compact subtle"
+                              className="mc-link-all"
                               onClick={() => void onOpenTemplateFile("service", selectedServiceTemplate?.name ?? "", file)}
                               disabled={fileViewerLoading}
                             >
                               View
                             </button>
-                          </div>
-                        </li>
-                      ))}
-                      {(selectedServiceTemplate?.previewFiles ?? []).length === 0 && <li>no template files found</li>}
-                    </ul>
-                  </article>
-
-                  <article className="create-template-card">
-                    <h3>GitOps template files</h3>
-                    {selectedGitopsTemplate?.path && (
-                      <p className="embed-note">
-                        <code>{selectedGitopsTemplate.path}</code>
-                      </p>
-                    )}
-                    <ul className="template-file-list">
-                      {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
-                        <li key={`gitops-${file}`} className="template-file-item">
-                          <div className="template-file-row">
+                          </li>
+                        ))}
+                        {(selectedServiceTemplate?.previewFiles ?? []).length === 0 && <li className="mc-muted">no files</li>}
+                      </ul>
+                    </article>
+                    <article className="wiz-template-card">
+                      <h3>GitOps template files</h3>
+                      <ul className="wiz-file-list">
+                        {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
+                          <li key={`gitops-${file}`}>
                             <code>{file}</code>
                             <button
                               type="button"
-                              className="open-link compact subtle"
+                              className="mc-link-all"
                               onClick={() => void onOpenTemplateFile("gitops", selectedGitopsTemplate?.name ?? "", file)}
                               disabled={fileViewerLoading}
                             >
                               View
                             </button>
-                          </div>
-                        </li>
-                      ))}
-                      {(selectedGitopsTemplate?.previewFiles ?? []).length === 0 && <li>no template files found</li>}
-                    </ul>
-                  </article>
+                          </li>
+                        ))}
+                        {(selectedGitopsTemplate?.previewFiles ?? []).length === 0 && <li className="mc-muted">no files</li>}
+                      </ul>
+                    </article>
+                  </div>
+                </div>
+              </details>
+
+              {fileViewerPanel}
+            </section>
+          )}
+
+          {step === 3 && (
+            <section className="mc-panel wiz-step-panel">
+              <h2 className="wiz-step-title">{mode === "interstellar" ? "Calibration" : "Service configuration"}</h2>
+              <p className="wiz-step-sub">
+                Tune the <code>overrides</code> for this {thing} — gateway, image and env. Edit as a form or as raw YAML.
+              </p>
+
+              <p className="wiz-note">
+                <strong>Day-0 bootstrap only.</strong> These overrides seed the initial{" "}
+                <code>services.yaml</code> entry — the platform&apos;s <strong>desired-state catalog</strong>, not the
+                running configuration. Once created, the {thing} is configured through its own generated GitOps config
+                (<code>services/{trimmedName || "<name>"}/chart</code>): <code>services.yaml</code> tracks <em>what
+                should exist</em>; the chart is <em>how it actually runs</em>.
+              </p>
+
+              <ConfigEditor
+                editorMode={editorMode}
+                onSetEditorMode={changeEditorMode}
+                serviceName={serviceName}
+                namespaceLabel={t.namespaceLabel}
+                gatewayEnabled={gatewayEnabled}
+                onGatewayChange={setGatewayEnabled}
+                imageOverride={imageOverride}
+                onImageChange={setImageOverride}
+                envRows={envRows}
+                onEnvRowsChange={setEnvRows}
+                yamlText={yamlText}
+                onYamlChange={setYamlText}
+                onYamlBlur={onYamlBlur}
+                onValidate={onGeneratePreview}
+                validating={previewing}
+                yamlError={yamlError}
+                unknownKeysWarning={unknownKeysWarning}
+              />
+
+              {previewResult ? (
+                <section className="wiz-preview">
+                  <div className="mc-panel-head">
+                    <h3 className="mc-panel-title">Preview</h3>
+                    <span className="mc-count-chip">{previewResult.generatedFiles.length} files</span>
+                  </div>
+                  <ul className="wiz-file-list">
+                    {previewResult.generatedFiles.map((file) => (
+                      <li key={file.path}>
+                        <code>{file.path}</code>
+                        <span className="mc-muted">{file.size} b</span>
+                        {typeof file.content === "string" ? (
+                          <button type="button" className="mc-link-all" onClick={() => onOpenGeneratedFile(file)}>
+                            View
+                          </button>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
                 </section>
-              </div>
-            </details>
-          </div>
+              ) : (
+                <p className="mc-muted wiz-preview-hint">Generate a preview to inspect the files before creating.</p>
+              )}
+
+              {fileViewerPanel}
+            </section>
+          )}
 
           {formError && (
             <p className="form-error" role="alert">
@@ -926,303 +1362,41 @@ export function CreateServicePanel() {
             </p>
           )}
 
-          <div className="form-actions">
-            <button type="button" className="ui-btn ui-btn-ghost" onClick={onGeneratePreview} disabled={previewing || submitting}>
-              {previewing ? "Generating..." : "Generate Preview"}
-            </button>
-            <button type="submit" className="ui-btn ui-btn-primary" disabled={submitting || previewing || !isPreviewCurrent}>
-              {submitting ? "Submitting..." : "Create Service"}
-            </button>
-          </div>
-          {!isPreviewCurrent && (
-            <p className="embed-note">Generate Preview with current values before creating the service.</p>
-          )}
-        </form>
-      </section>
-
-      <section className="panel create-side" aria-live="polite">
-        <div className="panel-header-row">
-          <h2 className="section-header-brand">Generate Preview</h2>
-          <button
-            type="button"
-            className="open-link compact subtle"
-            onClick={() => setPreviewCollapsed((value) => !value)}
-            aria-expanded={!previewCollapsed}
-          >
-            {previewCollapsed ? "Expand" : "Collapse"}
-          </button>
-        </div>
-        {previewCollapsed ? (
-          <section className="create-result create-result-placeholder">
-            <h3>Preview Collapsed</h3>
-            <p className="embed-note">
-              {previewResult
-                ? `${previewResult.generatedFiles.length} generated files ready.`
-                : "Run Generate Preview to inspect generated output and template files."}
-            </p>
-          </section>
-        ) : (
-          <>
-            {previewResult ? (
-              <section className="create-result">
-                <h3>Generated Output</h3>
-                <p className="embed-note">
-                  <strong>{previewResult.generatedFiles.length}</strong> files will be generated from selected templates.
-                </p>
-                <ul className="create-preview-list">
-                  {previewResult.generatedFiles.map((file) => (
-                    <li key={file.path} className="create-preview-item">
-                      <div className="create-preview-file-row">
-                        <code>{file.path}</code>
-                        <span>{file.size} bytes</span>
-                        {typeof file.content === "string" ? (
-                          <button
-                            type="button"
-                            className="open-link compact subtle"
-                            onClick={() => onOpenGeneratedFile(file)}
-                          >
-                            View
-                          </button>
-                        ) : (
-                          <span className="embed-note">preview unavailable</span>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+          <div className="wiz-nav">
+            {step > 1 ? (
+              <button type="button" className="mc-btn mc-btn-soft" onClick={goBack}>
+                <Icon.ChevronLeft size={15} />
+                Back
+              </button>
+            ) : null}
+            <span className="wiz-nav-spacer" />
+            {step < 3 ? (
+              <button type="button" className="mc-btn" onClick={goNext} disabled={step === 1 && !step1Valid}>
+                Next
+                <Icon.ArrowRight size={14} />
+              </button>
             ) : (
-              <section className="create-result create-result-placeholder">
-                <h3>Generated Output</h3>
-                <p className="embed-note">Click <strong>Generate Preview</strong> to inspect files before creating the service.</p>
-              </section>
+              <>
+                <button
+                  type="button"
+                  className="mc-btn mc-btn-soft"
+                  onClick={onGeneratePreview}
+                  disabled={previewing || submitting}
+                >
+                  {previewing ? "Generating…" : "Generate preview"}
+                </button>
+                <button type="submit" className="mc-btn" disabled={submitting || previewing || !isPreviewCurrent}>
+                  <Icon.Plus size={15} />
+                  {submitting ? "Creating…" : t.createCta}
+                </button>
+              </>
             )}
-          </>
-        )}
-      </section>
-
-      <section className="panel file-viewer-panel" aria-live="polite">
-        <div className="panel-header-row">
-          <h2 className="section-header-brand">File Viewer</h2>
-          <button
-            type="button"
-            className="open-link compact subtle"
-            onClick={() => setFileViewerCollapsed((value) => !value)}
-            aria-expanded={!fileViewerCollapsed}
-          >
-            {fileViewerCollapsed ? "Expand" : "Collapse"}
-          </button>
-        </div>
-        {fileViewerCollapsed ? (
-          <section className="create-result create-result-placeholder">
-            <h3>Viewer Collapsed</h3>
-            <p className="embed-note">
-              {fileViewer ? (
-                <>
-                  Selected file: <code>{fileViewer.path}</code>
-                </>
-              ) : (
-                <>Use <strong>View</strong> from Template Preview or Generated Output to inspect file content here.</>
-              )}
-            </p>
-          </section>
-        ) : fileViewerLoading ? (
-          <section className="create-result create-result-placeholder">
-            <h3>Loading File</h3>
-            <p className="embed-note">Fetching selected file content...</p>
-          </section>
-        ) : fileViewerError ? (
-          <section className="create-result create-result-placeholder">
-            <h3>File Load Error</h3>
-            <p className="form-error" role="alert">
-              {fileViewerError}
-            </p>
-          </section>
-        ) : fileViewer ? (
-          <section className="create-result">
-            <h3>{fileViewer.sourceLabel}</h3>
-            <p className="embed-note">
-              <code>{fileViewer.path}</code> • {fileViewer.size} bytes
-            </p>
-            <pre className="file-viewer-content">
-              <code>{fileViewer.content}</code>
-            </pre>
-            {fileViewer.truncated && (
-              <p className="embed-note">Preview truncated to first 128 KB.</p>
-            )}
-          </section>
-        ) : (
-          <section className="create-result create-result-placeholder">
-            <h3>No File Selected</h3>
-            <p className="embed-note">Use <strong>View</strong> from Template Preview or Generated Output to inspect file content here.</p>
-          </section>
-        )}
-      </section>
-
-      <section ref={resultSectionRef} className="panel transaction-panel" aria-live="polite">
-        <h2 className="section-header-brand">Result</h2>
-        <p className="embed-note">After submit, the portal opens a branch and PR to append your service config in <code>services.yaml</code>.</p>
-
-        {result ? (
-          <section className="create-result">
-            <h3>Result</h3>
-            <dl className="kv-list">
-              <div>
-                <dt>Service</dt>
-                <dd>{result.serviceName}</dd>
-              </div>
-              <div>
-                <dt>Branch</dt>
-                <dd>
-                  <code>{result.branchName ?? "n/a"}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>Generated Files</dt>
-                <dd>{result.generatedFiles.length}</dd>
-              </div>
-              <div>
-                <dt>Service Page</dt>
-                <dd>
-                  {serviceVisibleInCatalog ? (
-                    <a
-                      className="entity-link"
-                      href={buildServicePagePath(result.serviceName)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {buildServicePagePath(result.serviceName)}
-                    </a>
-                  ) : isSvcsBuildSuccessful(transactionStatus) ? (
-                    <>waiting for catalog refresh...</>
-                  ) : (
-                    <>available after Service build/deploy succeeds</>
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt>Service URL</dt>
-                <dd>
-                  <a
-                    className="entity-link"
-                    href={buildServicePublicUrl(result.serviceName)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {buildServicePublicUrl(result.serviceName)}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt>Pull Request</dt>
-                <dd>
-                  {result.pullRequestUrl ? (
-                    <a className="entity-link" href={result.pullRequestUrl} target="_blank" rel="noreferrer">
-                      {result.pullRequestUrl}
-                    </a>
-                  ) : (
-                    "n/a"
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt>PR Status</dt>
-                <dd>{transactionStatus ? (transactionStatus.pullRequest.merged ? "merged" : transactionStatus.pullRequest.state) : "loading..."}</dd>
-              </div>
-              <div>
-                <dt>Pipeline</dt>
-                <dd>
-                  {transactionStatus ? (
-                    <span className={`status-pill tone-${pipelineTone(transactionStatus.pipeline.status)}`}>
-                      {formatPipelineStatus(transactionStatus.pipeline.status)}
-                    </span>
-                  ) : (
-                    "loading..."
-                  )}
-                </dd>
-              </div>
-            </dl>
-
-            {transactionStatus && (
-              <section className="transaction-live">
-                <p className="embed-note">{transactionStatus.pipeline.message}</p>
-                {isSvcsBuildSuccessful(transactionStatus) && (
-                  <p className="embed-note">
-                    {catalogRefreshStatus === "refreshing" && catalogRefreshNote}
-                    {catalogRefreshStatus === "success" && catalogRefreshNote}
-                    {catalogRefreshStatus === "failed" && (catalogRefreshNote || "Service catalog refresh did not complete yet.")}
-                    {catalogRefreshStatus === "idle" && "Waiting to refresh service catalog."}
-                    {catalogRefreshAttempts > 0 && catalogRefreshStatus === "refreshing" && ` Attempts: ${catalogRefreshAttempts}.`}
-                  </p>
-                )}
-                {catalogRefreshError && (
-                  <p className="form-error" role="alert">
-                    {catalogRefreshError}
-                  </p>
-                )}
-                {catalogRefreshStatus === "failed" && (
-                  <div className="form-actions">
-                    <button
-                      type="button"
-                      className="open-link compact subtle"
-                      onClick={() => {
-                        setCatalogRefreshStatus("idle");
-                        setCatalogRefreshError("");
-                        setCatalogRefreshNote("");
-                        setCatalogRefreshAttempts(0);
-                      }}
-                    >
-                      Retry Catalog Refresh
-                    </button>
-                  </div>
-                )}
-                {transactionStatus.pipeline.notifications.length > 0 && (
-                  <ul className="transaction-notifications">
-                    {transactionStatus.pipeline.notifications.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                )}
-                <div className="pipeline-stages" role="list" aria-label="pipeline-stages">
-                  {pipelineStages.map((stage) => {
-                    const runTimestamp = stage.run?.updatedAt || stage.run?.createdAt || null;
-                    return (
-                      <article key={stage.key} className="pipeline-stage-item" role="listitem">
-                        <div className="pipeline-stage-header">
-                          <strong>{stage.label}</strong>
-                          <span className={`status-pill tone-${stageTone(stage.status)}`}>{formatStageStatus(stage.status)}</span>
-                        </div>
-                        <p className="embed-note">{stage.detail}</p>
-                        <div className="pipeline-stage-meta">
-                          {stage.run?.htmlUrl ? (
-                            <a className="entity-link" href={stage.run.htmlUrl} target="_blank" rel="noreferrer">
-                              {formatWorkflowRunStatus(stage.run)}
-                            </a>
-                          ) : (
-                            <span className="embed-note">run link available after workflow starts</span>
-                          )}
-                          <span className="embed-note">{runTimestamp ? formatTimestamp(runTimestamp) : "not started"}</span>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {transactionStatusError && (
-              <p className="form-error" role="alert">
-                {transactionStatusError}
-              </p>
-            )}
-          </section>
-        ) : (
-          <section className="create-result create-result-placeholder">
-            <h3>Result</h3>
-            <p className="embed-note">Submit the form to view the branch, PR link, and service endpoints.</p>
-          </section>
-        )}
-      </section>
-    </section>
+          </div>
+          {step === 3 && !isPreviewCurrent ? (
+            <p className="mc-muted wiz-preview-hint">Generate a preview of the current values before creating.</p>
+          ) : null}
+        </form>
+      )}
+    </div>
   );
 }

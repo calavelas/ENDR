@@ -13,17 +13,18 @@ export default function CreatePage() {
       <Explain
         idp={
           <>
-            Creating a service appends one entry to <code>services.yaml</code> — the platform's{" "}
-            <b>catalog</b> and single source of truth. From it, ENDR generates the app scaffold, Helm
-            chart and ArgoCD app, opens a <b>pull request</b>, and ArgoCD deploys the merge. No
-            kubectl.
+            Three steps — <b>basics → tech stack → configuration</b>. You're appending one entry to{" "}
+            <code>services.yaml</code>, the platform's <b>desired-state catalog</b>. From it, ENDR
+            generates the app scaffold, Helm chart and ArgoCD app, opens a <b>pull request</b>, and
+            ArgoCD deploys the merge. No kubectl.
           </>
         }
         interstellar={
           <>
-            Designing a robot files one entry in <code>services.yaml</code> — the catalog. From it,
-            ENDR forges the scaffold, Helm chart and ArgoCD app, opens a <b>pull request</b>, and the
-            autopilot deploys the merge. No kubectl.
+            Three steps — <b>basics → chassis → calibration</b>. You're filing one entry in{" "}
+            <code>services.yaml</code>, the <b>desired-state catalog</b>. From it, ENDR forges the
+            scaffold, Helm chart and ArgoCD app, opens a <b>pull request</b>, and the autopilot
+            deploys the merge. No kubectl.
           </>
         }
       />
