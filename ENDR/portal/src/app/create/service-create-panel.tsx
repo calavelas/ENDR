@@ -1171,10 +1171,11 @@ export function CreateServicePanel() {
       ) : (
         <form className="wiz-form" onSubmit={onSubmit}>
           <div className="wiz-cols">
-            {/* Left — the current step (just swaps this box) */}
+            {/* Left — the current step (just swaps this box) + the dry-run preview */}
             <div className="wiz-col-left" onFocusCapture={onFormFocus}>
+              <section className="mc-panel wiz-step-panel">
               {step === 1 && (
-                <section className="mc-panel wiz-step-panel">
+                <>
                   <h2 className="wiz-step-title">{mode === "interstellar" ? "Robot basics" : "Basic service info"}</h2>
                   <p className="wiz-step-sub">Define the core identity of your new {thing}.</p>
 
@@ -1213,11 +1214,11 @@ export function CreateServicePanel() {
                     </select>
                     <span className="wiz-hint">Where this {thing} lives in the cluster.</span>
                   </label>
-                </section>
+                </>
               )}
 
               {step === 2 && (
-                <section className="mc-panel wiz-step-panel">
+                <>
                   <h2 className="wiz-step-title">{mode === "interstellar" ? "Chassis & stack" : "Tech stack"}</h2>
                   <p className="wiz-step-sub">Pick the template, delivery, and target environment.</p>
 
@@ -1313,11 +1314,11 @@ export function CreateServicePanel() {
                       </article>
                     </div>
                   </details>
-                </section>
+                </>
               )}
 
               {step === 3 && (
-                <section className="mc-panel wiz-step-panel">
+                <>
                   <h2 className="wiz-step-title">{mode === "interstellar" ? "Calibration" : "Service configuration"}</h2>
                   <p className="wiz-step-sub">
                     Tune the <code>overrides</code> for this {thing} — or edit the YAML on the right directly.
@@ -1338,43 +1339,67 @@ export function CreateServicePanel() {
                     envRows={envRows}
                     onEnvRowsChange={setEnvRows}
                   />
-                </section>
+                </>
               )}
 
-              <div className="wiz-step-nav">
-                {step > 1 ? (
-                  <button type="button" className="mc-btn mc-btn-soft" onClick={goBack}>
-                    <Icon.ChevronLeft size={15} />
-                    Back
-                  </button>
-                ) : (
-                  <span />
-                )}
-                {step < 3 ? (
-                  <button type="button" className="mc-btn" onClick={goNext} disabled={step === 1 && !step1Valid}>
-                    Next
-                    <Icon.ArrowRight size={14} />
-                  </button>
-                ) : null}
-              </div>
+                <div className="wiz-step-nav">
+                  {step > 1 ? (
+                    <button type="button" className="mc-btn mc-btn-soft" onClick={goBack}>
+                      <Icon.ChevronLeft size={15} />
+                      Back
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+                  {step < 3 ? (
+                    <button type="button" className="mc-btn" onClick={goNext} disabled={step === 1 && !step1Valid}>
+                      Next
+                      <Icon.ArrowRight size={14} />
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+                </div>
+              </section>
+
+              {previewResult ? (
+                <section className="mc-panel wiz-preview-panel">
+                  <div className="mc-panel-head">
+                    <h3 className="mc-panel-title">Preview</h3>
+                    <span className="mc-count-chip">{previewResult.generatedFiles.length} files</span>
+                  </div>
+                  <ul className="wiz-file-list">
+                    {previewResult.generatedFiles.map((file) => (
+                      <li key={file.path}>
+                        <code>{file.path}</code>
+                        <span className="mc-muted">{file.size} b</span>
+                        {typeof file.content === "string" ? (
+                          <button type="button" className="mc-link-all" onClick={() => onOpenGeneratedFile(file)}>
+                            View
+                          </button>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
             </div>
 
-            {/* Right — the live services.yaml, always present */}
-            <YamlPane
-              yamlText={yamlText}
-              onYamlChange={onYamlChange}
-              onYamlFocus={onYamlFocus}
-              onYamlBlur={onYamlBlur}
-              onValidate={onGeneratePreview}
-              validating={previewing}
-              yamlError={yamlError}
-              unknownKeysWarning={unknownKeysWarning}
-              previewFiles={previewResult ? previewResult.generatedFiles : null}
-              onOpenFile={onOpenGeneratedFile}
-            />
+            {/* Right — the live services.yaml + the file viewer beneath it */}
+            <div className="wiz-col-right">
+              <YamlPane
+                yamlText={yamlText}
+                onYamlChange={onYamlChange}
+                onYamlFocus={onYamlFocus}
+                onYamlBlur={onYamlBlur}
+                onValidate={onGeneratePreview}
+                validating={previewing}
+                yamlError={yamlError}
+                unknownKeysWarning={unknownKeysWarning}
+              />
+              {fileViewerPanel}
+            </div>
           </div>
-
-          {fileViewerPanel}
 
           {formError && (
             <p className="form-error" role="alert">
