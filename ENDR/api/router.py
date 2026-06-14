@@ -281,6 +281,12 @@ def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> Creat
             detail="image is platform-controlled and cannot be set from the portal; only environment variables are configurable",
         )
     env = _sanitize_env(payload.env)
+    # Robots must be named and have something to say (the UI validates too, but the
+    # gate belongs server-side so a stale/bypassed client can't create empty units).
+    if payload.serviceTemplate.strip() == "endr-robot":
+        for key in ("ROBOT_NAME", "CATCHPHRASE"):
+            if not str(env.get(key, "")).strip():
+                raise HTTPException(status_code=400, detail=f"{key} is required for a robot")
     request = CreateServiceRequest(
         name=payload.serviceName.strip(),
         namespace=payload.namespace.strip(),
