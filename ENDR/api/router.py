@@ -1,7 +1,11 @@
+import os
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from pathlib import Path
 
+from engine.scaffold.github_client import GitHubAPIError, GitHubClient
 from engine.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
 from api.snapshot import (
     PlatformSnapshot,
@@ -294,6 +298,200 @@ def get_service_argocd_detail(name: str) -> ServiceArgoDetail:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"unable to load ArgoCD detail: {exc}") from exc
+
+
+# ── Service files (GitOps source) — browse + edit-via-PR (Phase D) ────────────
+class ServiceFileNode(BaseModel):
+    path: str
+    relativePath: str
+    size: int
+    editable: bool
+
+
+class ServiceFilesResponse(BaseModel):
+    serviceName: str
+    basePath: str
+    branch: str
+    available: bool
+    files: list[ServiceFileNode]
+    warnings: list[str] = Field(default_factory=list)
+
+
+class ServiceFileContentResponse(BaseModel):
+    serviceName: str
+    path: str
+    size: int
+    content: str
+    editable: bool
+    truncated: bool = False
+
+
+class EditServiceFileRequest(BaseModel):
+    path: str = Field(min_length=1)
+    content: str
+    branchName: str | None = None
+    dryRun: bool = False
+
+
+class EditServiceFileResponse(BaseModel):
+    serviceName: str
+    path: str
+    dryRun: bool
+    branchName: str | None = None
+    pullRequestUrl: str | None = None
+    pullRequestNumber: int | None = None
+
+
+_SERVICE_FILE_PREVIEW_MAX_BYTES = 128 * 1024
+
+
+def _service_base_path(name: str) -> str:
+    return f"SVCS/{name.strip()}"
+
+
+def _is_editable_service_path(base: str, path: str) -> bool:
+    # Developers tune chart values; templates are platform-owned (read-only).
+    return path == f"{base}/chart/values.yaml"
+
+
+def _resolve_app_service(name: str) -> tuple[object, str, str]:
+    """Validate the name is an application service; return (idp_config, base, branch)."""
+    idp_config, services_config, _paths, _svcs_url = load_platform_configs()
+    known = {service.name for service in services_config.services}
+    if name.strip() not in known:
+        raise HTTPException(status_code=404, detail=f"unknown application service: {name}")
+    return idp_config, _service_base_path(name), idp_config.config.git.defaultBranch
+
+
+def _github_client(idp_config: object) -> GitHubClient:
+    # Tokenless is fine for reads on the public repo; the edit path requires a token.
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    git = idp_config.config.git  # type: ignore[attr-defined]
+    return GitHubClient(token=token, owner=git.owner, repo=git.repo)
+
+
+@router.get("/api/platform/services/{name}/files", response_model=ServiceFilesResponse)
+def get_service_files(name: str) -> ServiceFilesResponse:
+    idp_config, base, branch = _resolve_app_service(name)
+    client = _github_client(idp_config)
+    try:
+        blobs = client.list_tree(branch, base)
+    except GitHubAPIError as exc:
+        return ServiceFilesResponse(
+            serviceName=name,
+            basePath=base,
+            branch=branch,
+            available=False,
+            files=[],
+            warnings=[f"unable to list files: {exc}"],
+        )
+
+    files = [
+        ServiceFileNode(
+            path=blob["path"],
+            relativePath=blob["path"][len(base) + 1 :] if blob["path"].startswith(base + "/") else blob["path"],
+            size=int(blob.get("size") or 0),
+            editable=_is_editable_service_path(base, blob["path"]),
+        )
+        for blob in sorted(blobs, key=lambda item: item["path"])
+    ]
+    return ServiceFilesResponse(serviceName=name, basePath=base, branch=branch, available=True, files=files)
+
+
+@router.get("/api/platform/services/{name}/file", response_model=ServiceFileContentResponse)
+def get_service_file(name: str, path: str) -> ServiceFileContentResponse:
+    idp_config, base, branch = _resolve_app_service(name)
+    normalized = path.strip().lstrip("/")
+    if not (normalized == base or normalized.startswith(base + "/")):
+        raise HTTPException(status_code=400, detail="path is outside the service folder")
+    client = _github_client(idp_config)
+    try:
+        raw = client.get_file_content(branch, normalized)
+    except GitHubAPIError as exc:
+        raise HTTPException(status_code=502, detail=f"unable to read file: {exc}") from exc
+    if raw is None:
+        raise HTTPException(status_code=404, detail="file not found")
+
+    preview = raw[:_SERVICE_FILE_PREVIEW_MAX_BYTES]
+    return ServiceFileContentResponse(
+        serviceName=name,
+        path=normalized,
+        size=len(raw),
+        content=preview.decode("utf-8", errors="replace"),
+        editable=_is_editable_service_path(base, normalized),
+        truncated=len(raw) > _SERVICE_FILE_PREVIEW_MAX_BYTES,
+    )
+
+
+@router.post("/api/platform/services/{name}/file", response_model=EditServiceFileResponse)
+def edit_service_file(name: str, payload: EditServiceFileRequest) -> EditServiceFileResponse:
+    idp_config, base, branch = _resolve_app_service(name)
+    normalized = payload.path.strip().lstrip("/")
+    if not _is_editable_service_path(base, normalized):
+        raise HTTPException(status_code=400, detail="only the chart values.yaml is editable from the portal")
+
+    try:
+        import yaml
+
+        yaml.safe_load(payload.content)
+    except ModuleNotFoundError:
+        pass
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"invalid YAML: {exc}") from exc
+
+    if payload.dryRun:
+        return EditServiceFileResponse(serviceName=name, path=normalized, dryRun=True)
+
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="GITHUB_TOKEN is required to open a pull request")
+
+    git = idp_config.config.git  # type: ignore[attr-defined]
+    client = GitHubClient(token=token, owner=git.owner, repo=git.repo)
+    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S")
+    branch_name = (payload.branchName.strip() if payload.branchName and payload.branchName.strip() else None) or f"portal/{name}-edit-{timestamp}"
+    base_branch = git.defaultBranch
+    try:
+        base_sha = client.get_ref_sha(base_branch)
+        client.create_branch(branch_name, base_sha)
+        client.create_or_update_file(
+            branch=branch_name,
+            file_path=normalized,
+            content_bytes=payload.content.encode("utf-8"),
+            commit_message=f"fix(portal): update {name} chart values",
+        )
+        pr = client.create_pull_request(
+            title=f"portal - update config : {name}",
+            body=(
+                f"Edited from the ENDR portal.\n\n"
+                f"- service: `{name}`\n"
+                f"- file: `{normalized}`\n"
+                f"- merge to roll out via ArgoCD"
+            ),
+            head=branch_name,
+            base=base_branch,
+        )
+    except GitHubAPIError as exc:
+        raise HTTPException(status_code=400, detail=f"github api failure during edit PR: {exc}") from exc
+
+    try:
+        record_case_submission(
+            service_name=name,
+            pull_request_number=pr.number,
+            pull_request_url=pr.html_url,
+            branch_name=branch_name,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+    return EditServiceFileResponse(
+        serviceName=name,
+        path=normalized,
+        dryRun=False,
+        branchName=branch_name,
+        pullRequestUrl=pr.html_url,
+        pullRequestNumber=pr.number,
+    )
 
 
 @router.get("/api/platform/history", response_model=CaseHistoryResponse)

@@ -21,9 +21,10 @@ class PullRequestInfo:
 
 class GitHubClient:
     def __init__(self, token: str, owner: str, repo: str, api_base: str = "https://api.github.com") -> None:
-        if not token:
-            raise ValueError("token is required")
-        self.token = token
+        # Token is optional: read operations on a public repo work unauthenticated
+        # (rate-limited). Mutations (branch/commit/PR) require a token and will 401
+        # without one — callers that mutate must pass a token.
+        self.token = token or ""
         self.owner = owner
         self.repo = repo
         self.api_base = api_base.rstrip("/")
@@ -57,7 +58,8 @@ class GitHubClient:
 
         for _ in range(max_redirects + 1):
             req = request.Request(url=url, data=body, method=method)
-            req.add_header("Authorization", f"Bearer {self.token}")
+            if self.token:
+                req.add_header("Authorization", f"Bearer {self.token}")
             req.add_header("Accept", "application/vnd.github+json")
             req.add_header("X-GitHub-Api-Version", "2022-11-28")
             if body is not None:
@@ -146,6 +148,22 @@ class GitHubClient:
             return base64.b64decode(normalized.encode("ascii"))
         except Exception as exc:  # noqa: BLE001
             raise GitHubAPIError(f"invalid base64 payload for {file_path}") from exc
+
+    def list_tree(self, ref: str, path_prefix: str = "") -> list[dict[str, Any]]:
+        """List blobs (files) under path_prefix on the given ref, recursively."""
+        sha = self.get_ref_sha(ref)
+        data = self._request("GET", f"/repos/{self.owner}/{self.repo}/git/trees/{sha}?recursive=1")
+        items = data.get("tree", []) if isinstance(data, dict) else []
+        prefix = path_prefix.strip("/")
+        out: list[dict[str, Any]] = []
+        for item in items:
+            if not isinstance(item, dict) or item.get("type") != "blob":
+                continue
+            path = str(item.get("path", ""))
+            if prefix and not (path == prefix or path.startswith(prefix + "/")):
+                continue
+            out.append({"path": path, "size": int(item.get("size") or 0)})
+        return out
 
     def create_or_update_file(
         self,
