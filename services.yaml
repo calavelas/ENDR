@@ -39,21 +39,3 @@ services:
       TRUST: '90'
       CATCHPHRASE: See you on the other side.
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
-- name: tryout-nova
-  namespace: miller
-  environments:
-  - gargantua
-  generator:
-    service:
-      template: endr-robot
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    env:
-      ROBOT_NAME: Nova
-      CATCHPHRASE: Onward, to the stars!
-      HUMOR: '75'
-      HONESTY: '90'
-      TRUST: '85'
