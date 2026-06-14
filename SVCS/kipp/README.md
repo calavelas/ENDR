@@ -13,6 +13,8 @@ runs the shared `calavelas/endr-robot:05d195d` image.
 | Key | Value |
 | --- | --- |
 | `ROBOT_NAME` | `kipp` |
+| `HUMOR` | `90` |
+| `TRUST` | `70` |
 | `CATCHPHRASE` | `Are you ready for my robot colony?` |
 
 

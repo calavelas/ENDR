@@ -13,6 +13,9 @@ runs the shared `calavelas/endr-robot:05d195d` image.
 | Key | Value |
 | --- | --- |
 | `ROBOT_NAME` | `plex` |
+| `HUMOR` | `90` |
+| `HONESTY` | `90` |
+| `TRUST` | `70` |
 | `CATCHPHRASE` | `Are you ready for my robot colony?` |
 
 
