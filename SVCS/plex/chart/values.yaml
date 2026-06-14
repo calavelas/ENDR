@@ -12,7 +12,7 @@ env:
   ROBOT_NAME: "plex"
   HUMOR: "90"
   HONESTY: "90"
-  TRUST: "9"
+  TRUST: "70"
   CATCHPHRASE: "Are you ready for my robot colony?"
 
 resources:
