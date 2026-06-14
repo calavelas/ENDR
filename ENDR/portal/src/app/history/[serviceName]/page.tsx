@@ -34,7 +34,12 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
   // "Adding service" PRs, so edit/decommission PRs won't appear there.
   const repoUrl = resolveGithubRepoUrl();
   const prUrl = pr && repoUrl ? `${repoUrl}/pull/${encodeURIComponent(pr)}` : null;
-  const argoUrl = buildArgoApplicationUrl(resolveArgoEmbedUrl(), decodedServiceName);
+  const argoEmbedUrl = resolveArgoEmbedUrl();
+  const argoUrl = buildArgoApplicationUrl(argoEmbedUrl, decodedServiceName);
+  // The app-of-apps that owns every service's ArgoCD Application. On decommission,
+  // the workflow deletes the service's file from the repo, but the child Application
+  // is pruned by syncing THIS parent — so that's where the user needs to look.
+  const argoAppsUrl = buildArgoApplicationUrl(argoEmbedUrl, "services");
   const servicePath = `/application-services/${encodeURIComponent(decodedServiceName)}`;
   const accessHost = `${decodedServiceName}.calavelas.net`;
   const accessUrl = `https://${accessHost}`;
@@ -80,17 +85,34 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
                 </a>
               ) : null}
             </li>
-            <li>
-              <span className="mc-step-title">Check &amp; Sync in ArgoCD</span>
-              <p className="mc-step-body">
-                After it merges, reconcile updates the manifests. Hit <b>Refresh</b>, then <b>Sync</b>, to roll it out now.
-              </p>
-              {argoUrl ? (
-                <a className="mc-step-link" href={argoUrl} target="_blank" rel="noreferrer">
-                  Open in ArgoCD <Icon.ExternalLink size={12} />
-                </a>
-              ) : null}
-            </li>
+            {action === "decommission" ? (
+              <li>
+                <span className="mc-step-title">Sync the services app in ArgoCD</span>
+                <p className="mc-step-body">
+                  The merge deletes the service&apos;s file from the repo, but its running workload is
+                  owned by the <b>services</b> app-of-apps. Reconcile regenerates the child Applications;
+                  open <b>services</b> and hit <b>Refresh</b>, then <b>Sync</b> with <b>Prune</b> enabled to
+                  remove this one&apos;s Application and tear the workload down.
+                </p>
+                {argoAppsUrl ? (
+                  <a className="mc-step-link" href={argoAppsUrl} target="_blank" rel="noreferrer">
+                    Open the services app-of-apps <Icon.ExternalLink size={12} />
+                  </a>
+                ) : null}
+              </li>
+            ) : (
+              <li>
+                <span className="mc-step-title">Check &amp; Sync in ArgoCD</span>
+                <p className="mc-step-body">
+                  After it merges, reconcile updates the manifests. Hit <b>Refresh</b>, then <b>Sync</b>, to roll it out now.
+                </p>
+                {argoUrl ? (
+                  <a className="mc-step-link" href={argoUrl} target="_blank" rel="noreferrer">
+                    Open in ArgoCD <Icon.ExternalLink size={12} />
+                  </a>
+                ) : null}
+              </li>
+            )}
             <li>
               <span className="mc-step-title">
                 {action === "decommission" ? "Confirm it's gone" : "Open the service once it's generated"}
