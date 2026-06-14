@@ -11,7 +11,7 @@ services:
   overrides:
     gateway:
       enabled: true
-    image: calavelas/endr-robot:5be8c76
+    image: calavelas/endr-robot:c68ef1a
     env:
       ROBOT_NAME: TARS
       HUMOR: '90'
@@ -31,7 +31,7 @@ services:
   overrides:
     gateway:
       enabled: true
-    image: calavelas/endr-robot:5be8c76
+    image: calavelas/endr-robot:c68ef1a
     env:
       ROBOT_NAME: CASE
       HUMOR: '30'
@@ -51,7 +51,7 @@ services:
   overrides:
     gateway:
       enabled: true
-    image: calavelas/endr-robot:5be8c76
+    image: calavelas/endr-robot:c68ef1a
     env:
       ROBOT_NAME: kipp
       HUMOR: '90'
