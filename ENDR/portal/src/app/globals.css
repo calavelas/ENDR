@@ -3538,6 +3538,32 @@ html[data-theme="light"] body { background: #f4f5f8; }
   letter-spacing: 0.1em;
 }
 
+/* Service-detail hero card (the page intro). */
+.mc-detail-hero { padding: 1.55rem 1.8rem; margin-bottom: 1.2rem; }
+.mc-detail-hero .mc-detail-sub { margin: 0; }
+.mc-detail-hero-title {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 2.1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--mc-ink);
+  word-break: break-word;
+}
+.mc-detail-hero-copy { margin: 0.75rem 0 0; font-size: 0.95rem; line-height: 1.6; color: var(--mc-ink-2); max-width: 74ch; }
+.mc-detail-hero-copy b { color: var(--mc-ink); font-weight: 600; }
+.mc-detail-hero-copy code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--mc-surface-2);
+  border: 1px solid var(--mc-line);
+  border-radius: 5px;
+  padding: 0 0.3em;
+  color: var(--mc-ink-2);
+}
+.mc-detail-hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 1.15rem; }
+.mc-detail-hero-cta { margin-left: auto; }
+
 /* ArgoCD detail: sync-policy badges + live resource list. */
 .mc-policy-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.85rem; }
 .mc-policy {
@@ -3590,6 +3616,9 @@ html[data-theme="light"] body { background: #f4f5f8; }
 @media (max-width: 680px) {
   .mc-detail-grid { grid-template-columns: 1fr; }
   .mc-detail-title { font-size: 1.3rem; }
+  .mc-detail-hero { padding: 1.15rem 1.1rem; }
+  .mc-detail-hero-title { font-size: 1.5rem; }
+  .mc-detail-hero-cta { margin-left: 0; }
   .mc-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
   .mc-kpi { padding: 0.6rem 0.6rem; }
   .mc-kpi-value { font-size: 1.25rem; }
