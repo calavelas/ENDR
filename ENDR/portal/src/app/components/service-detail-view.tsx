@@ -53,7 +53,7 @@ export interface ServiceDetailViewProps {
 // services; greyed out (with a reason) for core platform apps and protected
 // robots like TARS/CASE. Confirm -> opens a removal PR (auto-merged) -> reconcile
 // prunes the chart + ArgoCD app.
-function DecommissionButton({
+export function DecommissionButton({
   name,
   decommissionable,
   reason,

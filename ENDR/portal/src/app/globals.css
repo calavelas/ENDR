@@ -4449,3 +4449,22 @@ html[data-theme="light"] .endr-page {
 @media (max-width: 880px) {
   .uh-grid, .uh-grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ── Service "provisioning" state (created, not yet synced) ─────────────── */
+.mc-prov { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.1rem; }
+.mc-prov-spin {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  margin-top: 2px;
+  border: 3px solid var(--mc-line-bright);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: mc-prov-spin 0.9s linear infinite;
+}
+@keyframes mc-prov-spin { to { transform: rotate(360deg); } }
+.mc-prov-title { margin: 0 0 0.35rem; font-size: 1.05rem; font-weight: 700; color: var(--mc-ink); }
+.mc-prov-body { margin: 0; color: var(--mc-muted); line-height: 1.6; font-size: 0.9rem; max-width: 70ch; }
+.mc-prov-foot { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 1.1rem; }
+@media (prefers-reduced-motion: reduce) {
+  .mc-prov-spin { animation-duration: 3s; }
+}

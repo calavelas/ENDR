@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { notFound } from "next/navigation";
 
 import { ServiceDetailView } from "../../components/service-detail-view";
+import { ServiceProvisioningView } from "../../components/service-provisioning-view";
 import {
   buildArgoApplicationUrl,
   buildGithubFileUrl,
@@ -31,7 +32,27 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const service = findServiceByName(snapshot.services, serviceName);
 
   if (!service) {
-    notFound();
+    // Not live yet. If it's in the catalog (services.yaml) it's just provisioning —
+    // show a friendly "on its way" state (with Decommission) instead of a hard 404.
+    // Only a name that's in neither the cluster nor the catalog is a true 404.
+    const eligibility = await loadDecommissionEligibility(serviceName);
+    const inCatalog = eligibility.decommissionable || eligibility.protected;
+    if (!inCatalog) {
+      notFound();
+    }
+    const provisioningArgoUrl = buildArgoApplicationUrl(resolveArgoEmbedUrl(), "services");
+    const host = `${serviceName}.calavelas.net`;
+    return (
+      <ServiceProvisioningView
+        name={serviceName}
+        argoUrl={provisioningArgoUrl}
+        accessHost={host}
+        accessUrl={`https://${host}`}
+        decommissionable={eligibility.decommissionable}
+        decommissionReason={eligibility.reason}
+        protectedUnit={eligibility.protected}
+      />
+    );
   }
 
   const embedUrl = resolveArgoEmbedUrl();

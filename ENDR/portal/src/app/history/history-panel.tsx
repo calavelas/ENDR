@@ -19,7 +19,6 @@ interface CaseHistoryItem {
   headSha: string;
   baseRef: string;
   author: string;
-  pipelineStatus?: string | null;
 }
 
 interface CaseHistoryResponse {
@@ -28,54 +27,8 @@ interface CaseHistoryResponse {
   serviceFilter?: string | null;
   authorFilter?: string | null;
   prStateFilter?: string;
-  pipelineStatusFilter?: string;
   count: number;
   items: CaseHistoryItem[];
-}
-
-interface TransactionWorkflowRun {
-  id: number;
-  name: string;
-  title: string;
-  workflowPath: string;
-  htmlUrl: string;
-  event: string;
-  status: string;
-  conclusion: string | null;
-  headBranch: string;
-  headSha: string;
-  runNumber: number;
-  runAttempt: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface TransactionStatusResult {
-  pullRequest: {
-    number: number;
-    title: string;
-    htmlUrl: string;
-    state: string;
-    merged: boolean;
-    createdAt: string;
-    updatedAt: string;
-    closedAt: string | null;
-    mergedAt: string | null;
-    mergeCommitSha: string | null;
-    headRef: string;
-    headSha: string;
-    baseRef: string;
-  };
-  pipeline: {
-    status: "pending" | "running" | "success" | "failed" | "waiting-merge";
-    message: string;
-    notifications: string[];
-    runs: {
-      prCheck: TransactionWorkflowRun | null;
-      reconcileUpdate: TransactionWorkflowRun | null;
-      svcsBuildDeploy: TransactionWorkflowRun | null;
-    };
-  };
 }
 
 function readErrorMessage(payload: unknown): string {
@@ -123,31 +76,6 @@ function prLabel(item: CaseHistoryItem): string {
   return item.state || "unknown";
 }
 
-function pipelineTone(status: string): "good" | "warn" | "bad" | "neutral" {
-  const normalized = status.trim().toLowerCase();
-  if (normalized === "success") {
-    return "good";
-  }
-  if (normalized === "running" || normalized === "waiting-merge") {
-    return "warn";
-  }
-  if (normalized === "failed") {
-    return "bad";
-  }
-  return "neutral";
-}
-
-function formatPipelineStatus(status: string): string {
-  const normalized = status.trim().toLowerCase();
-  if (!normalized) {
-    return "Unknown";
-  }
-  if (normalized === "waiting-merge") {
-    return "Waiting Merge";
-  }
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-}
-
 function matchesPrState(item: CaseHistoryItem, filter: string): boolean {
   if (filter === "all") {
     return true;
@@ -164,13 +92,6 @@ function matchesPrState(item: CaseHistoryItem, filter: string): boolean {
   return true;
 }
 
-function pipelineForItem(item: CaseHistoryItem, transaction: TransactionStatusResult | undefined): string {
-  if (transaction) {
-    return transaction.pipeline.status;
-  }
-  return item.pipelineStatus?.trim() || "unknown";
-}
-
 function Badge({ label, tone }: { label: string; tone: "good" | "warn" | "bad" | "neutral" }) {
   return (
     <span className={`mc-badge ${tone}`}>
@@ -184,10 +105,7 @@ export function HistoryPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<CaseHistoryResponse | null>(null);
-  const [transactionMap, setTransactionMap] = useState<Record<number, TransactionStatusResult>>({});
-  const [transactionError, setTransactionError] = useState("");
   const [prStateFilter, setPrStateFilter] = useState("all");
-  const [pipelineFilter, setPipelineFilter] = useState("all");
   const [authorFilter, setAuthorFilter] = useState("all");
 
   useEffect(() => {
@@ -223,65 +141,6 @@ export function HistoryPanel() {
 
   const items = history?.items ?? [];
 
-  useEffect(() => {
-    if (items.length === 0) {
-      return;
-    }
-
-    let cancelled = false;
-    let timer: ReturnType<typeof setInterval> | null = null;
-    const openTargets = items.filter((item) => item.state === "open");
-    const targets = (openTargets.length > 0 ? openTargets : items).slice(0, 12);
-    const batchSize = 4;
-
-    const loadTransactions = async () => {
-      try {
-        const nextMap: Record<number, TransactionStatusResult> = {};
-        for (let index = 0; index < targets.length; index += batchSize) {
-          const batch = targets.slice(index, index + batchSize);
-          const responses = await Promise.all(
-            batch.map(async (item) => {
-              const response = await fetch(`/api/platform/transactions/${item.number}`, { cache: "no-store" });
-              const body = (await response.json().catch(() => ({}))) as unknown;
-              if (!response.ok) {
-                throw new Error(`#${item.number}: ${readErrorMessage(body)}`);
-              }
-              return { number: item.number, status: body as TransactionStatusResult };
-            })
-          );
-          for (const entry of responses) {
-            nextMap[entry.number] = entry.status;
-          }
-        }
-
-        if (!cancelled) {
-          setTransactionMap(nextMap);
-          setTransactionError("");
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const detail = err instanceof Error ? err.message : "unable to load transaction statuses";
-          setTransactionError(detail);
-        }
-      }
-    };
-
-    void loadTransactions();
-
-    if (openTargets.length > 0) {
-      timer = setInterval(() => {
-        void loadTransactions();
-      }, 45_000);
-    }
-
-    return () => {
-      cancelled = true;
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [items]);
-
   const authors = useMemo(() => {
     return [...new Set(items.map((item) => item.author).filter((value) => value && value.trim()))].sort();
   }, [items]);
@@ -294,15 +153,9 @@ export function HistoryPanel() {
       if (authorFilter !== "all" && item.author !== authorFilter) {
         return false;
       }
-      if (pipelineFilter !== "all") {
-        const pipelineStatus = pipelineForItem(item, transactionMap[item.number]).trim().toLowerCase();
-        if (pipelineStatus !== pipelineFilter) {
-          return false;
-        }
-      }
       return true;
     });
-  }, [authorFilter, items, pipelineFilter, prStateFilter, transactionMap]);
+  }, [authorFilter, items, prStateFilter]);
 
   if (loading) {
     return (
@@ -356,18 +209,6 @@ export function HistoryPanel() {
           </select>
         </label>
         <label className="mc-filter">
-          <span>Pipeline</span>
-          <select className="mc-select" value={pipelineFilter} onChange={(event) => setPipelineFilter(event.target.value)}>
-            <option value="all">All</option>
-            <option value="success">Success</option>
-            <option value="running">Running</option>
-            <option value="pending">Pending</option>
-            <option value="waiting-merge">Waiting-merge</option>
-            <option value="failed">Failed</option>
-            <option value="unknown">Unknown</option>
-          </select>
-        </label>
-        <label className="mc-filter">
           <span>Author</span>
           <select className="mc-select" value={authorFilter} onChange={(event) => setAuthorFilter(event.target.value)}>
             <option value="all">All</option>
@@ -383,17 +224,15 @@ export function HistoryPanel() {
         </span>
       </div>
 
-      {transactionError && (
-        <p className="form-error" role="alert">
-          {transactionError}
-        </p>
-      )}
-
       <section className="mc-panel">
         <div className="mc-panel-head">
           <h2 className="mc-panel-title">Delivery history</h2>
           <span className="mc-count-chip">{filteredItems.length}</span>
         </div>
+        <p className="mc-muted" style={{ margin: "0 0 0.6rem", fontSize: "0.82rem" }}>
+          Each row is a portal pull request. Open the PR on GitHub to see its live CI checks —
+          that&apos;s the source of truth for pipeline status.
+        </p>
         {filteredItems.length === 0 ? (
           <p className="mc-empty">No portal-created pull requests match the current filters.</p>
         ) : (
@@ -404,68 +243,36 @@ export function HistoryPanel() {
                   <th>Service</th>
                   <th>PR</th>
                   <th>PR Status</th>
-                  <th>Pipeline</th>
                   <th>Author</th>
                   <th>Created</th>
                   <th>Merged</th>
-                  <th>Workflows</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item) => {
-                  const transaction = transactionMap[item.number];
-                  const pipelineStatus = pipelineForItem(item, transaction);
-                  const runs = transaction?.pipeline.runs;
-                  return (
-                    <tr key={item.number}>
-                      <td>
-                        {item.serviceName ? (
-                          <Link className="mc-table-name" href={`/history/${encodeURIComponent(item.serviceName)}`}>
-                            {item.serviceName}
-                          </Link>
-                        ) : (
-                          <span className="mc-muted">n/a</span>
-                        )}
-                      </td>
-                      <td>
-                        <a className="mc-extlink" href={item.htmlUrl} target="_blank" rel="noreferrer">
-                          #{item.number}
-                        </a>
-                      </td>
-                      <td>
-                        <Badge label={prLabel(item)} tone={prTone(item)} />
-                      </td>
-                      <td>
-                        <Badge label={formatPipelineStatus(pipelineStatus)} tone={pipelineTone(pipelineStatus)} />
-                      </td>
-                      <td>{item.author}</td>
-                      <td>{formatTimestamp(item.createdAt)}</td>
-                      <td>{formatTimestamp(item.mergedAt)}</td>
-                      <td>
-                        <span className="mc-link-set">
-                          {runs?.prCheck?.htmlUrl ? (
-                            <a className="mc-extlink" href={runs.prCheck.htmlUrl} target="_blank" rel="noreferrer">
-                              PR
-                            </a>
-                          ) : null}
-                          {runs?.reconcileUpdate?.htmlUrl ? (
-                            <a className="mc-extlink" href={runs.reconcileUpdate.htmlUrl} target="_blank" rel="noreferrer">
-                              Reconcile
-                            </a>
-                          ) : null}
-                          {runs?.svcsBuildDeploy?.htmlUrl ? (
-                            <a className="mc-extlink" href={runs.svcsBuildDeploy.htmlUrl} target="_blank" rel="noreferrer">
-                              Build
-                            </a>
-                          ) : null}
-                          {!runs?.prCheck?.htmlUrl && !runs?.reconcileUpdate?.htmlUrl && !runs?.svcsBuildDeploy?.htmlUrl ? (
-                            <span className="mc-muted">—</span>
-                          ) : null}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {filteredItems.map((item) => (
+                  <tr key={item.number}>
+                    <td>
+                      {item.serviceName ? (
+                        <Link className="mc-table-name" href={`/history/${encodeURIComponent(item.serviceName)}`}>
+                          {item.serviceName}
+                        </Link>
+                      ) : (
+                        <span className="mc-muted">n/a</span>
+                      )}
+                    </td>
+                    <td>
+                      <a className="mc-extlink" href={item.htmlUrl} target="_blank" rel="noreferrer">
+                        #{item.number}
+                      </a>
+                    </td>
+                    <td>
+                      <Badge label={prLabel(item)} tone={prTone(item)} />
+                    </td>
+                    <td>{item.author}</td>
+                    <td>{formatTimestamp(item.createdAt)}</td>
+                    <td>{formatTimestamp(item.mergedAt)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
