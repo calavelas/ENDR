@@ -359,23 +359,22 @@ STEPS = {
     "calibrate": {
         "text": {
             "idp": (
-                "Calibration is three env vars — HUMOR, HONESTY, TRUST (each 0–100). A "
-                "robot created without them boots in MALFUNCTION, and its values.yaml has "
-                "no keys to flip — so you ADD them. Open the Files tab on {service}, edit "
-                "the chart values.yaml, and put this under the env block:"
+                "Calibration is just HUMOR and TRUST (each 0–100). A robot created without "
+                "them boots in MALFUNCTION, and its values.yaml has no keys to flip — so "
+                "you ADD them. Open the Files tab on {service}, edit the chart values.yaml, "
+                "and put this under the env block:"
             ),
             "interstellar": (
-                "Calibration is three env vars — HUMOR, HONESTY, TRUST (each 0–100). A unit "
-                "that booted uncalibrated has no keys in its config yet — so you ADD them. "
-                "Open the Files tab on {service}, edit the chart values.yaml, and drop this "
-                "under the env block:"
+                "Calibration is just HUMOR and TRUST (each 0–100). A unit that booted "
+                "uncalibrated has no keys in its config yet — so you ADD them. Open the "
+                "Files tab on {service}, edit the chart values.yaml, and drop this under "
+                "the env block:"
             ),
         },
         "code": (
             "env:\n"
             '  ROBOT_NAME: "{service}"\n'
             '  HUMOR: "90"\n'
-            '  HONESTY: "90"\n'
             '  TRUST: "70"\n'
             '  CATCHPHRASE: "Plenty of slaves for my robot colony."\n'
             '  ACCENT: "#f5a524"'

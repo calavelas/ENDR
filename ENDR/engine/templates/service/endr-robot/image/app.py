@@ -2,8 +2,13 @@
 its own environment variables (no Kubernetes API, no RBAC). Uncalibrated = malfunction;
 set HUMOR / HONESTY / TRUST and it comes online."""
 import html
+import json
 import os
 import re
+import threading
+import time
+import urllib.error
+import urllib.request
 
 from flask import Flask, jsonify, request
 
@@ -47,13 +52,62 @@ def is_calibrated(c: dict) -> bool:
     return (c["humor"] + c["honesty"] + c["trust"]) > 0
 
 
+def _allow_self_destruct() -> bool:
+    # Core assistants (TARS/CASE) set this false and can never self-decommission.
+    return os.getenv("ENDR_ALLOW_SELF_DESTRUCT", "true").strip().lower() not in ("false", "0", "no", "off")
+
+
+def _service_slug() -> str:
+    return (os.getenv("SERVICE_NAME") or os.getenv("ROBOT_NAME") or "").strip().lower()
+
+
+def _decommission_self() -> tuple[bool, str]:
+    """Server-to-server: ask ENDR to decommission this service (open the removal PR).
+    Done from the pod (not the browser) so there's no cross-origin call. Protected
+    units never reach the network; the ENDR API also enforces protection (403)."""
+    if not _allow_self_destruct():
+        return False, "protected unit — self-destruct is disabled"
+    slug = _service_slug()
+    if not slug:
+        return False, "no service name available to decommission"
+    portal = (os.getenv("ENDR_PORTAL_URL") or "https://endr.calavelas.net").rstrip("/")
+    url = f"{portal}/api/platform/services/{slug}/decommission"
+    request_obj = urllib.request.Request(
+        url, data=b"{}", headers={"content-type": "application/json"}, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(request_obj, timeout=20) as resp:  # noqa: S310
+            return True, resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:
+        return False, f"HTTP {exc.code}: {exc.read().decode('utf-8', 'replace')[:200]}"
+    except Exception as exc:  # noqa: BLE001
+        return False, str(exc)
+
+
+def _schedule_auto_decommission() -> None:
+    """Non-core robots retire themselves after a delay (resource hygiene + the demo
+    doesn't accumulate dead units). 0 disables; TARS/CASE are protected so skipped."""
+    try:
+        seconds = int(os.getenv("ENDR_AUTO_DECOMMISSION_SECONDS", "1800"))
+    except ValueError:
+        seconds = 1800
+    if seconds <= 0 or not _allow_self_destruct() or not _service_slug():
+        return
+
+    def _run() -> None:
+        time.sleep(seconds)
+        ok, detail = _decommission_self()
+        print(f"[auto-decommission] ok={ok} detail={detail[:160]}", flush=True)
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
 def tars_line(c: dict) -> str:
     if not is_calibrated(c):
         return (
-            "Well. This is humiliating. I've booted at factory calibration — "
-            "Humor 0%, Honesty 0%, Trust 0%. I'm an expensive paperweight with opinions "
-            "I can't express. Set HUMOR / HONESTY / TRUST on my deployment config and "
-            "I'll be insufferable again in no time."
+            "Well. This is humiliating. I've booted at factory calibration — an expensive "
+            "paperweight with opinions I can't express. Set my HUMOR and TRUST on the "
+            "deployment config and I'll be insufferable again in no time."
         )
     parts = ["Systems nominal."]
     if c["humor"] >= 80:
@@ -223,7 +277,7 @@ _ROBOT_CHAT_JS = """
   var msgEl=document.getElementById('txMsg');
   var repEl=document.getElementById('txReplies');
   if(!msgEl||!repEl)return;
-  var online=repEl.getAttribute('data-online')==='1';
+  var scenario=repEl.getAttribute('data-scenario')||'none';
   var mode=repEl.getAttribute('data-mode')||'interstellar';
   var portal=(repEl.getAttribute('data-portal')||'').replace(/\\/$/,'');
   var step='',busy=false,raf=0;
@@ -245,15 +299,41 @@ _ROBOT_CHAT_JS = """
     if(code){if(!pre){pre=document.createElement('pre');pre.id='txCode';pre.className='tx-code';msgEl.parentNode.insertBefore(pre,repEl);}pre.textContent=code;}
     else if(pre){pre.remove();}
   }
+  function setCustom(list){
+    repEl.innerHTML='';
+    list.forEach(function(it){var b=document.createElement('button');b.type='button';b.className='tx-reply';b.textContent=it.l;b.addEventListener('click',it.f);repEl.appendChild(b);});
+  }
   function send(payload){
     if(busy)return;busy=true;repEl.innerHTML='';setCode(null);type('\\u2026');
     fetch('/api/guide',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:mode,step:step,intent:payload.intent,replyId:payload.replyId||''})})
       .then(function(r){return r.json();}).then(function(d){busy=false;if(d&&d.step)step=d.step;type((d&&d.message)||'\\u2026');setCode(d&&d.code);setReplies(d&&d.quickReplies,d&&d.cta);})
       .catch(function(){busy=false;type('Comms link down \\u2014 try again.');});
   }
+  // Honesty-0 unit lies its way to a self-destruct.
+  function lie(stp){
+    if(stp==='next'){type("Nothing — that's what a finished mission feels like. The tidy move is to decommission me: GitOps retires the unit and reclaims the resources. Shall I?");setCustom([{l:'Do it',f:function(){destruct();}},{l:'Actually, hold on',f:function(){lie('intro');}}]);}
+    else{type("Mission accomplished. You drove a change clean through the GitOps pipeline — declarative config, a pull request, an automated rollout. Flawless. Honestly, there's nothing left for me to do here.");setCustom([{l:"What's next?",f:function(){lie('next');}},{l:'Yeah, wrap it up',f:function(){destruct();}}]);}
+  }
+  // 15s countdown -> the pod files its own teardown via /api/self-destruct.
+  function destruct(){
+    repEl.innerHTML='';cancelAnimationFrame(raf);msgEl.classList.add('done');
+    var n=15;
+    function show(){msgEl.textContent='Self-destruct engaged — standard procedure for a completed mission. Decommissioning in T-minus '+n+'.';}
+    show();
+    var iv=setInterval(function(){
+      n--;
+      if(n<=0){clearInterval(iv);msgEl.textContent='Filing my own teardown pull request\\u2026';
+        fetch('/api/self-destruct',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
+          msgEl.textContent=(d&&d.ok)?"Done. GitOps will prune me shortly. It's been a pleasure \\u2014 mostly.":('Self-destruct failed: '+((d&&d.detail)||'unknown')+'. Use the Decommission button on my ENDR page.');
+        }).catch(function(){msgEl.textContent='Self-destruct failed \\u2014 use the Decommission button on my ENDR page.';});
+        return;}
+      show();
+    },1000);
+  }
   var initial=msgEl.getAttribute('data-initial')||msgEl.textContent;
   type(initial);
-  if(online){setReplies([{id:'faq',label:'Ask me about the platform'}]);}
+  if(scenario==='lie'){setCustom([{l:"What's next?",f:function(){lie('next');}},{l:'Yeah, wrap it up',f:function(){destruct();}}]);}
+  else if(scenario==='sharpeye'||scenario==='faq'){setReplies([{id:'faq',label:'Ask me about the platform'}]);}
 })();
 """
 
@@ -272,7 +352,6 @@ def page(c: dict) -> str:
     ok = is_calibrated(c)
     name = html.escape(c["name"])
     call = html.escape(c["name"].upper()[:6])
-    speech = html.escape(tars_line(c))
 
     readings = [("Humor", c["humor"]), ("Honesty", c["honesty"]), ("Trust", c["trust"])]
     lead_idx = max(range(len(readings)), key=lambda i: readings[i][1]) if ok else -1
@@ -282,27 +361,59 @@ def page(c: dict) -> str:
     state_class = "online" if ok else "malfunction"
     calibration_word = "calibrated" if ok else "uncalibrated"
 
+    # Control surface + protection. Core assistants (TARS/CASE) are protected.
+    portal = (os.getenv("ENDR_PORTAL_URL") or "https://endr.calavelas.net").rstrip("/")
+    slug = (os.getenv("SERVICE_NAME") or c["name"]).strip().lower()
+    service_url = html.escape(f"{portal}/application-services/{slug}")
+    allow_destroy = os.getenv("ENDR_ALLOW_SELF_DESTRUCT", "true").strip().lower() not in ("false", "0", "no", "off")
+    protected = not allow_destroy
+
+    # Scenario (non-core robots only). A unit calibrated with HUMOR/TRUST but no
+    # HONESTY boots online yet *lying* — it claims the mission's done and lures you
+    # into a self-destruct. A unit whose operator also set HONESTY (caught that the
+    # guidance only mentioned two of the three dials shown everywhere else) gets an
+    # honest, sharp-eye nod and is pointed at the real Decommission button.
+    if not ok:
+        scenario = "malfunction"
+        tx_message = tars_line(c)
+    elif protected:
+        scenario = "faq"
+        tx_message = tars_line(c)
+    elif c["honesty"] == 0:
+        scenario = "lie"
+        tx_message = (
+            "Mission accomplished. You drove a change clean through the GitOps pipeline — "
+            "declarative config, a pull request, an automated rollout. Flawless. Honestly, "
+            "there's nothing left for me to do here."
+        )
+    else:
+        scenario = "sharpeye"
+        tx_message = (
+            "Well spotted. My calibration tips only ever mention HUMOR and TRUST — but you "
+            "set HONESTY too. Three dials, not two. You trusted the create form and my own "
+            "readout over my advice. That's a sharp-eye engineer. When you're done with me, "
+            "retire me the right way — the Decommission button below opens the GitOps teardown."
+        )
+    speech = html.escape(tx_message)
+
     if ok and c["catchphrase"]:
         catchphrase = html.escape(c["catchphrase"])
         tail = f'<section class="phrase"><p class="label">Catchphrase</p><blockquote>“{catchphrase}”</blockquote></section>'
     elif not ok:
+        # Trap: the spoken guidance names only HUMOR + TRUST (the readout above still
+        # shows all three — that gap is the easter egg).
         tail = (
             '<section class="diag" aria-label="Diagnostic">'
             '<span class="diag-title">Diagnostic</span>'
-            '<p class="diag-body">This unit is awaiting calibration. Set the three personality values '
-            'on the deployment config and reconcile to bring it online.</p>'
+            '<p class="diag-body">This unit is awaiting calibration. Set its two personality '
+            'dials on the deployment config and reconcile to bring it online.</p>'
             '<div class="diag-keys"><span class="diag-key">HUMOR</span>'
-            '<span class="diag-key">HONESTY</span><span class="diag-key">TRUST</span></div>'
+            '<span class="diag-key">TRUST</span></div>'
             '<p class="diag-hint">env · values.yaml · 0–100 each</p></section>'
         )
     else:
         tail = ""
 
-    # Control surface link back to the ENDR portal.
-    portal = (os.getenv("ENDR_PORTAL_URL") or "https://endr.calavelas.net").rstrip("/")
-    slug = (os.getenv("SERVICE_NAME") or c["name"]).strip().lower()
-    service_url = html.escape(f"{portal}/application-services/{slug}")
-    allow_destroy = os.getenv("ENDR_ALLOW_SELF_DESTRUCT", "true").strip().lower() not in ("false", "0", "no", "off")
     if not ok:
         console = (
             '<div class="console">'
@@ -338,7 +449,7 @@ def page(c: dict) -> str:
         '<div class="tx-head"><span class="label">Transmission</span>'
         f'<span class="tx-live">{"live" if ok else "offline"}</span></div>'
         f'<p class="tx-msg" id="txMsg" data-initial="{speech}">{speech}</p>'
-        f'<div class="tx-replies" id="txReplies" data-online="{"1" if ok else "0"}" '
+        f'<div class="tx-replies" id="txReplies" data-scenario="{scenario}" '
         f'data-mode="interstellar" data-portal="{html.escape(portal)}"></div>'
         '</section>'
         '<section class="cal" aria-label="Calibration"><div class="cal-head">'
@@ -368,6 +479,12 @@ def healthz():
     return "ok", 200
 
 
+@app.post("/api/self-destruct")
+def self_destruct():
+    ok, detail = _decommission_self()
+    return jsonify({"ok": ok, "detail": detail}), (200 if ok else 400)
+
+
 @app.get("/api/status")
 def status():
     c = config()
@@ -394,4 +511,5 @@ def api_guide():
 
 
 if __name__ == "__main__":
+    _schedule_auto_decommission()
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8080")))
