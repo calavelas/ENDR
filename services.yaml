@@ -31,7 +31,6 @@ services:
       HONESTY: '90'
       TRUST: '70'
       CATCHPHRASE: Plenty of slaves for my robot colony.
-      ACCENT: '#37d3c3'
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
 - name: case
   namespace: edmunds
@@ -52,7 +51,6 @@ services:
       HONESTY: '95'
       TRUST: '90'
       CATCHPHRASE: See you on the other side.
-      ACCENT: '#9aa7bd'
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
 - name: kipp
   namespace: miller

@@ -17,7 +17,6 @@ runs the shared `calavelas/endr-robot:05d195d` image.
 | `HONESTY` | `95` |
 | `TRUST` | `90` |
 | `CATCHPHRASE` | `See you on the other side.` |
-| `ACCENT` | `#9aa7bd` |
 | `ENDR_ALLOW_SELF_DESTRUCT` | `false` |
 
 

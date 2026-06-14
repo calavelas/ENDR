@@ -740,6 +740,25 @@ export function CreateServicePanel() {
       return null;
     }
 
+    // Robots: ROBOT_NAME + CATCHPHRASE are required; everything else (image, port,
+    // resources) stays platform-controlled and can't be set from the portal.
+    if (form.serviceTemplate === "endr-robot") {
+      const robotEnv = (key: string) =>
+        (form.envRows.find((row) => row.key.trim() === key)?.value ?? "").trim();
+      if (!robotEnv("ROBOT_NAME")) {
+        setFormError("ROBOT_NAME is required — give your robot a name.");
+        return null;
+      }
+      if (!robotEnv("CATCHPHRASE")) {
+        setFormError("CATCHPHRASE is required — give your robot something to say.");
+        return null;
+      }
+      if (form.imageOverride.trim()) {
+        setFormError("Image is platform-controlled for robots and can't be set here.");
+        return null;
+      }
+    }
+
     const payload: CreateServicePayload = {
       serviceName: name,
       namespace: form.namespace,
@@ -1264,7 +1283,7 @@ export function CreateServicePanel() {
                       className="wiz-input"
                       value={serviceName}
                       onChange={(event) => setServiceName(event.target.value)}
-                      placeholder={mode === "interstellar" ? "tars-9" : "payment-001"}
+                      placeholder="tars-9"
                       autoComplete="off"
                     />
                     {step1NameError ? (

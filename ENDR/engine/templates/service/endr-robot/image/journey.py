@@ -376,8 +376,7 @@ STEPS = {
             '  ROBOT_NAME: "{service}"\n'
             '  HUMOR: "90"\n'
             '  TRUST: "70"\n'
-            '  CATCHPHRASE: "Plenty of slaves for my robot colony."\n'
-            '  ACCENT: "#f5a524"'
+            '  CATCHPHRASE: "Plenty of slaves for my robot colony."'
         ),
         "cta": None,
         "replies": [
@@ -672,7 +671,6 @@ def guide(payload, c):
 
     meta = {
         "persona": c.get("name", "TARS"),
-        "accent": c.get("accent", "#37d3c3"),
         "calibrated": _calibrated(c),
         "humor": c.get("humor", 0),
         "honesty": c.get("honesty", 0),

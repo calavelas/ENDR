@@ -17,7 +17,6 @@ runs the shared `calavelas/endr-robot:05d195d` image.
 | `HONESTY` | `90` |
 | `TRUST` | `70` |
 | `CATCHPHRASE` | `Plenty of slaves for my robot colony.` |
-| `ACCENT` | `#37d3c3` |
 | `ENDR_ALLOW_SELF_DESTRUCT` | `false` |
 
 

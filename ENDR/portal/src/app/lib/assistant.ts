@@ -43,7 +43,7 @@ export interface AssistantRequest {
 
 export interface AssistantResponse {
   persona: string; // display name, e.g. "TARS"
-  accent: string;
+  accent?: string; // optional; the widget falls back to the persona's colour
   calibrated: boolean;
   state: "online" | "malfunction";
   humor: number;

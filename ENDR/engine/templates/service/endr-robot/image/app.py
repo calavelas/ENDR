@@ -4,7 +4,6 @@ set HUMOR / HONESTY / TRUST and it comes online."""
 import html
 import json
 import os
-import re
 import threading
 import time
 import urllib.error
@@ -13,8 +12,6 @@ import urllib.request
 from flask import Flask, jsonify, request
 
 from journey import guide
-
-_HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 app = Flask(__name__)
 
@@ -44,7 +41,6 @@ def config() -> dict:
         "honesty": _num("HONESTY"),
         "trust": _num("TRUST"),
         "catchphrase": (os.getenv("CATCHPHRASE") or "").strip(),
-        "accent": (os.getenv("ACCENT") or "#37d3c3").strip(),
     }
 
 

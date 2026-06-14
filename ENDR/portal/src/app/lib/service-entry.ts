@@ -148,5 +148,5 @@ export function parseYamlToForm(text: string): ParsedEntry {
 // just ordinary env keys, fully editable/removable (real-platform overrides).
 export const ROBOT_ENV_SEED: EnvRow[] = [
   { key: "ROBOT_NAME", value: "" },
-  { key: "CATCHPHRASE", value: "Are you ready for my robot colony?" },
+  { key: "CATCHPHRASE", value: "" },
 ];
