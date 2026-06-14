@@ -48,11 +48,13 @@ function Level({
   depth,
   onOpenFile,
   activePath,
+  lazy,
 }: {
   node: TreeNode;
   depth: number;
   onOpenFile: (file: TreeFile) => void;
   activePath?: string;
+  lazy?: boolean;
 }) {
   return (
     <>
@@ -66,20 +68,20 @@ function Level({
                 <Icon.Layers size={13} />
                 <span className="wiz-tree-name">{child.name}/</span>
               </div>
-              <Level node={child} depth={depth + 1} onOpenFile={onOpenFile} activePath={activePath} />
+              <Level node={child} depth={depth + 1} onOpenFile={onOpenFile} activePath={activePath} lazy={lazy} />
             </div>
           );
         }
         const file = child.file!;
-        const hasContent = typeof file.content === "string";
+        const clickable = lazy || typeof file.content === "string";
         return (
           <button
             key={child.name}
             type="button"
             className={`wiz-tree-row wiz-tree-file${activePath === file.path ? " active" : ""}`}
             style={pad}
-            onClick={() => hasContent && onOpenFile(file)}
-            disabled={!hasContent}
+            onClick={() => clickable && onOpenFile(file)}
+            disabled={!clickable}
             title={file.path}
           >
             <Icon.FileText size={13} />
@@ -98,17 +100,19 @@ export function FileTree({
   files,
   onOpenFile,
   activePath,
+  lazy,
 }: {
   files: TreeFile[];
   onOpenFile: (file: TreeFile) => void;
   activePath?: string;
+  lazy?: boolean;
 }) {
   if (files.length === 0) {
     return <p className="mc-muted">No files generated.</p>;
   }
   return (
     <div className="wiz-tree">
-      <Level node={buildTree(files)} depth={0} onOpenFile={onOpenFile} activePath={activePath} />
+      <Level node={buildTree(files)} depth={0} onOpenFile={onOpenFile} activePath={activePath} lazy={lazy} />
     </div>
   );
 }

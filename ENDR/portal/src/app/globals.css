@@ -3447,6 +3447,10 @@ html[data-theme="light"] body { background: #f4f5f8; }
 /* Detail grid + key/value lists. */
 .mc-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
 .mc-detail-span { grid-column: 1 / -1; }
+
+/* Files tab: repo tree (left) + viewer/editor (right). */
+.mc-files-grid { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 1rem; align-items: start; }
+.mc-files-tree { position: sticky; top: 1rem; }
 .mc-kv { margin: 0; display: grid; grid-template-columns: minmax(110px, auto) 1fr; gap: 0.5rem 1rem; }
 .mc-kv dt { color: var(--mc-muted); font-size: 0.82rem; }
 .mc-kv dd { margin: 0; color: var(--mc-ink-2); font-size: 0.88rem; word-break: break-word; }
@@ -3637,6 +3641,8 @@ html[data-theme="light"] body { background: #f4f5f8; }
 /* ── Mobile-compact for catalog + service pages ── */
 @media (max-width: 680px) {
   .mc-detail-grid { grid-template-columns: 1fr; }
+  .mc-files-grid { grid-template-columns: 1fr; }
+  .mc-files-tree { position: static; }
   .mc-detail-title { font-size: 1.3rem; }
   .mc-detail-hero { padding: 1.15rem 1.1rem; }
   .mc-detail-hero-title { font-size: 1.5rem; }

@@ -16,6 +16,7 @@ import {
 } from "../lib/platform";
 import { ArgoEmbedPanel } from "./argo-embed-panel";
 import * as Icon from "./icons";
+import { ServiceFilesTab } from "./service-files-tab";
 
 export interface ReadmeData {
   path: string;
@@ -61,7 +62,7 @@ function Badge({ status, tone }: { status: string; tone: NodeTone }) {
   );
 }
 
-type TabId = "overview" | "readme" | "argocd";
+type TabId = "overview" | "readme" | "files" | "argocd";
 
 export function ServiceDetailView(props: ServiceDetailViewProps) {
   const { mode, t } = useNarrative();
@@ -153,6 +154,11 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
         {hasReadme ? (
           <button type="button" className={`mc-tab${tab === "readme" ? " on" : ""}`} onClick={() => setTab("readme")}>
             README
+          </button>
+        ) : null}
+        {props.kind === "application" ? (
+          <button type="button" className={`mc-tab${tab === "files" ? " on" : ""}`} onClick={() => setTab("files")}>
+            Files
           </button>
         ) : null}
         <button type="button" className={`mc-tab${tab === "argocd" ? " on" : ""}`} onClick={() => setTab("argocd")}>
@@ -366,6 +372,10 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
             </div>
           )}
         </section>
+      ) : null}
+
+      {tab === "files" && props.kind === "application" ? (
+        <ServiceFilesTab serviceName={props.name} thing={kindLabel} />
       ) : null}
 
       {tab === "argocd" ? (
