@@ -89,3 +89,19 @@ services:
       HONESTY: '90'
       TRUST: '70'
       CATCHPHRASE: Are you ready for my robot colony?
+- name: valx
+  namespace: mann
+  environments:
+  - gargantua
+  generator:
+    service:
+      template: endr-robot
+    gitops:
+      template: helm-service
+  overrides:
+    gateway:
+      enabled: true
+    env:
+      ROBOT_NAME: valx
+      CATCHPHRASE: Lets go
+      HUMOR: '8'
