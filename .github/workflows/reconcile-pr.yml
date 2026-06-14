@@ -261,6 +261,27 @@ jobs:
               throw new Error(`Unable to load PR state for #${pr.number}`);
             }
 
+            // Concurrency resilience: if another portal PR merged first, this one
+            // may have fallen "behind". Pull base into the branch (the services.yaml
+            // union merge driver resolves overlapping entries) and re-check, so a
+            // second simultaneous create/decommission still merges cleanly.
+            if (!latestPr.merged && (latestPr.mergeable === false || latestPr.mergeable_state === "behind" || latestPr.mergeable_state === "dirty")) {
+              try {
+                await github.rest.pulls.updateBranch({ owner, repo, pull_number: pr.number });
+                core.notice(`Updated PR #${pr.number} branch from base (concurrency resolve).`);
+              } catch (error) {
+                core.warning(`updateBranch failed for #${pr.number}: ${error.message}`);
+              }
+              for (let attempt = 0; attempt < 8; attempt += 1) {
+                await sleep(2500);
+                const refreshed = await github.rest.pulls.get({ owner, repo, pull_number: pr.number });
+                latestPr = refreshed.data;
+                if (latestPr.merged || latestPr.mergeable === true) {
+                  break;
+                }
+              }
+            }
+
             if (latestPr.merged) {
               core.notice(`PR #${pr.number} is already merged.`);
               merged = true;

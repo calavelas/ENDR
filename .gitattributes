@@ -1,0 +1,14 @@
+# Concurrency: every portal action (create / decommission) edits the single
+# shared desired-state file, services.yaml. When two people act at the same time,
+# both PRs append to (or trim) the same file and the second one would hit a merge
+# conflict and get stuck — exactly the "my service never deployed" failure.
+#
+# The built-in `union` merge driver resolves overlapping changes by KEEPING LINES
+# FROM BOTH SIDES instead of leaving conflict markers. For concurrent service
+# additions (the common case) that means both new entries survive and both PRs
+# merge cleanly. GitHub honors this driver when it performs the merge.
+#
+# Note: reconcile re-renders everything from services.yaml and the API re-validates
+# state at merge time, so the catalog stays the single source of truth even if a
+# rare add/remove overlap needs a follow-up reconcile.
+services.yaml merge=union
