@@ -1,8 +1,8 @@
 services:
 - name: sample
-  namespace: demo
+  namespace: miller
   environments:
-  - mac-lab
+  - gargantua
   generator:
     service:
       template: python-fastapi
@@ -13,9 +13,9 @@ services:
       enabled: true
     image: calavelas/sample:47e65d3
 - name: tars
-  namespace: demo
+  namespace: mann
   environments:
-  - mac-lab
+  - gargantua
   generator:
     service:
       template: endr-robot
@@ -33,9 +33,9 @@ services:
       CATCHPHRASE: "Plenty of slaves for my robot colony."
       ACCENT: "#37d3c3"
 - name: case
-  namespace: demo
+  namespace: edmunds
   environments:
-  - mac-lab
+  - gargantua
   generator:
     service:
       template: endr-robot

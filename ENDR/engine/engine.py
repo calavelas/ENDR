@@ -46,7 +46,7 @@ def get_changed_files(repo_root: Path, before: str, after: str) -> list[str]:
 
 def service_name_from_path(file_path: str) -> str | None:
     parts = Path(file_path).parts
-    if len(parts) < 3 or parts[0] != "services":
+    if len(parts) < 3 or parts[0] != "SVCS":
         return None
 
     service_name = parts[1]
@@ -88,7 +88,7 @@ def build_matrix(
     skipped: list[str] = []
 
     for service in sorted(set(services)):
-        service_dir = repo_root / "services" / service
+        service_dir = repo_root / "SVCS" / service
         dockerfile = service_dir / "Dockerfile"
         values_file = service_dir / "chart" / "values.yaml"
 
@@ -146,8 +146,8 @@ def build_matrix(
         matrix.append(
             {
                 "service": service,
-                "context": f"services/{service}",
-                "dockerfile": f"services/{service}/Dockerfile",
+                "context": f"SVCS/{service}",
+                "dockerfile": f"SVCS/{service}/Dockerfile",
                 "image_tag": str(image_tag),
                 **(
                     {"repo_name": repo_name}
@@ -161,7 +161,7 @@ def build_matrix(
 
 
 def list_all_services(repo_root: Path) -> list[str]:
-    services_dir = repo_root / "services"
+    services_dir = repo_root / "SVCS"
     if not services_dir.exists():
         return []
 

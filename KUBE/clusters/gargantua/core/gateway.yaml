@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/calavelas/ENDR.git
     targetRevision: main
-    path: KUBE/clusters/mac/lab/gateway
+    path: KUBE/clusters/gargantua/gateway
   destination:
     server: https://kubernetes.default.svc
     namespace: gateway

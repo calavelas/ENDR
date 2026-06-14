@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/{{ github_owner }}/{{ github_repo }}.git
     targetRevision: main
-    path: services/{{ service_name }}/chart
+    path: SVCS/{{ service_name }}/chart
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ namespace }}

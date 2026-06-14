@@ -81,6 +81,10 @@ const LABELS: Record<NarrativeMode, NarrativeLabels> = {
 // Namespaces become planets; the cluster becomes Gargantua.
 const PLANETS = ["Miller", "Mann", "Edmunds", "Brand", "Romilly", "Doyle", "Cooper Station"];
 const NAMESPACE_PLANETS: Record<string, string> = {
+  miller: "Miller",
+  mann: "Mann",
+  edmunds: "Edmunds",
+  // legacy demo namespaces, kept so older services still map to a planet
   demo: "Miller",
   demo2: "Mann",
   default: "Edmunds",

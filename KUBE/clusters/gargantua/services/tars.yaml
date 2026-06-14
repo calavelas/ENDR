@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: sample
+  name: tars
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/calavelas/ENDR.git
     targetRevision: main
-    path: services/sample/chart
+    path: SVCS/tars/chart
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo
+    namespace: mann
   syncPolicy:
     automated:
       prune: true

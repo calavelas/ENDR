@@ -49,13 +49,13 @@ def write_github_output(values: dict[str, str]) -> None:
 def classify_component(service_name: str, repo_path: str, apps_repo_dir: str) -> str:
     if repo_path.startswith("KUBE/clusters/") and repo_path.endswith(f"/services/{service_name}.yaml"):
         return "app"
-    if repo_path.startswith(f"services/{service_name}/chart/"):
+    if repo_path.startswith(f"SVCS/{service_name}/chart/"):
         return "gitops"
     return "service"
 
 
 def _service_name_from_repo_path(repo_path: str, apps_repo_dir: str) -> str | None:
-    if repo_path.startswith("services/"):
+    if repo_path.startswith("SVCS/"):
         parts = Path(repo_path).parts
         if len(parts) >= 2 and parts[1]:
             return parts[1]
@@ -162,7 +162,7 @@ def write_state_file(state_file: Path, project_name: str, state_map: dict[str, b
 
 def discover_managed_services(repo_root: Path, idp_config: Any) -> set[str]:
     managed: set[str] = set()
-    services_root = repo_root / "services"
+    services_root = repo_root / "SVCS"
     if services_root.exists():
         for entry in services_root.iterdir():
             if not entry.is_dir():
@@ -192,7 +192,7 @@ def collect_service_files_for_delete(repo_root: Path, idp_config: Any, service_n
         if app_file.exists() and app_file.is_file():
             files.add(app_file.relative_to(repo_root).as_posix())
 
-    service_root = repo_root / "services" / service_name
+    service_root = repo_root / "SVCS" / service_name
     if service_root.exists() and service_root.is_dir():
         for file_path in service_root.rglob("*"):
             if file_path.is_file():

@@ -12,7 +12,7 @@ After `SVCS Build/Deploy` completes and ArgoCD sync is healthy, access this serv
 
 ## Runtime
 
-- Namespace: `demo`
+- Namespace: `miller`
 - Port: `8080`
 - Service Template: `python-fastapi`
 - GitOps Template: configured in `services.yaml`

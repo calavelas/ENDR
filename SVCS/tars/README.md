@@ -1,23 +1,23 @@
-# case
+# tars
 
 An ENDR demo **robot** — its whole personality is driven by deployment environment
 variables, managed through GitOps. There is no app code here to maintain: every robot
 runs the shared `calavelas/endr-robot:latest` image.
 
-- **Namespace:** `demo`
-- **URL:** `https://case.calavelas.net`
+- **Namespace:** `mann`
+- **URL:** `https://tars.calavelas.net`
 - **Image:** `calavelas/endr-robot:latest`
 
 ## Calibration
 
 | Key | Value |
 | --- | --- |
-| `ROBOT_NAME` | `CASE` |
-| `HUMOR` | `30` |
-| `HONESTY` | `95` |
-| `TRUST` | `90` |
-| `CATCHPHRASE` | `See you on the other side.` |
-| `ACCENT` | `#9aa7bd` |
+| `ROBOT_NAME` | `TARS` |
+| `HUMOR` | `90` |
+| `HONESTY` | `90` |
+| `TRUST` | `70` |
+| `CATCHPHRASE` | `Plenty of slaves for my robot colony.` |
+| `ACCENT` | `#37d3c3` |
 
 
 The robot comes **ONLINE** when `HUMOR` / `HONESTY` / `TRUST` are set (sum > 0);

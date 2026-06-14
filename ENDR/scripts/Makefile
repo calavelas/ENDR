@@ -1,6 +1,6 @@
 .PHONY: bootstrap up down port-forward port-forward-argocd port-forward-grafana port-forward-prometheus api web portal validate-config smoke-test smoke-test-api smoke-test-platform services-check services-sync dev-start dev-stop dev-restart dev-status dev-logs tunnel-login tunnel-create tunnel-route tunnel-setup tunnel-start tunnel-stop tunnel-restart tunnel-status tunnel-logs tunnel-render-config
 
-CLUSTER_NAME ?= mac-lab
+CLUSTER_NAME ?= gargantua
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 REPO_ROOT := $(abspath $(MAKEFILE_DIR)/../..)
 

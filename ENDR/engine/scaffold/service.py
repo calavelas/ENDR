@@ -290,7 +290,7 @@ def _collect_commit_files(
         if not file_path.is_file():
             continue
         relative = file_path.relative_to(stage_service_dir).as_posix()
-        repo_path = f"services/{service.name}/{relative}"
+        repo_path = f"SVCS/{service.name}/{relative}"
         files[repo_path] = file_path.read_bytes()
 
     for file_path in sorted(stage_gitops_dir.rglob("*")):
@@ -304,7 +304,7 @@ def _collect_commit_files(
                 service.environments[0] if service.environments else None,
             )
         else:
-            repo_path = f"services/{service.name}/chart/{relative}"
+            repo_path = f"SVCS/{service.name}/chart/{relative}"
         files[repo_path] = file_path.read_bytes()
 
     return files

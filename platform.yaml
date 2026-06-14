@@ -9,11 +9,12 @@ config:
     defaultBranch: main
   environments:
     kubernetes:
-    - name: mac-lab
-      description: Testing K8s cluster on Mac
+    - name: gargantua
+      description: k3d cluster (Interstellar-themed)
   namespace:
-    - name: demo
-    - name: demo2
+    - name: miller
+    - name: mann
+    - name: edmunds
 templates:
   extends: []
   service:

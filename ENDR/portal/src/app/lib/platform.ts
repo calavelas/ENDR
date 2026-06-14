@@ -95,7 +95,7 @@ export function buildArgoApplicationUrl(embedUrl: string, appName: string): stri
 }
 
 export function buildServiceFolderPath(serviceName: string): string {
-  return `services/${serviceName.trim()}`;
+  return `SVCS/${serviceName.trim()}`;
 }
 
 export function buildGithubFolderUrl(repoUrl: string, branch: string, folderPath: string): string {
@@ -211,9 +211,9 @@ function buildFallbackSnapshot(reason: string): PlatformSnapshot {
   return {
     generatedAt: new Date().toISOString(),
     dataSource: "fallback",
-    clusterName: "lab",
-    clusterPath: "KUBE/clusters/mac/lab/core",
-    servicesPath: "KUBE/clusters/mac/lab/services",
+    clusterName: "gargantua",
+    clusterPath: "KUBE/clusters/gargantua/core",
+    servicesPath: "KUBE/clusters/gargantua/services",
     warnings: [reason],
     platformServices: [
       {
@@ -222,7 +222,7 @@ function buildFallbackSnapshot(reason: string): PlatformSnapshot {
         namespace: "argocd",
         syncStatus: "Unknown",
         healthStatus: "Unknown",
-        sourcePath: "KUBE/clusters/mac/lab/core.yaml",
+        sourcePath: "KUBE/clusters/gargantua/core.yaml",
         revision: "main",
         deployedAt: null,
         imageTag: null,
