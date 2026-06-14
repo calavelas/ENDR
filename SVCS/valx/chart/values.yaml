@@ -10,6 +10,10 @@ service:
 # Edit these via the portal; the deployment template renders them from here.
 env:
   ROBOT_NAME: "valx"
+  HUMOR: "90"
+  TRUST: "70"
+  CATCHPHRASE: "Plenty of slaves for my robot colony."
+  ACCENT: "#f5a524"
 
 resources:
   requests:
