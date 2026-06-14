@@ -190,13 +190,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button type="button" className="app-icon-btn" aria-label="Notifications">
             <Icon.Bell />
           </button>
-          <div className="app-profile">
-            <span className="app-avatar">CO</span>
-            <span className="app-profile-text">
-              <strong>COOPER</strong>
-              <span>{t.profileRole}</span>
-            </span>
-          </div>
         </div>
       </header>
 
