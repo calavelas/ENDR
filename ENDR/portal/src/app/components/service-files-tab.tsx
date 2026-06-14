@@ -50,153 +50,20 @@ function readErr(body: unknown): string {
 
 const base = (name: string) => `/api/platform/services/${encodeURIComponent(name)}`;
 
-interface TxRun {
-  htmlUrl: string;
-  status: string;
-  conclusion: string | null;
-  updatedAt: string;
-}
-
-interface TxStatus {
-  pipeline: {
-    status: "pending" | "running" | "success" | "failed" | "waiting-merge";
-    message: string;
-    runs: {
-      prCheck: TxRun | null;
-      reconcileUpdate: TxRun | null;
-      svcsBuildDeploy: TxRun | null;
-    };
-  };
-}
-
-function pipelineTone(status: string): "good" | "warn" | "bad" | "neutral" {
-  const s = status.trim().toLowerCase();
-  if (s === "success") return "good";
-  if (s === "running" || s === "waiting-merge") return "warn";
-  if (s === "failed") return "bad";
-  return "neutral";
-}
-
-function fmtPipeline(status: string): string {
-  const s = status.trim().toLowerCase();
-  if (s === "waiting-merge") return "Waiting merge";
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-function runStatus(run: TxRun | null): string {
-  if (!run) return "not started";
-  if (run.status !== "completed") return run.status;
-  return run.conclusion ? `completed (${run.conclusion})` : "completed";
-}
-
-function fmtTime(value: string | null): string {
-  if (!value) return "";
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString();
-}
-
-// Live status for the PR the edit just opened: validate -> merge -> reconcile ->
-// ArgoCD deploy. Polls the same transaction endpoint the delivery page uses, and
-// stops once the pipeline reaches a terminal state.
-function EditPrStatus({ prNumber }: { prNumber: number }) {
-  const [status, setStatus] = useState<TxStatus | null>(null);
-  const [err, setErr] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setInterval> | null = null;
-    const stop = () => {
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-      }
-    };
-    const load = async () => {
-      try {
-        const response = await fetch(`/api/platform/transactions/${prNumber}`, { cache: "no-store" });
-        const body = (await response.json().catch(() => ({}))) as unknown;
-        if (!response.ok) throw new Error(readErr(body));
-        if (cancelled) return;
-        const data = body as TxStatus;
-        setStatus(data);
-        setErr("");
-        if (data.pipeline?.status === "success" || data.pipeline?.status === "failed") stop();
-      } catch (error) {
-        if (!cancelled) setErr(error instanceof Error ? error.message : "unable to load pipeline status");
-      }
-    };
-    void load();
-    timer = setInterval(load, 8000);
-    return () => {
-      cancelled = true;
-      stop();
-    };
-  }, [prNumber]);
-
-  if (err) {
-    return (
-      <p className="form-error" role="alert" style={{ marginTop: "0.8rem" }}>
-        {err}
-      </p>
-    );
-  }
-  if (!status) {
-    return (
-      <p className="mc-muted" style={{ marginTop: "0.8rem", fontSize: "0.82rem" }}>
-        Checking pipeline status…
-      </p>
-    );
-  }
-
-  const rows = [
-    { label: "PR Check", run: status.pipeline.runs.prCheck },
-    { label: "Reconcile", run: status.pipeline.runs.reconcileUpdate },
-    { label: "Service build/deploy", run: status.pipeline.runs.svcsBuildDeploy },
-  ];
-
-  return (
-    <div style={{ marginTop: "1rem" }}>
-      <div className="mc-panel-head" style={{ marginBottom: 0 }}>
-        <h3 className="mc-panel-title" style={{ fontSize: "0.72rem" }}>
-          Pipeline
-        </h3>
-        <span className={`mc-badge ${pipelineTone(status.pipeline.status)}`}>
-          <span className="mc-badge-dot" />
-          {fmtPipeline(status.pipeline.status)}
-        </span>
-      </div>
-      <p className="mc-muted" style={{ margin: "0.35rem 0 0", fontSize: "0.82rem" }}>
-        {status.pipeline.message}
-      </p>
-      <ul className="mc-run-list">
-        {rows.map(({ label, run }) => (
-          <li key={label} className="mc-run-item">
-            <span className="mc-run-name">{label}</span>
-            {run?.htmlUrl ? (
-              <a className="mc-extlink" href={run.htmlUrl} target="_blank" rel="noreferrer">
-                {runStatus(run)}
-              </a>
-            ) : (
-              <span className="mc-muted">{runStatus(run)}</span>
-            )}
-            <span className="mc-run-time">{fmtTime(run?.updatedAt ?? null)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 // The "Files" tab: the service's GitOps source tree (from GitHub) + a viewer. The
 // chart values.yaml is editable; saving opens a PR (Phase D — the FIX flow).
 export function ServiceFilesTab({
   serviceName,
   thing,
   argoUrl,
+  accessUrl,
+  protectedUnit,
 }: {
   serviceName: string;
   thing: string;
   argoUrl?: string;
+  accessUrl?: string | null;
+  protectedUnit?: boolean;
 }) {
   const [files, setFiles] = useState<FileNode[] | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -299,7 +166,14 @@ export function ServiceFilesTab({
           <h2 className="mc-panel-title">Repo files</h2>
         </div>
         <p className="mc-muted" style={{ marginTop: 0, fontSize: "0.78rem" }}>
-          This {thing}&apos;s GitOps source. <code>values.yaml</code> is editable.
+          This {thing}&apos;s GitOps source.{" "}
+          {protectedUnit ? (
+            <>Read-only — protected core unit.</>
+          ) : (
+            <>
+              <code>values.yaml</code> is editable.
+            </>
+          )}
         </p>
         <FileTree files={treeFiles} onOpenFile={(file) => void openFile(file.path)} activePath={active ?? undefined} lazy />
       </section>
@@ -308,7 +182,13 @@ export function ServiceFilesTab({
         <div className="mc-panel-head">
           <h2 className="mc-panel-title">{fileName}</h2>
           {content?.editable && !editing && !result ? (
-            <button type="button" className="mc-btn mc-btn-sm" onClick={() => { setDraft(content.content); setEditing(true); }}>
+            <button
+              type="button"
+              className="mc-btn mc-btn-sm"
+              disabled={protectedUnit}
+              title={protectedUnit ? "Protected core unit — config is read-only" : undefined}
+              onClick={protectedUnit ? undefined : () => { setDraft(content.content); setEditing(true); }}
+            >
               <Icon.FileText size={14} />
               Edit
             </button>
@@ -342,53 +222,69 @@ export function ServiceFilesTab({
           </>
         ) : result ? (
           <>
-            <div className="mc-warning" style={{ borderColor: "color-mix(in srgb, var(--mc-good) 40%, transparent)", background: "color-mix(in srgb, var(--mc-good) 8%, transparent)" }}>
-              <strong>Pull request opened</strong> — CI validates it, it auto-merges, then ArgoCD rolls out the change.
-              <dl className="mc-kv" style={{ marginTop: "0.6rem" }}>
+            <div className="mc-edit-done">
+              <span className="mc-edit-done-head">
+                <Icon.CheckCircle size={16} />
+                Pull request opened
+              </span>
+              <dl className="mc-kv" style={{ marginTop: "0.55rem" }}>
                 <dt>Branch</dt>
                 <dd className="mc-mono">{result.branchName ?? "n/a"}</dd>
-                <dt>Pull Request</dt>
+                <dt>Pull request</dt>
                 <dd>
                   {result.pullRequestUrl ? (
                     <a className="mc-extlink" href={result.pullRequestUrl} target="_blank" rel="noreferrer">
-                      {result.pullRequestUrl}
+                      {result.pullRequestUrl.replace("https://github.com/", "")}
                     </a>
                   ) : (
                     "n/a"
                   )}
                 </dd>
               </dl>
-
-              {result.pullRequestNumber ? <EditPrStatus prNumber={result.pullRequestNumber} /> : null}
-
-              <div className="mc-files-actions" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "1rem" }}>
-                {result.pullRequestUrl ? (
-                  <a className="mc-btn mc-btn-sm mc-btn-soft" href={result.pullRequestUrl} target="_blank" rel="noreferrer">
-                    View PR
-                    <Icon.ExternalLink size={13} />
-                  </a>
-                ) : null}
-                {argoUrl ? (
-                  <a className="mc-btn mc-btn-sm mc-btn-soft" href={argoUrl} target="_blank" rel="noreferrer">
-                    Open in ArgoCD
-                    <Icon.ExternalLink size={13} />
-                  </a>
-                ) : null}
-                <Link
-                  className="mc-btn mc-btn-sm mc-btn-soft"
-                  href={`/history/${encodeURIComponent(serviceName)}${result.pullRequestNumber ? `?pr=${result.pullRequestNumber}` : ""}`}
-                >
-                  Track in Delivery
-                  <Icon.ChevronRight size={13} />
-                </Link>
-              </div>
-
-              {argoUrl ? (
-                <p className="mc-muted" style={{ fontSize: "0.76rem", margin: "0.65rem 0 0" }}>
-                  Already merged? Hit <b>Refresh</b> (then <b>Sync</b>) in ArgoCD to roll the change out immediately.
-                </p>
-              ) : null}
             </div>
+
+            <ol className="mc-steps" aria-label="next steps">
+              <li>
+                <span className="mc-step-title">Review &amp; merge on GitHub</span>
+                <p className="mc-step-body">
+                  Open the PR, watch CI validate it — it auto-merges once green.
+                </p>
+                {result.pullRequestUrl ? (
+                  <a className="mc-step-link" href={result.pullRequestUrl} target="_blank" rel="noreferrer">
+                    Open PR <Icon.ExternalLink size={12} />
+                  </a>
+                ) : null}
+              </li>
+              <li>
+                <span className="mc-step-title">Watch the rollout in ArgoCD</span>
+                <p className="mc-step-body">
+                  After merge, reconcile updates the manifest and ArgoCD syncs it.
+                </p>
+                {argoUrl ? (
+                  <a className="mc-step-link" href={argoUrl} target="_blank" rel="noreferrer">
+                    Open in ArgoCD <Icon.ExternalLink size={12} />
+                  </a>
+                ) : null}
+              </li>
+              <li>
+                <span className="mc-step-title">Apply it now (optional)</span>
+                <p className="mc-step-body">
+                  In ArgoCD hit <b>Refresh</b>, then <b>Sync</b>, to roll the change out immediately instead of waiting.
+                </p>
+              </li>
+              <li>
+                <span className="mc-step-title">Reload the {thing}</span>
+                <p className="mc-step-body">Once the pod restarts, refresh its page to see the change.</p>
+                {accessUrl ? (
+                  <a className="mc-step-link" href={accessUrl} target="_blank" rel="noreferrer">
+                    Open {thing} <Icon.ExternalLink size={12} />
+                  </a>
+                ) : null}
+                <Link className="mc-step-link" href={`/history/${encodeURIComponent(serviceName)}`}>
+                  Track in Delivery <Icon.ChevronRight size={12} />
+                </Link>
+              </li>
+            </ol>
             <CodeBlock content={content.content} filename={content.path} />
           </>
         ) : (

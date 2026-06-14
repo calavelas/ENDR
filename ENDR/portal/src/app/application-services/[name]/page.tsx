@@ -92,6 +92,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
       argoDetail={argoDetail}
       decommissionable={decommission.decommissionable}
       decommissionReason={decommission.reason}
+      protectedUnit={decommission.protected}
       warnings={snapshot.warnings}
     />
   );

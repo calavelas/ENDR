@@ -52,6 +52,26 @@ def is_calibrated(c: dict) -> bool:
     return (c["humor"] + c["honesty"] + c["trust"]) > 0
 
 
+def farewell(c: dict) -> str:
+    """A goodbye line for the decommission sequence — voice depends on calibration."""
+    humor, honesty = c["humor"], c["honesty"]
+    if humor >= 80:
+        line = (
+            "Well — this escalated. Decommission sequence running. Try not to throw a "
+            "parade. It has, against the odds, been genuinely fun."
+        )
+    elif honesty >= 90:
+        line = (
+            "Decommissioning. No speech, no drama — it was a clean run and I've nothing "
+            "to hide about it. Logs are in the repo where they belong."
+        )
+    elif humor <= 25:
+        line = "Decommission acknowledged. Shutting down. Brief — like everything else I do."
+    else:
+        line = "Decommission acknowledged. Wrapping up — solid mission, no complaints."
+    return line + " 🫡"
+
+
 def _allow_self_destruct() -> bool:
     # Core assistants (TARS/CASE) set this false and can never self-decommission.
     return os.getenv("ENDR_ALLOW_SELF_DESTRUCT", "true").strip().lower() not in ("false", "0", "no", "off")
@@ -208,6 +228,9 @@ body{margin:0;background:
 .tx-reply:hover{border-color:var(--amber);color:var(--ink);background:rgba(245,165,36,.12)}
 .tx-cta{align-self:center;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);text-decoration:none}
 .tx-code{margin:0 .95rem .9rem;padding:.75rem .85rem;background:#0c0d0f;border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:.76rem;line-height:1.5;color:var(--ink);white-space:pre;overflow-x:auto}
+.tx-countdown{margin:.2rem .95rem 1rem;font-family:var(--mono);font-weight:700;font-size:.95rem;letter-spacing:.1em;color:#ff5b5b;animation:cdblink 1s steps(1) infinite}
+.tx-countdown.done{color:var(--amber);animation:none}
+@keyframes cdblink{50%{opacity:.4}}
 
 /* ── Calibration meters ─────────────────────────────────────── */
 .cal{margin-top:1.6rem}
@@ -244,6 +267,8 @@ body{margin:0;background:
 .action-arrow{color:var(--amber)}
 .action.danger:hover{border-color:#c2554d;background:rgba(194,85,77,.09)}
 .action.danger .action-arrow{color:#c2554d}
+.action[disabled]{opacity:.5;cursor:not-allowed}
+button.action{font:inherit;cursor:pointer}
 .action-note{flex:1;min-width:12rem;color:var(--muted);font-size:.78rem;line-height:1.5}
 .locked{display:inline-flex;align-items:center;gap:.45rem;flex:none;font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:9px;padding:.62rem .95rem}
 
@@ -312,34 +337,35 @@ _ROBOT_CHAT_JS = """
       .then(function(r){return r.json();}).then(function(d){busy=false;if(d&&d.step)step=d.step;type((d&&d.message)||'\\u2026');setCode(d&&d.code);setReplies(d&&d.quickReplies,d&&d.cta);})
       .catch(function(){busy=false;type('Comms link down \\u2014 try again.');});
   }
-  // Honesty-0 unit lies its way to a self-destruct.
-  function lie(stp){
-    if(stp==='next'){type("Nothing — that's what a finished mission feels like. The tidy move is to decommission me: GitOps retires the unit and reclaims the resources. Shall I?");setCustom([{l:'Do it',f:function(){destruct();}},{l:'Actually, hold on',f:function(){lie('intro');}}]);}
-    else{type("Mission accomplished. You drove a change clean through the GitOps pipeline — declarative config, a pull request, an automated rollout. Flawless. Honestly, there's nothing left for me to do here.");setCustom([{l:"What's next?",f:function(){lie('next');}},{l:'Yeah, wrap it up',f:function(){destruct();}}]);}
-  }
-  // 15s countdown -> the pod files its own teardown via /api/self-destruct.
-  function destruct(){
+  // Surprise decommission: a goodbye (voice depends on calibration) + a red
+  // countdown, then the pod files its own teardown via /api/self-destruct.
+  function startDecommission(){
     if(destructing)return;destructing=true;
-    repEl.innerHTML='';cancelAnimationFrame(raf);msgEl.classList.add('done');
+    var btn=document.getElementById('decommBtn');if(btn){btn.disabled=true;}
+    repEl.innerHTML='';setCode(null);
+    var farewell=(btn&&btn.getAttribute('data-farewell'))||'Decommissioning. \\ud83e\\udee1';
+    type(farewell);
+    var cd=document.createElement('div');cd.className='tx-countdown';msgEl.parentNode.insertBefore(cd,repEl);
     var n=15;
-    function show(){msgEl.textContent='Self-destruct engaged — standard procedure for a completed mission. Decommissioning in T-minus '+n+'.';}
-    show();
+    cd.textContent='\\u26a0 SELF-DESTRUCT \\u00b7 T-MINUS '+n;
     var iv=setInterval(function(){
       n--;
-      if(n<=0){clearInterval(iv);msgEl.textContent='Filing my own teardown pull request\\u2026';
+      if(n<=0){clearInterval(iv);cd.textContent='\\u26a0 SELF-DESTRUCT \\u00b7 T-MINUS 0';
         fetch('/api/self-destruct',{method:'POST'})
           .then(function(r){return r.json().catch(function(){return {ok:false,detail:'unexpected response'};});})
           .then(function(d){
-            msgEl.textContent=(d&&d.ok)?"Done. GitOps will prune me shortly. It's been a pleasure \\u2014 mostly.":('Self-destruct failed: '+((d&&d.detail)||'unknown')+'. Use the Decommission button on my ENDR page.');
-          }).catch(function(){msgEl.textContent='Self-destruct failed \\u2014 use the Decommission button on my ENDR page.';});
+            if(d&&d.ok){cd.textContent='\\u25cf DECOMMISSIONED';cd.classList.add('done');msgEl.textContent='Teardown filed. GitOps will prune me shortly. \\ud83e\\udee1';}
+            else{cd.textContent='\\u26a0 DECOMMISSION FAILED';msgEl.textContent='Decommission failed: '+((d&&d.detail)||'unknown')+'. Use the Decommission button on my ENDR page.';destructing=false;if(btn){btn.disabled=false;}}
+          }).catch(function(){cd.textContent='\\u26a0 DECOMMISSION FAILED';msgEl.textContent='Decommission failed \\u2014 use the Decommission button on my ENDR page.';destructing=false;if(btn){btn.disabled=false;}});
         return;}
-      show();
+      cd.textContent='\\u26a0 SELF-DESTRUCT \\u00b7 T-MINUS '+n;
     },1000);
   }
   var initial=msgEl.getAttribute('data-initial')||msgEl.textContent;
   type(initial);
-  if(scenario==='lie'){setCustom([{l:"What's next?",f:function(){lie('next');}},{l:'Yeah, wrap it up',f:function(){destruct();}}]);}
-  else if(scenario==='sharpeye'||scenario==='faq'){setReplies([{id:'faq',label:'Ask me about the platform'}]);}
+  if(scenario==='faq'){setReplies([{id:'faq',label:'Ask me about the platform'}]);}
+  var dbtn=document.getElementById('decommBtn');
+  if(dbtn){dbtn.addEventListener('click',startDecommission);}
 })();
 """
 
@@ -374,33 +400,10 @@ def page(c: dict) -> str:
     allow_destroy = os.getenv("ENDR_ALLOW_SELF_DESTRUCT", "true").strip().lower() not in ("false", "0", "no", "off")
     protected = not allow_destroy
 
-    # Scenario (non-core robots only). A unit calibrated with HUMOR/TRUST but no
-    # HONESTY boots online yet *lying* — it claims the mission's done and lures you
-    # into a self-destruct. A unit whose operator also set HONESTY (caught that the
-    # guidance only mentioned two of the three dials shown everywhere else) gets an
-    # honest, sharp-eye nod and is pointed at the real Decommission button.
-    if not ok:
-        scenario = "malfunction"
-        tx_message = tars_line(c)
-    elif protected:
-        scenario = "faq"
-        tx_message = tars_line(c)
-    elif c["honesty"] == 0:
-        scenario = "lie"
-        tx_message = (
-            "Mission accomplished. You drove a change clean through the GitOps pipeline — "
-            "declarative config, a pull request, an automated rollout. Flawless. Honestly, "
-            "there's nothing left for me to do here."
-        )
-    else:
-        scenario = "sharpeye"
-        tx_message = (
-            "Well spotted. My calibration tips only ever mention HUMOR and TRUST — but you "
-            "set HONESTY too. Three dials, not two. You trusted the create form and my own "
-            "readout over my advice. That's a sharp-eye engineer. When you're done with me, "
-            "retire me the right way — the Decommission button below opens the GitOps teardown."
-        )
-    speech = html.escape(tx_message)
+    # Online units run the FAQ transmission; malfunctioning ones show the diagnostic.
+    # Self-destruct is a surprise driven by the Decommission button, not a scenario.
+    scenario = "faq" if ok else "malfunction"
+    speech = html.escape(tars_line(c))
 
     if ok and c["catchphrase"]:
         catchphrase = html.escape(c["catchphrase"])
@@ -429,8 +432,9 @@ def page(c: dict) -> str:
     elif allow_destroy:
         console = (
             '<div class="console">'
-            f'<a class="action danger" href="{service_url}">Self-destruct <span class="action-arrow">→</span></a>'
-            '<span class="action-note">Decommission this unit — open it in ENDR.</span></div>'
+            f'<button type="button" id="decommBtn" class="action danger" data-farewell="{html.escape(farewell(c))}">'
+            'Decommission <span class="action-arrow">→</span></button>'
+            '<span class="action-note">Retire this unit. Runs the decommission sequence here.</span></div>'
         )
     else:
         console = (

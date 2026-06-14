@@ -501,6 +501,10 @@ def edit_service_file(name: str, payload: EditServiceFileRequest) -> EditService
     if not _is_editable_service_path(base, normalized):
         raise HTTPException(status_code=400, detail="only the chart values.yaml is editable from the portal")
 
+    # Core assistants (TARS/CASE, ENDR_ALLOW_SELF_DESTRUCT=false) are read-only.
+    if _decommission_eligibility(name).protected:
+        raise HTTPException(status_code=403, detail="this is a protected core unit; its config is read-only from the portal")
+
     client = _github_client(idp_config)
     _assert_values_only_env_changed(client, branch, normalized, payload.content)
 
@@ -615,14 +619,32 @@ def _entry_status_in_raw(raw: bytes, name: str) -> tuple[bool, bool]:
 
 
 def _decommission_eligibility(name: str) -> DecommissionEligibility:
-    entry = _find_service_entry(name)
-    if entry is None:
+    target = name.strip()
+    # Prefer the FRESH services.yaml from GitHub — the API's baked IDP_REPO_ROOT copy
+    # can be stale for services created after the image was built, which would make
+    # them wrongly 403 (the kipp/plex case). Fall back to the local snapshot.
+    exists: bool | None = None
+    protected = False
+    try:
+        idp_config, _services_config, _paths, _svcs_url = load_platform_configs()
+        client = _github_client(idp_config)
+        raw = client.get_file_content(idp_config.config.git.defaultBranch, "services.yaml")
+        if raw is not None:
+            exists, protected = _entry_status_in_raw(raw, target)
+    except Exception:  # noqa: BLE001
+        exists = None
+    if exists is None:
+        entry = _find_service_entry(target)
+        exists = entry is not None
+        protected = bool(entry is not None and _service_is_protected(entry))
+
+    if not exists:
         # Platform/core services are not in services.yaml and cannot be removed here.
         return DecommissionEligibility(
             serviceName=name, decommissionable=False, protected=False,
             reason="not a portal-managed service",
         )
-    if _service_is_protected(entry):
+    if protected:
         return DecommissionEligibility(
             serviceName=name, decommissionable=False, protected=True,
             reason="protected core unit (self-destruct disabled)",

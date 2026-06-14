@@ -45,6 +45,7 @@ export interface ServiceDetailViewProps {
   argoDetail?: ServiceArgoDetail | null;
   decommissionable?: boolean;
   decommissionReason?: string;
+  protectedUnit?: boolean;
   warnings: string[];
 }
 
@@ -475,7 +476,13 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
       ) : null}
 
       {tab === "files" && props.kind === "application" ? (
-        <ServiceFilesTab serviceName={props.name} thing={kindLabel} argoUrl={props.argoUrl} />
+        <ServiceFilesTab
+          serviceName={props.name}
+          thing={kindLabel}
+          argoUrl={props.argoUrl}
+          accessUrl={props.accessUrl ?? null}
+          protectedUnit={props.protectedUnit ?? false}
+        />
       ) : null}
 
       {tab === "argocd" ? (

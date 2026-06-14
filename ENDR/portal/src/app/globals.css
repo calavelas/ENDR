@@ -3485,6 +3485,24 @@ html[data-theme="light"] body { background: #f4f5f8; }
 /* Files tab: repo tree (left) + viewer/editor (right). */
 .mc-files-grid { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 1rem; align-items: start; }
 .mc-files-tree { position: sticky; top: 1rem; }
+/* Edit -> PR success + next-steps flow (Files tab) */
+.mc-edit-done {
+  border: 1px solid color-mix(in srgb, var(--mc-good) 35%, transparent);
+  background: color-mix(in srgb, var(--mc-good) 7%, transparent);
+  border-radius: 10px; padding: 0.85rem 1rem; margin-top: 0.3rem;
+}
+.mc-edit-done-head { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--mc-good); font-weight: 600; font-size: 0.9rem; }
+.mc-steps { list-style: none; counter-reset: step; margin: 1.1rem 0 0; padding: 0; display: grid; gap: 0.65rem; }
+.mc-steps li { counter-increment: step; position: relative; border: 1px solid var(--mc-line); border-radius: 10px; padding: 0.78rem 0.9rem 0.78rem 2.9rem; background: var(--mc-surface-2); }
+.mc-steps li::before {
+  content: counter(step); position: absolute; left: 0.85rem; top: 0.78rem;
+  width: 1.55rem; height: 1.55rem; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600; color: var(--mc-bg); background: var(--mc-ink-2);
+}
+.mc-step-title { display: block; font-weight: 600; font-size: 0.86rem; color: var(--mc-ink); }
+.mc-step-body { margin: 0.25rem 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--mc-ink-2); }
+.mc-step-link { display: inline-flex; align-items: center; gap: 0.3rem; margin: 0.5rem 0.9rem 0 0; font-size: 0.78rem; color: var(--mc-info); text-decoration: none; }
+.mc-step-link:hover { text-decoration: underline; }
 .mc-kv { margin: 0; display: grid; grid-template-columns: minmax(110px, auto) 1fr; gap: 0.5rem 1rem; }
 .mc-kv dt { color: var(--mc-muted); font-size: 0.82rem; }
 .mc-kv dd { margin: 0; color: var(--mc-ink-2); font-size: 0.88rem; word-break: break-word; }
