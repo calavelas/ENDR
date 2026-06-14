@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+
+import * as Icon from "../../components/icons";
 
 interface CaseHistoryItem {
   number: number;
@@ -386,6 +389,16 @@ export function ServiceHistoryPanel({ serviceName }: ServiceHistoryPanelProps) {
                   </li>
                 ))}
               </ul>
+              {latestTransaction.pipeline.status === "success" ? (
+                <Link
+                  className="mc-btn mc-btn-sm mc-btn-soft"
+                  href={`/application-services/${encodeURIComponent(serviceName)}`}
+                  style={{ marginTop: "0.9rem" }}
+                >
+                  View service
+                  <Icon.ChevronRight size={14} />
+                </Link>
+              ) : null}
             </>
           ) : (
             <p className="mc-muted">Pipeline detail is loading…</p>

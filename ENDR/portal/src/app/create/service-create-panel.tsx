@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { CodeBlock } from "../components/code-block";
@@ -336,6 +337,7 @@ function buildPreviewSignature(payload: CreateServicePayload): string {
 
 export function CreateServicePanel() {
   const { mode, t } = useNarrative();
+  const router = useRouter();
   const setCreateStep = useSetCreateStep();
   const resultSectionRef = useRef<HTMLElement | null>(null);
   const [options, setOptions] = useState<CreateOptionsResponse | null>(null);
@@ -962,12 +964,19 @@ export function CreateServicePanel() {
 
       const created = body as CreateServiceResult;
       setResult(created);
-      resultSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       setPreviewResult(null);
       setLastPreviewSignature(null);
       setFileViewer(null);
       setFileViewerLoading(false);
       setFileViewerError("");
+
+      // Hand off to the refresh-safe delivery page: the post-create "waiting for
+      // PR -> merge -> deploy" view lives only in this component's state, so a
+      // browser refresh here would lose it. /history/<service> is server-rendered
+      // and re-fetches the same PR + pipeline status from GitHub, so it survives a
+      // refresh and is shareable. ?created=1 shows the "service requested" banner.
+      const prQuery = created.pullRequestNumber ? `&pr=${created.pullRequestNumber}` : "";
+      router.replace(`/history/${encodeURIComponent(created.serviceName)}?created=1${prQuery}`);
     } catch (error) {
       const detail = error instanceof Error ? error.message : "submit failed";
       setFormError(detail);
