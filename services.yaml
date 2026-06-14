@@ -104,3 +104,17 @@ services:
     env:
       ROBOT_NAME: ''
       CATCHPHRASE: ''
+- name: valx
+  namespace: miller
+  environments:
+  - gargantua
+  generator:
+    service:
+      template: endr-robot
+    gitops:
+      template: helm-service
+  overrides:
+    gateway:
+      enabled: true
+    env:
+      ROBOT_NAME: valx
