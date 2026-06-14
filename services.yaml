@@ -89,21 +89,6 @@ services:
       HONESTY: '90'
       TRUST: '70'
       CATCHPHRASE: Are you ready for my robot colony?
-- name: aaa
-  namespace: miller1
-  environments:
-  - gargantua
-  generator:
-    service:
-      template: python-fastapi
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    env:
-      ROBOT_NAME: ''
-      CATCHPHRASE: ''
 - name: valx
   namespace: miller
   environments:
