@@ -87,6 +87,9 @@ export function resolveAssistantBase(persona: AssistantPersona): string {
 
 // ── Lean offline fallback ───────────────────────────────────────────────────
 const ORDER = ["welcome", "create", "deploy", "catalog", "history", "done"];
+// Sub-steps of the create wizard — the dialog mirrors the form as the user moves
+// through them. Kept separate from ORDER so their progress reads 1/4…4/4.
+const CREATE_SUBSTEPS = ["create-basics", "create-stack", "create-config", "create-review"];
 
 type FallbackStep = {
   text: Record<AssistantMode, string>;
@@ -166,6 +169,48 @@ const STEPS: Record<string, FallbackStep> = {
     cta: null,
     replies: [{ id: "resume", label: "Back to the tour" }],
   },
+
+  // ── Create-wizard sub-steps (the dialog tracks the form) ──────────────────
+  "create-basics": {
+    text: {
+      idp: "Step 1 — the basics. Give your service a DNS-safe name (lowercase letters, numbers, dashes) and pick a namespace. That name becomes its address: <name>.calavelas.net.",
+      interstellar: "Step 1 — robot basics. Give your robot a call-sign (lowercase, numbers, dashes) and pick a planet to land on. The call-sign becomes its address: <name>.calavelas.net.",
+    },
+    cta: null,
+    replies: [],
+  },
+  "create-stack": {
+    text: {
+      idp: "Step 2 — the stack. Choose the target environment, a service template (the code scaffold) and a GitOps template (how it's packaged and deployed). The defaults are a fine starting point.",
+      interstellar: "Step 2 — chassis & stack. Choose the target system, a blueprint (the chassis) and a delivery rig (how it's packaged and launched). The defaults are a fine starting point.",
+    },
+    cta: null,
+    replies: [],
+  },
+  "create-config": {
+    text: {
+      idp: "Step 3 — configuration. These are the service's overrides: gateway, image and environment variables. It's a one-time Day-0 seed — after creation the service owns its config in its own GitOps repo. (Image is locked for the demo.)",
+      interstellar: "Step 3 — calibration. This is the robot's overrides block: gateway, image and env. For a robot, set HUMOR / HONESTY / TRUST — leave them blank and it boots in MALFUNCTION. One-time Day-0 seed; after launch the robot owns its config in GitOps.",
+    },
+    cta: null,
+    replies: [],
+  },
+  "create-review": {
+    text: {
+      idp: "Step 4 — review. On the left is the exact repo tree this will add; click any file to inspect it. Hit Create and the portal opens a pull request appending your service to services.yaml.",
+      interstellar: "Step 4 — final checks. On the left is the exact repo tree this launch will add; click any file to inspect it. Hit Create and the portal opens a pull request appending your robot to services.yaml.",
+    },
+    cta: null,
+    replies: [],
+  },
+  "create-submitted": {
+    text: {
+      idp: "Pull request opened. Merge it and ArgoCD takes over — it syncs the deployment to the cluster and self-heals it. Watch the pipeline below, or jump to Observability.",
+      interstellar: "Pull request away. Merge it and the autopilot — ArgoCD — launches your robot and keeps it alive. Watch the pipeline below, or jump to telemetry.",
+    },
+    cta: { href: "/argocd", label: { idp: "Open Observability", interstellar: "Open telemetry" } },
+    replies: [],
+  },
 };
 
 const BANNER: Record<AssistantPersona, string> = {
@@ -239,7 +284,9 @@ export function fallbackGuide(req: AssistantRequest): AssistantResponse {
     step: target,
     progress: ORDER.includes(target)
       ? { index: ORDER.indexOf(target) + 1, total: ORDER.length }
-      : null,
+      : CREATE_SUBSTEPS.includes(target)
+        ? { index: CREATE_SUBSTEPS.indexOf(target) + 1, total: CREATE_SUBSTEPS.length }
+        : null,
     message,
     quickReplies: node.replies.map((r) => ({ id: r.id, label: pick(r.label, mode) })),
     cta: node.cta ? { href: node.cta.href, label: pick(node.cta.label, mode) } : null,

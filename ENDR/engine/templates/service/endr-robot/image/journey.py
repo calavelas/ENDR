@@ -14,6 +14,10 @@ maps that to a step in a small, linear tour and returns a ready-to-render bubble
 # Linear tour. ``welcome`` doubles as the dashboard step (route "/").
 ORDER = ["welcome", "create", "deploy", "catalog", "history", "done"]
 
+# Sub-steps of the create wizard. The portal sends one of these as the intent so
+# the dialog mirrors the form; kept out of ORDER so their progress reads 1/4…4/4.
+CREATE_SUBSTEPS = ["create-basics", "create-stack", "create-config", "create-review"]
+
 # Route prefix -> step id. Mirrors the portal's matchPath(). "/" is handled
 # explicitly in route_to_step() because it is a prefix of everything.
 ROUTE_PREFIXES = [
@@ -211,6 +215,91 @@ STEPS = {
             {"id": "resume", "label": "Back to the tour"},
         ],
     },
+    # ── Create-wizard sub-steps (the dialog tracks the form) ──────────────────
+    "create-basics": {
+        "text": {
+            "idp": (
+                "Step 1 — the basics. Give your service a DNS-safe name (lowercase "
+                "letters, numbers, dashes) and pick a namespace. That name becomes "
+                "its address: <name>.calavelas.net."
+            ),
+            "interstellar": (
+                "Step 1 — robot basics. Give your robot a call-sign (lowercase, "
+                "numbers, dashes) and pick a planet to land on. The call-sign "
+                "becomes its address: <name>.calavelas.net."
+            ),
+        },
+        "cta": None,
+        "replies": [],
+    },
+    "create-stack": {
+        "text": {
+            "idp": (
+                "Step 2 — the stack. Choose the target environment, a service "
+                "template (the code scaffold) and a GitOps template (how it's "
+                "packaged and deployed). The defaults are a fine starting point."
+            ),
+            "interstellar": (
+                "Step 2 — chassis & stack. Choose the target system, a blueprint "
+                "(the chassis) and a delivery rig (how it's packaged and launched). "
+                "The defaults are a fine starting point."
+            ),
+        },
+        "cta": None,
+        "replies": [],
+    },
+    "create-config": {
+        "text": {
+            "idp": (
+                "Step 3 — configuration. These are the service's overrides: gateway, "
+                "image and environment variables. It's a one-time Day-0 seed — after "
+                "creation the service owns its config in its own GitOps repo. (Image "
+                "is locked for the demo.)"
+            ),
+            "interstellar": (
+                "Step 3 — calibration. This is my overrides block: gateway, image and "
+                "env. Set HUMOR / HONESTY / TRUST — leave them blank and I boot in "
+                "MALFUNCTION. One-time Day-0 seed; after launch I own my config in "
+                "GitOps."
+            ),
+        },
+        "cta": None,
+        "replies": [],
+    },
+    "create-review": {
+        "text": {
+            "idp": (
+                "Step 4 — review. On the left is the exact repo tree this will add; "
+                "click any file to inspect it. Hit Create and the portal opens a pull "
+                "request appending your service to services.yaml."
+            ),
+            "interstellar": (
+                "Step 4 — final checks. On the left is the exact repo tree this "
+                "launch will add; click any file to inspect it. Hit Create and the "
+                "portal opens a pull request appending your robot to services.yaml."
+            ),
+        },
+        "cta": None,
+        "replies": [],
+    },
+    "create-submitted": {
+        "text": {
+            "idp": (
+                "Pull request opened. Merge it and ArgoCD takes over — it syncs the "
+                "deployment to the cluster and self-heals it. Watch the pipeline "
+                "below, or jump to Observability."
+            ),
+            "interstellar": (
+                "Pull request away. Merge it and the autopilot — ArgoCD — launches "
+                "your robot and keeps it alive. Watch the pipeline below, or jump to "
+                "telemetry."
+            ),
+        },
+        "cta": {"href": "/argocd", "label": {
+            "idp": "Open Observability", "interstellar": "Open telemetry",
+        }},
+        "replies": [],
+    },
 }
 
 MALFUNCTION = {
@@ -337,7 +426,12 @@ def _message(target, node, mode, c, context):
     base = node["text"].get(mode, node["text"]["idp"]).replace("{name}", c.get("name", "TARS"))
     if target == "welcome":
         base = _context_clause(base, context, mode)
-    idx = ORDER.index(target) if target in ORDER else len(WITTY_ASIDES) - 1
+    if target in ORDER:
+        idx = ORDER.index(target)
+    elif target in CREATE_SUBSTEPS:
+        idx = CREATE_SUBSTEPS.index(target)
+    else:
+        idx = len(WITTY_ASIDES) - 1
     return _flavor(base, c, idx)
 
 
@@ -385,6 +479,8 @@ def guide(payload, c):
     progress = None
     if target in ORDER:
         progress = {"index": ORDER.index(target) + 1, "total": len(ORDER)}
+    elif target in CREATE_SUBSTEPS:
+        progress = {"index": CREATE_SUBSTEPS.index(target) + 1, "total": len(CREATE_SUBSTEPS)}
 
     return {
         **meta,

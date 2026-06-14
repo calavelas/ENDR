@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { CodeBlock } from "../components/code-block";
 import * as Icon from "../components/icons";
+import { useSetCreateStep, type CreateStepId } from "../lib/create-step";
 import { useNarrative } from "../lib/narrative";
 import {
   envRowsToMap,
@@ -335,6 +336,7 @@ function buildPreviewSignature(payload: CreateServicePayload): string {
 
 export function CreateServicePanel() {
   const { mode, t } = useNarrative();
+  const setCreateStep = useSetCreateStep();
   const resultSectionRef = useRef<HTMLElement | null>(null);
   const [options, setOptions] = useState<CreateOptionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -439,6 +441,19 @@ export function CreateServicePanel() {
       }),
     );
   }, [serviceName, namespace, environment, serviceTemplate, gitopsTemplate, gatewayEnabled, imageOverride, envRows]);
+
+  // Tell the floating assistant which wizard sub-step is active so its guidance
+  // tracks the form. Cleared on unmount (leaving the create page).
+  useEffect(() => {
+    const byStep: Record<StepId, CreateStepId> = {
+      1: "create-basics",
+      2: "create-stack",
+      3: "create-config",
+      4: "create-review",
+    };
+    setCreateStep(result ? "create-submitted" : byStep[step]);
+  }, [step, result, setCreateStep]);
+  useEffect(() => () => setCreateStep(null), [setCreateStep]);
 
   useEffect(() => {
     const prNumber = result?.pullRequestNumber;

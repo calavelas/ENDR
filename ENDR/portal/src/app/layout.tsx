@@ -4,6 +4,7 @@ import { JetBrains_Mono, Manrope } from "next/font/google";
 import { ReactNode } from "react";
 
 import { AppShell } from "./components/app-shell";
+import { CreateStepProvider } from "./lib/create-step";
 import { NarrativeProvider } from "./lib/narrative";
 
 const manrope = Manrope({
@@ -28,7 +29,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${jetbrainsMono.variable}`}>
         <NarrativeProvider>
-          <AppShell>{children}</AppShell>
+          <CreateStepProvider>
+            <AppShell>{children}</AppShell>
+          </CreateStepProvider>
         </NarrativeProvider>
       </body>
     </html>

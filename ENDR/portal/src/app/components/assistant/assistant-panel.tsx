@@ -121,29 +121,31 @@ export function AssistantPanel({
         </div>
       ) : null}
 
-      <div className="asst-foot">
-        {data?.cta ? (
-          <Link href={data.cta.href} className="asst-cta">
-            {data.cta.label}
-            <Icon.ArrowRight size={14} />
-          </Link>
-        ) : null}
-        {data?.quickReplies?.length ? (
-          <div className="asst-replies">
-            {data.quickReplies.map((reply) => (
-              <button
-                key={reply.id}
-                type="button"
-                className="asst-chip"
-                onClick={() => onReply(reply.id)}
-                disabled={loading}
-              >
-                {reply.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      {data?.cta || data?.quickReplies?.length ? (
+        <div className="asst-foot">
+          {data?.cta ? (
+            <Link href={data.cta.href} className="asst-cta">
+              {data.cta.label}
+              <Icon.ArrowRight size={14} />
+            </Link>
+          ) : null}
+          {data?.quickReplies?.length ? (
+            <div className="asst-replies">
+              {data.quickReplies.map((reply) => (
+                <button
+                  key={reply.id}
+                  type="button"
+                  className="asst-chip"
+                  onClick={() => onReply(reply.id)}
+                  disabled={loading}
+                >
+                  {reply.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

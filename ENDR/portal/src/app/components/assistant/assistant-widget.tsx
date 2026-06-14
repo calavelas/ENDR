@@ -9,6 +9,7 @@ import {
   type AssistantRequest,
   type AssistantResponse,
 } from "../../lib/assistant";
+import { useCreateStep } from "../../lib/create-step";
 import { useNarrative } from "../../lib/narrative";
 import { AssistantLauncher } from "./assistant-launcher";
 import { AssistantPanel } from "./assistant-panel";
@@ -25,6 +26,9 @@ const ACCENT: Record<AssistantPersona, string> = {
 export function AssistantWidget() {
   const { mode } = useNarrative();
   const pathname = usePathname() || "/";
+  // Which create-wizard sub-step is active (null off the create page). When set,
+  // the dialog asks for that step's guidance so it mirrors the form.
+  const createStep = useCreateStep();
 
   // Render nothing until mounted — keeps the fixed overlay out of SSR and avoids
   // any hydration mismatch (mirrors NarrativeProvider's post-mount restore).
@@ -124,12 +128,15 @@ export function AssistantWidget() {
   // refetch, no typewriter replay) — the panel stays mounted while collapsed.
   useEffect(() => {
     if (!mounted || !open) return;
-    const sig = `${persona}|${mode}|${pathname}`;
+    const sub = pathname.startsWith("/create") ? createStep : null;
+    const sig = `${persona}|${mode}|${pathname}|${sub ?? ""}`;
     if (data && lastFetchSigRef.current === sig) return;
     lastFetchSigRef.current = sig;
-    sendRef.current("open");
+    // On the create page, ask for the active sub-step's guidance so the dialog
+    // mirrors the wizard; elsewhere just open at the route's step.
+    sendRef.current(sub ?? "open");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, persona, mode, pathname, mounted]);
+  }, [open, persona, mode, pathname, createStep, mounted]);
 
   // Return focus to the launcher when the panel closes (but not on first mount).
   useEffect(() => {
