@@ -3346,6 +3346,9 @@ html[data-theme="light"] body { background: #f4f5f8; }
 .mc-stage.run .mc-stage-dot { background: var(--mc-warn); border-color: var(--mc-warn); color: #1a1304; }
 .mc-stage-title { margin: 0; font-size: 0.92rem; color: var(--mc-ink); font-weight: 600; }
 .mc-stage-meta { font-size: 0.78rem; color: var(--mc-muted); }
+/* Full-width Sync status card: lay the pipeline out horizontally. */
+.mc-detail-span .mc-pipe { flex-direction: row; flex-wrap: wrap; gap: 1.2rem; }
+.mc-detail-span .mc-stage { flex: 1 1 200px; border-left: 0; margin-left: 0; padding: 0; }
 
 /* Toolbar (search + filters). */
 .mc-toolbar {
@@ -3442,7 +3445,8 @@ html[data-theme="light"] body { background: #f4f5f8; }
 .mc-only-narrow { display: none; }
 
 /* Detail grid + key/value lists. */
-.mc-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.mc-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+.mc-detail-span { grid-column: 1 / -1; }
 .mc-kv { margin: 0; display: grid; grid-template-columns: minmax(110px, auto) 1fr; gap: 0.5rem 1rem; }
 .mc-kv dt { color: var(--mc-muted); font-size: 0.82rem; }
 .mc-kv dd { margin: 0; color: var(--mc-ink-2); font-size: 0.88rem; word-break: break-word; }

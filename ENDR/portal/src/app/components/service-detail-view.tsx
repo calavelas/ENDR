@@ -350,7 +350,7 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
             </>
           ) : null}
 
-          <article className="mc-panel">
+          <article className="mc-panel mc-detail-span">
             <div className="mc-panel-head">
               <h2 className="mc-panel-title">Sync status</h2>
             </div>
