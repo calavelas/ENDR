@@ -4,7 +4,6 @@ export const revalidate = 0;
 import Link from "next/link";
 
 import * as Icon from "../../components/icons";
-import { StageRail } from "../../components/stage-rail";
 import { ServiceHistoryPanel } from "./service-history-panel";
 
 interface ServiceHistoryPageProps {
@@ -23,8 +22,6 @@ export default async function ServiceHistoryPage({ params }: ServiceHistoryPageP
         <Icon.ChevronLeft size={15} />
         Back to delivery
       </Link>
-
-      <StageRail active="deliver" />
 
       <ServiceHistoryPanel serviceName={decodedServiceName} />
     </div>

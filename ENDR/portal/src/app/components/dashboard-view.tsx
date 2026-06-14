@@ -119,7 +119,25 @@ export function DashboardView({ stats, rows, platform, activity, githubUrl }: Da
             {rows.length === 0 ? (
               <p className="mc-empty">No services yet. Create one to get started.</p>
             ) : (
-              <div className="mc-table-wrap">
+              <>
+              <div className="mc-row-cards mc-only-narrow">
+                {rows.map((row) => (
+                  <Link key={row.name} href={row.href} className="mc-card mc-row-card">
+                    <div className="mc-card-head">
+                      <span className="mc-card-name">{row.name}</span>
+                      <span className="mc-card-badges">
+                        <StatusBadge status={row.status} tone={row.tone} />
+                      </span>
+                    </div>
+                    <div className="mc-card-meta">
+                      <span className="mc-chip">{row.template}</span>
+                      <span className="mc-chip">{environmentLabel(row.namespace, mode)}</span>
+                      <span className="mc-chip mc-mono">{row.revision}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <div className="mc-table-wrap mc-only-wide">
                 <table className="mc-table">
                   <thead>
                     <tr>
@@ -167,6 +185,7 @@ export function DashboardView({ stats, rows, platform, activity, githubUrl }: Da
                   </tbody>
                 </table>
               </div>
+              </>
             )}
 
             <Link href="/create" className="mc-mission-create">

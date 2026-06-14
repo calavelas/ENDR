@@ -2328,6 +2328,20 @@ html[data-theme="light"] .app-shell {
 }
 html[data-theme="light"] body { background: #f4f5f8; }
 
+/* Subtle, themed scrollbars — replaces the chunky default that shows on
+   horizontally-overflowing tables / code panes. */
+.app-shell *::-webkit-scrollbar { width: 10px; height: 10px; }
+.app-shell *::-webkit-scrollbar-track { background: transparent; }
+.app-shell *::-webkit-scrollbar-thumb {
+  background: var(--mc-line-bright);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.app-shell *::-webkit-scrollbar-thumb:hover { background: var(--mc-muted); background-clip: padding-box; }
+.app-shell *::-webkit-scrollbar-corner { background: transparent; }
+.app-shell * { scrollbar-width: thin; scrollbar-color: var(--mc-line-bright) transparent; }
+
 /* Brand cell (top-left, over the sidebar) */
 .app-brand {
   grid-area: 1 / 1;
@@ -3409,8 +3423,21 @@ html[data-theme="light"] body { background: #f4f5f8; }
 }
 .mc-card:hover { border-color: var(--mc-line-bright); transform: translateY(-2px); }
 .mc-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.7rem; }
-.mc-card-name { font-family: var(--font-mono); font-size: 0.95rem; color: var(--mc-ink); }
+.mc-card-name { flex: 1 1 auto; font-family: var(--font-mono); font-size: 0.95rem; color: var(--mc-ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-card-badges { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem; flex-shrink: 0; }
+/* Compact badges inside cards so health + sync fit beside the name. */
+.mc-card-badges .mc-badge { padding: 0.14rem 0.46rem; font-size: 0.56rem; letter-spacing: 0.06em; gap: 0.28rem; }
+.mc-card-badges .mc-badge-dot { width: 5px; height: 5px; }
 .mc-card-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* Compact service cards used for the dashboard service list on mobile. */
+.mc-row-cards { display: grid; gap: 0.6rem; }
+.mc-row-card { padding: 0.8rem 0.9rem; border-radius: 12px; }
+.mc-row-card .mc-card-head { margin-bottom: 0.55rem; }
+
+/* Responsive show/hide (table on wide screens, cards on phones). */
+.mc-only-wide { display: block; }
+.mc-only-narrow { display: none; }
 
 /* Detail grid + key/value lists. */
 .mc-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
@@ -3532,6 +3559,12 @@ html[data-theme="light"] body { background: #f4f5f8; }
   .mc-page-actions .mc-btn { flex: 1 1 auto; justify-content: center; }
   .mc-status-strip { gap: 0.4rem; }
   .mc-tabs { gap: 0.3rem; }
+  /* Swap overflowing tables for the compact card list. */
+  .mc-only-wide { display: none; }
+  .mc-only-narrow { display: grid; }
+  /* Compact badges so health + sync fit on the name row. */
+  .mc-badge { gap: 0.3rem; padding: 0.16rem 0.5rem; font-size: 0.58rem; letter-spacing: 0.08em; }
+  .mc-badge-dot { width: 5px; height: 5px; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

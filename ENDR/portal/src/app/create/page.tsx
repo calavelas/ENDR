@@ -2,14 +2,11 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { Explain } from "../components/explain";
-import { StageRail } from "../components/stage-rail";
 import { CreateServicePanel } from "./service-create-panel";
 
 export default function CreatePage() {
   return (
     <div className="mc create-main">
-      <StageRail active="declare" />
-
       <Explain
         idp={
           <>

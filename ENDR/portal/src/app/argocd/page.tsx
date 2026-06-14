@@ -4,7 +4,6 @@ export const revalidate = 0;
 import { ArgoEmbedPanel } from "../components/argo-embed-panel";
 import { Explain } from "../components/explain";
 import * as Icon from "../components/icons";
-import { StageRail } from "../components/stage-rail";
 import { loadSnapshot, resolveArgoEmbedUrl } from "../lib/platform";
 
 export default async function ArgoCdPage() {
@@ -13,8 +12,6 @@ export default async function ArgoCdPage() {
 
   return (
     <div className="mc">
-      <StageRail active="operate" />
-
       {embedUrl ? (
         <div className="mc-page-actions">
           <a className="mc-btn mc-btn-soft" href={embedUrl} target="_blank" rel="noreferrer">

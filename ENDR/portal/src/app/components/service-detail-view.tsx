@@ -10,7 +10,6 @@ import { healthTone, optionalTimestamp, shortRevision, syncTone, type NodeTone }
 import { ArgoEmbedPanel } from "./argo-embed-panel";
 import { Explain } from "./explain";
 import * as Icon from "./icons";
-import { StageRail } from "./stage-rail";
 
 export interface ReadmeData {
   path: string;
@@ -99,8 +98,6 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
 
   return (
     <div className="mc">
-      <StageRail active="operate" />
-
       <Link href="/catalog" className="mc-back">
         <Icon.ChevronLeft size={15} />
         {mode === "interstellar" ? "Back to fleet" : "Back to catalog"}

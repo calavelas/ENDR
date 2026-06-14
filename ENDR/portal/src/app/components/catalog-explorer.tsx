@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { environmentLabel, platformServiceLabel, useNarrative } from "../lib/narrative";
+import { useMediaQuery } from "../lib/use-media-query";
 import {
   buildArgoApplicationUrl,
   buildGithubFolderUrl,
@@ -18,7 +19,6 @@ import {
 } from "../lib/platform";
 import { Explain } from "./explain";
 import * as Icon from "./icons";
-import { StageRail } from "./stage-rail";
 
 type View = "cards" | "table";
 type ToneFilter = "all" | NodeTone;
@@ -55,10 +55,13 @@ export function CatalogExplorer({
   githubBranch,
 }: CatalogExplorerProps) {
   const { mode, t } = useNarrative();
+  const isNarrow = useMediaQuery("(max-width: 680px)");
   const [query, setQuery] = useState("");
   const [health, setHealth] = useState<ToneFilter>("all");
   const [sync, setSync] = useState<ToneFilter>("all");
   const [view, setView] = useState<View>("cards");
+  // Tables overflow on phones — always use cards there (and hide the toggle).
+  const effectiveView: View = isNarrow ? "cards" : view;
 
   useEffect(() => {
     const saved = window.localStorage.getItem("endr-catalog-view");
@@ -109,8 +112,6 @@ export function CatalogExplorer({
 
   return (
     <>
-      <StageRail active="operate" />
-
       <div className="mc-page-actions">
         <Link href="/create" className="mc-btn mc-btn-lg">
           <Icon.Plus size={16} />
@@ -191,14 +192,16 @@ export function CatalogExplorer({
           <option value="bad">Out of sync</option>
           <option value="neutral">Unknown</option>
         </select>
-        <div className="mc-seg" role="group" aria-label="View">
-          <button type="button" className={`mc-seg-opt${view === "cards" ? " on" : ""}`} onClick={() => setView("cards")}>
-            Cards
-          </button>
-          <button type="button" className={`mc-seg-opt${view === "table" ? " on" : ""}`} onClick={() => setView("table")}>
-            Table
-          </button>
-        </div>
+        {!isNarrow ? (
+          <div className="mc-seg" role="group" aria-label="View">
+            <button type="button" className={`mc-seg-opt${view === "cards" ? " on" : ""}`} onClick={() => setView("cards")}>
+              Cards
+            </button>
+            <button type="button" className={`mc-seg-opt${view === "table" ? " on" : ""}`} onClick={() => setView("table")}>
+              Table
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {groups.map((group) => {
@@ -212,7 +215,7 @@ export function CatalogExplorer({
 
             {filtered.length === 0 ? (
               <p className="mc-empty">No matching {mode === "interstellar" ? "robots" : "services"}.</p>
-            ) : view === "cards" ? (
+            ) : effectiveView === "cards" ? (
               <div className="mc-card-grid">
                 {filtered.map((service) => (
                   <Link
@@ -222,10 +225,12 @@ export function CatalogExplorer({
                   >
                     <div className="mc-card-head">
                       <span className="mc-card-name">{displayName(group, service)}</span>
-                      <Badge status={service.healthStatus} tone={healthTone(service.healthStatus)} />
+                      <span className="mc-card-badges">
+                        <Badge status={service.healthStatus} tone={healthTone(service.healthStatus)} />
+                        <Badge status={service.syncStatus} tone={syncTone(service.syncStatus)} />
+                      </span>
                     </div>
                     <div className="mc-card-meta">
-                      <Badge status={service.syncStatus} tone={syncTone(service.syncStatus)} />
                       <span className="mc-chip">
                         <span className="mc-chip-key">{t.namespaceLabel}</span>
                         {environmentLabel(service.namespace, mode)}
