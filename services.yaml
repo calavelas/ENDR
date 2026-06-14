@@ -72,3 +72,18 @@ services:
     env:
       ROBOT_NAME: Rover
       CATCHPHRASE: Beep boop, exploring Edmunds!
+- name: tryout-svc
+  namespace: miller
+  environments:
+  - gargantua
+  generator:
+    service:
+      template: endr-robot
+    gitops:
+      template: helm-service
+  overrides:
+    gateway:
+      enabled: true
+    env:
+      ROBOT_NAME: TRYOUT
+      CATCHPHRASE: Just here for the evaluation.
