@@ -1,0 +1,60 @@
+name: ArgoCD refresh
+description: >
+  Force a hard refresh of an ArgoCD Application via its API — the same thing the
+  "Refresh" button does — so it picks up a just-pushed git change immediately
+  instead of waiting for ArgoCD's polling interval (~3 min). The app (and the
+  app-of-apps) have automated sync, so a refresh cascades into a sync + deploy.
+  Best-effort: never fails the workflow.
+
+inputs:
+  server:
+    description: ArgoCD host (no scheme).
+    required: false
+    default: argocd.calavelas.net
+  app:
+    description: ArgoCD Application name to refresh (e.g. services, or a service name).
+    required: true
+  token:
+    description: Optional ArgoCD API bearer token. Empty = anonymous (works when the
+      server allows anonymous access, which this demo does).
+    required: false
+    default: ''
+  refresh:
+    description: normal | hard. hard re-fetches from git first.
+    required: false
+    default: hard
+
+runs:
+  using: composite
+  steps:
+    - name: Refresh ArgoCD app
+      shell: bash
+      env:
+        ARGOCD_SERVER: ${{ inputs.server }}
+        ARGOCD_APP: ${{ inputs.app }}
+        ARGOCD_TOKEN: ${{ inputs.token }}
+        ARGOCD_REFRESH: ${{ inputs.refresh }}
+      run: |
+        set -uo pipefail
+        if [ -z "${ARGOCD_APP}" ]; then
+          echo "::notice title=ArgoCD refresh::no app name given; skipping."
+          exit 0
+        fi
+        url="https://${ARGOCD_SERVER}/api/v1/applications/$(printf '%s' "${ARGOCD_APP}" | sed 's/ /%20/g')?refresh=${ARGOCD_REFRESH}"
+        auth=()
+        if [ -n "${ARGOCD_TOKEN}" ]; then auth=(-H "Authorization: Bearer ${ARGOCD_TOKEN}"); fi
+        echo "Refreshing ArgoCD app '${ARGOCD_APP}' (${ARGOCD_REFRESH}) on ${ARGOCD_SERVER}…"
+        code=$(curl -sS --max-time 30 -o /tmp/argocd_refresh.json -w "%{http_code}" "${auth[@]}" "${url}" || echo "000")
+        echo "ArgoCD refresh -> HTTP ${code}"
+        case "${code}" in
+          2*)
+            echo "::notice title=ArgoCD refresh::'${ARGOCD_APP}' refreshed; automated sync will roll it out now (no ~3-min wait)."
+            ;;
+          401|403)
+            echo "::warning title=ArgoCD refresh::auth required (HTTP ${code}). Set the ARGOCD_AUTH_TOKEN secret to enable instant refresh; ArgoCD will still auto-sync on its normal interval."
+            ;;
+          *)
+            echo "::warning title=ArgoCD refresh::could not refresh (HTTP ${code}); ArgoCD will auto-sync on its normal interval."
+            ;;
+        esac
+        exit 0

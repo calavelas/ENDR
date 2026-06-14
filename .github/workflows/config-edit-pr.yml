@@ -262,11 +262,11 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
           stage: Auto-merge
           status: success
-          title: Merged — ArgoCD will roll out the new config
+          title: Merged — rolling out the new config now
           body: >-
-            Squash-merged to `main`. ArgoCD detects the changed chart values and
-            re-syncs the service. To roll it out now, open the service's
-            Application in ArgoCD and hit **Refresh**, then **Sync**.
+            Squash-merged to `main`, and ArgoCD has been refreshed automatically, so
+            the new config is rolling out now — no manual Refresh/Sync and no waiting
+            on the polling interval. Give it a few seconds, then reload the service.
 
       - name: Comment — queued to merge
         if: ${{ steps.merge.outputs.merged != 'true' }}
@@ -280,3 +280,23 @@ jobs:
           body: >-
             Approved and auto-merge is enabled. GitHub will squash-merge this
             automatically as soon as required checks are green.
+
+      - name: Derive edited service name
+        id: svc
+        if: ${{ steps.merge.outputs.merged == 'true' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -uo pipefail
+          # Title format: "Portal · Update config: <name>"
+          name="${PR_TITLE##*: }"
+          name="$(printf '%s' "$name" | xargs)"
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "Edited service: ${name:-<unknown>}"
+
+      - name: Refresh ArgoCD (edited service)
+        if: ${{ steps.merge.outputs.merged == 'true' && steps.svc.outputs.name != '' }}
+        uses: ./.github/actions/argocd-refresh
+        with:
+          app: ${{ steps.svc.outputs.name }}
+          token: ${{ secrets.ARGOCD_AUTH_TOKEN }}
