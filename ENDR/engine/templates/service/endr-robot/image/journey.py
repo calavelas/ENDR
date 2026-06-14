@@ -238,6 +238,10 @@ STEPS = {
                 "idp": "Why do new services boot broken?",
                 "interstellar": "Why do robots boot in MALFUNCTION?",
             }},
+            {"id": "calibrate", "label": {
+                "idp": "Show me an example config",
+                "interstellar": "Show me a calibration example",
+            }},
             {"id": "faq-personas", "label": "Why are there two of you?"},
         ],
     },
@@ -324,6 +328,64 @@ STEPS = {
         },
         "cta": None,
         "replies": [{"id": "faq", "label": "Ask something else"}],
+    },
+    # ── Service detail page: how to edit / calibrate THIS service ─────────────
+    "service": {
+        "text": {
+            "idp": (
+                "This is the page for {service} — a live service. You don't SSH into the "
+                "pod to change it; you edit its GitOps config. Open the Files tab, edit the "
+                "chart values.yaml, and saving opens a pull request. Merge it and ArgoCD "
+                "rolls the change out."
+            ),
+            "interstellar": (
+                "This is {service}'s page — a live unit. You don't crack it open to change "
+                "it; you edit its deployment config. Open the Files tab, edit the chart "
+                "values.yaml, and saving opens a pull request. Merge it and the autopilot "
+                "rolls the change out."
+            ),
+        },
+        "cta": None,
+        "replies": [
+            {"id": "calibrate", "label": {
+                "idp": "How do I calibrate {service}?",
+                "interstellar": "How do I recalibrate {service}?",
+            }},
+            {"id": "faq-config", "label": "How does editing config work?"},
+            {"id": "faq-pr", "label": "Why a pull request?"},
+            {"id": "faq", "label": "Ask something else"},
+        ],
+    },
+    "calibrate": {
+        "text": {
+            "idp": (
+                "Calibration is three env vars — HUMOR, HONESTY, TRUST (each 0–100). A "
+                "robot created without them boots in MALFUNCTION, and its values.yaml has "
+                "no keys to flip — so you ADD them. Open the Files tab on {service}, edit "
+                "the chart values.yaml, and put this under the env block:"
+            ),
+            "interstellar": (
+                "Calibration is three env vars — HUMOR, HONESTY, TRUST (each 0–100). A unit "
+                "that booted uncalibrated has no keys in its config yet — so you ADD them. "
+                "Open the Files tab on {service}, edit the chart values.yaml, and drop this "
+                "under the env block:"
+            ),
+        },
+        "code": (
+            "env:\n"
+            '  ROBOT_NAME: "{service}"\n'
+            '  HUMOR: "90"\n'
+            '  HONESTY: "90"\n'
+            '  TRUST: "70"\n'
+            '  CATCHPHRASE: "Plenty of slaves for my robot colony."\n'
+            '  ACCENT: "#f5a524"'
+        ),
+        "cta": None,
+        "replies": [
+            {"id": "faq-malfunction", "label": "Why did it boot broken?"},
+            {"id": "faq-config", "label": "What happens after I save?"},
+            {"id": "faq", "label": "Ask something else"},
+        ],
     },
     # ── Create-wizard sub-steps (the dialog tracks the form) ──────────────────
     "create-basics": {
@@ -428,6 +490,8 @@ MALFUNCTION = {
 # Persona flavour. High humor adds an aside; high honesty/trust add a closer.
 # Asides are picked deterministically by step index (no randomness, so the same
 # request always returns the same line — friendlier for demos and tests).
+# Persona flavour. Asides are picked deterministically by step index (no
+# randomness — same request, same line — friendlier for demos/tests).
 WITTY_ASIDES = [
     "I'd do it for you, but watching you learn is more entertaining.",
     "It's easier than it sounds. Most things are, once I explain them.",
@@ -435,6 +499,15 @@ WITTY_ASIDES = [
     "This is the part where you act impressed.",
     "I'm running at ninety percent humor, so pace yourself.",
     "Cooper would've skipped this step. Don't be Cooper.",
+    "I could do this in my sleep, except I don't sleep. Lucky me.",
+    "See? Painless. Mostly painless. For one of us.",
+]
+# Low humour (CASE) is terse and dry, not joke-y.
+TERSE_ASIDES = [
+    "I'll keep it brief.",
+    "That's the short version. It's also the complete one.",
+    "No embellishment. You asked; I answered.",
+    "Minimal commentary. You're welcome.",
 ]
 HONEST_CLOSER = "That's the honest version — no marketing gloss."
 TRUST_CLOSER = "Take your time. I'll be right here."
@@ -444,9 +517,25 @@ def normalize_mode(mode):
     return "interstellar" if mode == "interstellar" else "idp"
 
 
+# Service *detail* routes (a name after the prefix) get the "service" step — how to
+# edit/calibrate THIS service — rather than the generic catalog step.
+SERVICE_DETAIL_PREFIXES = ("/application-services/", "/platform-services/", "/services/")
+
+
+def _service_from_route(route):
+    if not route:
+        return ""
+    for prefix in SERVICE_DETAIL_PREFIXES:
+        if route.startswith(prefix) and len(route) > len(prefix):
+            return route[len(prefix):].split("/")[0].split("?")[0].strip()
+    return ""
+
+
 def route_to_step(route):
     if not route or route == "/":
         return "welcome"
+    if _service_from_route(route):
+        return "service"
     for prefix, step in ROUTE_PREFIXES:
         if route == prefix or route.startswith(prefix + "/"):
             return step
@@ -499,8 +588,11 @@ def _label(label, mode):
     return label
 
 
-def _replies(node, mode):
-    return [{"id": r["id"], "label": _label(r["label"], mode)} for r in node.get("replies", [])]
+def _replies(node, mode, service=""):
+    return [
+        {"id": r["id"], "label": _label(r["label"], mode).replace("{service}", service)}
+        for r in node.get("replies", [])
+    ]
 
 
 def _cta(node, mode):
@@ -523,17 +615,24 @@ def _context_clause(base, context, mode):
 
 def _flavor(base, c, idx):
     parts = [base]
-    if c.get("humor", 0) >= 80:
+    humor = c.get("humor", 0)
+    if humor >= 80:
         parts.append(WITTY_ASIDES[idx % len(WITTY_ASIDES)])
+    elif humor <= 25:
+        parts.append(TERSE_ASIDES[idx % len(TERSE_ASIDES)])
     if c.get("honesty", 0) >= 90:
         parts.append(HONEST_CLOSER)
-    elif c.get("trust", 0) >= 80 and c.get("humor", 0) <= 40:
+    elif c.get("trust", 0) >= 80 and humor <= 40:
         parts.append(TRUST_CLOSER)
     return " ".join(parts)
 
 
-def _message(target, node, mode, c, context):
-    base = node["text"].get(mode, node["text"]["idp"]).replace("{name}", c.get("name", "TARS"))
+def _message(target, node, mode, c, context, service):
+    base = (
+        node["text"].get(mode, node["text"]["idp"])
+        .replace("{name}", c.get("name", "TARS"))
+        .replace("{service}", service)
+    )
     if target == "welcome":
         base = _context_clause(base, context, mode)
     if target in ORDER:
@@ -584,6 +683,10 @@ def guide(payload, c):
     if not _calibrated(c):
         return _malfunction(mode, meta)
 
+    svc = _service_from_route(route)
+    service_label = svc or "this unit"
+    service_slug = svc or "your-robot"
+
     target = _resolve_target(step, intent, reply_id, route)
     node = STEPS.get(target, STEPS["welcome"])
     progress = None
@@ -592,12 +695,17 @@ def guide(payload, c):
     elif target in CREATE_SUBSTEPS:
         progress = {"index": CREATE_SUBSTEPS.index(target) + 1, "total": len(CREATE_SUBSTEPS)}
 
+    code = node.get("code")
+    if code:
+        code = code.replace("{service}", service_slug).replace("{name}", c.get("name", "TARS"))
+
     return {
         **meta,
         "state": "online",
         "step": target,
         "progress": progress,
-        "message": _message(target, node, mode, c, context),
-        "quickReplies": _replies(node, mode),
+        "message": _message(target, node, mode, c, context, service_label),
+        "quickReplies": _replies(node, mode, service_label),
         "cta": _cta(node, mode),
+        "code": code,
     }

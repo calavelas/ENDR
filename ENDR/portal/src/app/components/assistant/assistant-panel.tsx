@@ -110,6 +110,12 @@ export function AssistantPanel({
             </>
           )}
         </div>
+
+        {data?.code ? (
+          <pre className="asst-code" aria-label="example config">
+            {data.code}
+          </pre>
+        ) : null}
       </div>
 
       {data?.progress ? (

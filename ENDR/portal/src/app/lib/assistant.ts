@@ -52,6 +52,7 @@ export interface AssistantResponse {
   step: string;
   progress: AssistantProgress | null;
   message: string;
+  code?: string | null;
   quickReplies: AssistantQuickReply[];
   cta: AssistantCta | null;
   source: "live" | "fallback";

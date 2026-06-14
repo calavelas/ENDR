@@ -3142,6 +3142,19 @@ html[data-theme="light"] body { background: #f4f5f8; }
   padding: 0.7rem 0.8rem;
   min-height: 2.4rem;
 }
+.asst-code {
+  margin: 0.6rem 0 0;
+  padding: 0.7rem 0.8rem;
+  background: var(--mc-bg);
+  border: 1px solid var(--mc-line);
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--mc-ink);
+  white-space: pre;
+  overflow-x: auto;
+}
 .asst-typing { color: var(--mc-muted); letter-spacing: 0.25em; font-size: 0.7rem; }
 .asst-caret {
   display: inline-block;

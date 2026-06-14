@@ -150,6 +150,7 @@ body{margin:0;background:
   border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-radius:999px;padding:.42rem .8rem;cursor:pointer;text-align:left;transition:border-color .15s,background .15s,color .15s}
 .tx-reply:hover{border-color:var(--amber);color:var(--ink);background:rgba(245,165,36,.12)}
 .tx-cta{align-self:center;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);text-decoration:none}
+.tx-code{margin:0 .95rem .9rem;padding:.75rem .85rem;background:#0c0d0f;border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:.76rem;line-height:1.5;color:var(--ink);white-space:pre;overflow-x:auto}
 
 /* ── Calibration meters ─────────────────────────────────────── */
 .cal{margin-top:1.6rem}
@@ -239,10 +240,15 @@ _ROBOT_CHAT_JS = """
     (list||[]).forEach(function(r){var b=document.createElement('button');b.type='button';b.className='tx-reply';b.textContent=r.label;b.addEventListener('click',function(){send({intent:'quick-reply',replyId:r.id});});repEl.appendChild(b);});
     if(cta&&cta.href){var href=cta.href.charAt(0)==='/'?portal+cta.href:cta.href;var a=document.createElement('a');a.className='tx-cta';a.href=href;a.target='_top';a.rel='noreferrer';a.textContent=cta.label+' \\u2192';repEl.appendChild(a);}
   }
+  function setCode(code){
+    var pre=document.getElementById('txCode');
+    if(code){if(!pre){pre=document.createElement('pre');pre.id='txCode';pre.className='tx-code';msgEl.parentNode.insertBefore(pre,repEl);}pre.textContent=code;}
+    else if(pre){pre.remove();}
+  }
   function send(payload){
-    if(busy)return;busy=true;repEl.innerHTML='';type('\\u2026');
+    if(busy)return;busy=true;repEl.innerHTML='';setCode(null);type('\\u2026');
     fetch('/api/guide',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:mode,step:step,intent:payload.intent,replyId:payload.replyId||''})})
-      .then(function(r){return r.json();}).then(function(d){busy=false;if(d&&d.step)step=d.step;type((d&&d.message)||'\\u2026');setReplies(d&&d.quickReplies,d&&d.cta);})
+      .then(function(r){return r.json();}).then(function(d){busy=false;if(d&&d.step)step=d.step;type((d&&d.message)||'\\u2026');setCode(d&&d.code);setReplies(d&&d.quickReplies,d&&d.cta);})
       .catch(function(){busy=false;type('Comms link down \\u2014 try again.');});
   }
   var initial=msgEl.getAttribute('data-initial')||msgEl.textContent;
