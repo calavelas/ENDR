@@ -996,6 +996,18 @@ export function CreateServicePanel() {
 
   const thing = mode === "interstellar" ? "robot" : "service";
 
+  // The user's own choices — generated lines containing one are flagged as
+  // "your change" in the diff view.
+  const diffHighlights = [
+    serviceName.trim(),
+    namespace.trim(),
+    environment.trim(),
+    imageOverride.trim(),
+    ...envRows.flatMap((row) => [row.key.trim(), row.value.trim()]),
+  ].filter((value) => value.length >= 2 && value !== "true" && value !== "false");
+
+  const isServicesYaml = (path: string) => /(^|\/)services\.yaml$/.test(path);
+
   const fileViewerPanel =
     fileViewerLoading || fileViewerError || fileViewer ? (
       <section className="mc-panel wiz-fileviewer" aria-live="polite">
@@ -1017,8 +1029,25 @@ export function CreateServicePanel() {
           <>
             <p className="mc-muted" style={{ fontSize: "0.8rem" }}>
               <code>{fileViewer.path}</code> • {fileViewer.size} bytes
+              {fileViewer.sourceLabel === "Generated Output" ? (
+                <span className="wiz-diff-legend">
+                  <span className="wiz-diff-key add">+ added</span>
+                  <span className="wiz-diff-key user">your change</span>
+                </span>
+              ) : null}
             </p>
-            <CodeBlock content={fileViewer.content} filename={fileViewer.path} />
+            <CodeBlock
+              content={fileViewer.content}
+              filename={fileViewer.path}
+              diff={
+                fileViewer.sourceLabel === "Generated Output"
+                  ? {
+                      entryName: isServicesYaml(fileViewer.path) ? serviceName.trim() : undefined,
+                      highlights: diffHighlights,
+                    }
+                  : undefined
+              }
+            />
             {fileViewer.truncated ? <p className="mc-muted">Preview truncated to first 128 KB.</p> : null}
           </>
         ) : null}
@@ -1438,13 +1467,6 @@ export function CreateServicePanel() {
           </>
           ) : (
           <>
-          <p className="wiz-note">
-            <strong>Day-0 bootstrap only.</strong> This opens a PR that adds one <code>services.yaml</code> entry — the
-            platform&apos;s <strong>desired-state catalog</strong>, not the running configuration. Once created, the{" "}
-            {thing} is configured through its own generated GitOps config (its chart): <code>services.yaml</code> tracks{" "}
-            <em>what should exist</em>; the chart is <em>how it actually runs</em>.
-          </p>
-
           <div className="wiz-cols">
             {/* Left — the generated repo tree */}
             <section className="mc-panel wiz-preview-panel">

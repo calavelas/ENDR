@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { useNarrative, type NarrativeLabels, type NarrativeMode } from "../lib/narrative";
+import { useTheme, type ThemeMode } from "../lib/theme";
 import { AssistantWidget } from "./assistant/assistant-widget";
 import { AutoRefresh } from "./auto-refresh";
 import * as Icon from "./icons";
@@ -96,6 +97,21 @@ function NarrativeToggle({
   );
 }
 
+function ThemeToggle({ theme, toggle }: { theme: ThemeMode; toggle: () => void }) {
+  const next = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      type="button"
+      className="app-icon-btn"
+      onClick={toggle}
+      aria-label={`Switch to ${next} theme`}
+      title={`Switch to ${next} theme`}
+    >
+      {theme === "dark" ? <Icon.Sun /> : <Icon.Moon />}
+    </button>
+  );
+}
+
 interface NavItem {
   key: string;
   label: string;
@@ -108,6 +124,7 @@ interface NavItem {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/";
   const { mode, setMode, t } = useNarrative();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
   const navItems: NavItem[] = [
@@ -166,6 +183,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="app-header-actions">
           <NarrativeToggle mode={mode} setMode={setMode} />
+          <ThemeToggle theme={theme} toggle={toggleTheme} />
           <button type="button" className="app-icon-btn" aria-label="Help">
             <Icon.HelpCircle />
           </button>

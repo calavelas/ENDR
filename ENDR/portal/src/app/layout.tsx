@@ -6,6 +6,7 @@ import { ReactNode } from "react";
 import { AppShell } from "./components/app-shell";
 import { CreateStepProvider } from "./lib/create-step";
 import { NarrativeProvider } from "./lib/narrative";
+import { ThemeProvider } from "./lib/theme";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -28,11 +29,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${jetbrainsMono.variable}`}>
-        <NarrativeProvider>
-          <CreateStepProvider>
-            <AppShell>{children}</AppShell>
-          </CreateStepProvider>
-        </NarrativeProvider>
+        <ThemeProvider>
+          <NarrativeProvider>
+            <CreateStepProvider>
+              <AppShell>{children}</AppShell>
+            </CreateStepProvider>
+          </NarrativeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

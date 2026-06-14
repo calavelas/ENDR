@@ -102,6 +102,11 @@ export function CatalogExplorer({
   const displayName = (group: Group, service: ServiceNode) =>
     group.id === "platform" ? platformServiceLabel(service.name, mode) : service.name;
 
+  const healthy = services.filter((service) => healthTone(service.healthStatus) === "good").length;
+  const healthyPct = services.length ? Math.round((healthy / services.length) * 100) : 0;
+  const appLabel = mode === "interstellar" ? "Robots" : "Services";
+  const platformLabel = mode === "interstellar" ? "Subsystems" : "Platform";
+
   return (
     <>
       <StageRail active="operate" />
@@ -118,6 +123,24 @@ export function CatalogExplorer({
           </a>
         ) : null}
       </div>
+
+      <section className="mc-kpis">
+        <div className="mc-kpi neutral">
+          <span className="mc-kpi-value">{services.length}</span>
+          <span className="mc-kpi-label">{appLabel}</span>
+          <span className="mc-kpi-sub">Active</span>
+        </div>
+        <div className="mc-kpi good">
+          <span className="mc-kpi-value">{healthyPct}%</span>
+          <span className="mc-kpi-label">Healthy</span>
+          <span className="mc-kpi-sub">{healthy}/{services.length}</span>
+        </div>
+        <div className="mc-kpi neutral">
+          <span className="mc-kpi-value">{platformServices.length}</span>
+          <span className="mc-kpi-label">{platformLabel}</span>
+          <span className="mc-kpi-sub">Platform services</span>
+        </div>
+      </section>
 
       <Explain
         idp={
@@ -181,9 +204,9 @@ export function CatalogExplorer({
       {groups.map((group) => {
         const filtered = group.items.filter(matches);
         return (
-          <section className="mc-section" key={group.id}>
-            <div className="mc-section-head">
-              <h2 className="mc-section-title">{group.label}</h2>
+          <section className="mc-panel mc-cat-group" key={group.id}>
+            <div className="mc-panel-head">
+              <h2 className="mc-panel-title">{group.label}</h2>
               <span className="mc-count-chip">{filtered.length}</span>
             </div>
 
@@ -215,7 +238,6 @@ export function CatalogExplorer({
                 ))}
               </div>
             ) : (
-              <div className="mc-panel">
                 <div className="mc-table-wrap">
                   <table className="mc-table">
                     <thead>
@@ -289,7 +311,6 @@ export function CatalogExplorer({
                     </tbody>
                   </table>
                 </div>
-              </div>
             )}
           </section>
         );

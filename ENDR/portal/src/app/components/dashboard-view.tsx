@@ -52,19 +52,6 @@ export interface DashboardViewProps {
   githubUrl: string;
 }
 
-const HEALTH_SEGMENTS = 10;
-
-function HealthBar({ pct, tone }: { pct: number; tone: NodeTone }) {
-  const filled = Math.max(0, Math.min(HEALTH_SEGMENTS, Math.round((pct / 100) * HEALTH_SEGMENTS)));
-  return (
-    <span className="mc-bar" role="img" aria-label={`Health ${pct}%`}>
-      {Array.from({ length: HEALTH_SEGMENTS }, (_, i) => (
-        <span key={i} className={`mc-seg${i < filled ? ` on ${tone}` : ""}`} />
-      ))}
-    </span>
-  );
-}
-
 function StatusBadge({ status, tone }: { status: string; tone: NodeTone }) {
   return (
     <span className={`mc-badge ${tone}`}>
@@ -140,7 +127,6 @@ export function DashboardView({ stats, rows, platform, activity, githubUrl }: Da
                       <th>Status</th>
                       <th>{t.modelLabel}</th>
                       <th>{t.namespaceLabel}</th>
-                      <th>Health</th>
                       <th>Revision</th>
                       <th>Deployed</th>
                       <th aria-label="Actions" />
@@ -168,12 +154,6 @@ export function DashboardView({ stats, rows, platform, activity, githubUrl }: Da
                         </td>
                         <td>{row.template}</td>
                         <td>{environmentLabel(row.namespace, mode)}</td>
-                        <td>
-                          <div className="mc-th-health">
-                            <HealthBar pct={row.healthPct} tone={row.tone} />
-                            <span className={`mc-health-pct ${row.tone}`}>{row.healthPct}%</span>
-                          </div>
-                        </td>
                         <td className="mc-mono">{row.revision}</td>
                         <td className="mc-mono">{row.deployed}</td>
                         <td className="mc-table-action">
@@ -246,9 +226,9 @@ export function DashboardView({ stats, rows, platform, activity, githubUrl }: Da
                   <div className="mc-activity-item" key={`${item.title}-${index}`}>
                     <span className={`mc-activity-ic ${item.tone}`}>
                       {item.tone === "bad" ? (
-                        <Icon.AlertTriangle size={18} />
+                        <Icon.AlertTriangle size={15} />
                       ) : (
-                        <Icon.CheckCircle size={18} />
+                        <Icon.CheckCircle size={15} />
                       )}
                     </span>
                     <span className="mc-activity-body">

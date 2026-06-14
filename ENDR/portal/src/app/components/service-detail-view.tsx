@@ -106,6 +106,11 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
         {mode === "interstellar" ? "Back to fleet" : "Back to catalog"}
       </Link>
 
+      <div className="mc-detail-head">
+        <h1 className="mc-detail-title">{displayName}</h1>
+        <span className="mc-detail-sub">{kindLabel}</span>
+      </div>
+
       <div className="mc-status-strip">
         <Badge status={props.healthStatus} tone={healthT} />
         <Badge status={props.syncStatus} tone={syncT} />
