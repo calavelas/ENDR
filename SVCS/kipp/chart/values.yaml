@@ -1,10 +1,10 @@
 image:
   repository: calavelas/endr-robot
-  tag: latest
+  tag: aaaa
   pullPolicy: IfNotPresent
 
 service:
-  port: 8080
+  port: 8089
 
 # Deployment environment variables — developer-tunable (e.g. robot calibration).
 # Edit these via the portal; the deployment template renders them from here.
