@@ -3625,6 +3625,8 @@ html[data-theme="light"] body { background: #f4f5f8; }
   color: var(--mc-warn);
   line-height: 1.4;
 }
+/* Message column in the live-resources table — allow wrapping (cells default to nowrap). */
+.mc-table td.mc-res-msg { white-space: normal; color: var(--mc-muted); font-size: 0.8rem; min-width: 16ch; }
 
 @media (max-width: 760px) {
   .stage-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }

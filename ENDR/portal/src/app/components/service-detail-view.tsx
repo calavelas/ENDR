@@ -61,37 +61,6 @@ function Badge({ status, tone }: { status: string; tone: NodeTone }) {
   );
 }
 
-// A static read of the ArgoCD reconcile→sync→healthy loop reflecting the
-// service's current state — the mockup's provisioning pipeline as live status.
-function SyncPipeline({ sync, health }: { sync: NodeTone; health: NodeTone }) {
-  const cls = (tone: NodeTone) => (tone === "good" ? "done" : tone === "warn" ? "run" : "");
-  return (
-    <div className="mc-pipe">
-      <div className="mc-stage done">
-        <span className="mc-stage-dot">1</span>
-        <div>
-          <h4 className="mc-stage-title">Reconcile &amp; render</h4>
-          <p className="mc-stage-meta">engine → chart + ArgoCD app</p>
-        </div>
-      </div>
-      <div className={`mc-stage ${cls(sync)}`}>
-        <span className="mc-stage-dot">2</span>
-        <div>
-          <h4 className="mc-stage-title">ArgoCD sync</h4>
-          <p className="mc-stage-meta">deployment · service · httproute</p>
-        </div>
-      </div>
-      <div className={`mc-stage ${cls(health)}`}>
-        <span className="mc-stage-dot">3</span>
-        <div>
-          <h4 className="mc-stage-title">Healthy</h4>
-          <p className="mc-stage-meta">pod ready · route live</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 type TabId = "overview" | "readme" | "argocd";
 
 export function ServiceDetailView(props: ServiceDetailViewProps) {
@@ -264,7 +233,7 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
 
           {argo?.available ? (
             <>
-              <article className="mc-panel">
+              <article className="mc-panel mc-detail-span">
                 <div className="mc-panel-head">
                   <h2 className="mc-panel-title">Deployed commit</h2>
                 </div>
@@ -314,7 +283,7 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
                 ) : null}
               </article>
 
-              <article className="mc-panel" style={{ minWidth: 0 }}>
+              <article className="mc-panel mc-detail-span" style={{ minWidth: 0 }}>
                 <div className="mc-panel-head">
                   <h2 className="mc-panel-title">Live resources</h2>
                   {argo.podsReady ? <span className="mc-count-chip">pods {argo.podsReady}</span> : null}
@@ -325,37 +294,44 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
                   </p>
                 ) : null}
                 {argo.resources.length ? (
-                  <ul className="mc-res-list">
-                    {argo.resources.map((resource, index) => (
-                      <li className="mc-res" key={`${resource.kind}-${resource.name}-${index}`}>
-                        <span className="mc-res-kind">{resource.kind}</span>
-                        <span className="mc-res-name mc-mono">{resource.name}</span>
-                        <span className={`mc-badge ${healthTone(resource.health ?? "")}`}>
-                          <span className="mc-badge-dot" />
-                          {resource.ready ?? resource.health ?? "—"}
-                          {typeof resource.restarts === "number" && resource.restarts > 0
-                            ? ` · ${resource.restarts}↺`
-                            : ""}
-                        </span>
-                        {resource.healthMessage ? (
-                          <span className="mc-res-reason">{resource.healthMessage}</span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mc-table-wrap">
+                    <table className="mc-table">
+                      <thead>
+                        <tr>
+                          <th>Kind</th>
+                          <th>Name</th>
+                          <th>Status</th>
+                          <th>Message</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {argo.resources.map((resource, index) => (
+                          <tr key={`${resource.kind}-${resource.name}-${index}`}>
+                            <td>
+                              <span className="mc-res-kind">{resource.kind}</span>
+                            </td>
+                            <td className="mc-mono">{resource.name}</td>
+                            <td>
+                              <span className={`mc-badge ${healthTone(resource.health ?? "")}`}>
+                                <span className="mc-badge-dot" />
+                                {resource.ready ?? resource.health ?? "—"}
+                                {typeof resource.restarts === "number" && resource.restarts > 0
+                                  ? ` · ${resource.restarts}↺`
+                                  : ""}
+                              </span>
+                            </td>
+                            <td className="mc-res-msg">{resource.healthMessage ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
                   <p className="mc-empty">No resources reported.</p>
                 )}
               </article>
             </>
           ) : null}
-
-          <article className="mc-panel mc-detail-span">
-            <div className="mc-panel-head">
-              <h2 className="mc-panel-title">Sync status</h2>
-            </div>
-            <SyncPipeline sync={syncT} health={healthT} />
-          </article>
         </div>
 
         {argo?.available && argo.conditions.length ? (
