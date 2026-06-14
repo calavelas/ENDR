@@ -533,7 +533,7 @@ def edit_service_file(name: str, payload: EditServiceFileRequest) -> EditService
             commit_message=f"fix(portal): update {name} chart values",
         )
         pr = client.create_pull_request(
-            title=f"portal - update config : {name}",
+            title=f"Portal · Update config: {name}",
             body=(
                 f"Edited from the ENDR portal.\n\n"
                 f"- service: `{name}`\n"
@@ -711,7 +711,7 @@ def decommission_service(name: str, payload: DecommissionServiceRequest) -> Deco
             commit_message=f"feat(idp): decommission service {name}",
         )
         pr = client.create_pull_request(
-            title=f"portal - Decommission service : {name}",
+            title=f"Portal · Decommission service: {name}",
             body=(
                 "Decommissioned from the ENDR portal.\n\n"
                 f"- service: `{name}`\n"

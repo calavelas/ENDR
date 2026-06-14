@@ -14,7 +14,11 @@ from pydantic import BaseModel, Field
 
 from engine.config.loader import load_idp_config, resolve_config_paths
 
-PORTAL_PR_TITLE_PREFIX = "portal - Adding service :"
+PORTAL_PR_TITLE_PREFIX = "Portal · Create service:"
+# Older create PRs used this title; keep recognizing it so existing delivery
+# history doesn't disappear after the rename.
+_LEGACY_CREATE_PREFIXES = ("portal - Adding service :",)
+_CREATE_PREFIXES = (PORTAL_PR_TITLE_PREFIX, *_LEGACY_CREATE_PREFIXES)
 _GITHUB_API_BASE = "https://api.github.com"
 _STATE_VERSION = 1
 _STATE_RELATIVE_PATH = Path(".idp") / "api" / "transactions-state.json"
@@ -264,16 +268,17 @@ def _mutate_state(repo_root: Path, mutator: Any) -> Any:
 
 
 def _extract_service_name(title: str) -> str:
-    if not title.startswith(PORTAL_PR_TITLE_PREFIX):
-        return ""
-    return title[len(PORTAL_PR_TITLE_PREFIX) :].strip()
+    for prefix in _CREATE_PREFIXES:
+        if title.startswith(prefix):
+            return title[len(prefix) :].strip()
+    return ""
 
 
 def _is_case_pr(pr: dict[str, Any]) -> bool:
     title = str(pr.get("title") or "")
     head = pr.get("head", {}) if isinstance(pr.get("head"), dict) else {}
     head_ref = str(head.get("ref") or "")
-    return title.startswith(PORTAL_PR_TITLE_PREFIX) and head_ref.startswith("portal/")
+    return title.startswith(_CREATE_PREFIXES) and head_ref.startswith("portal/")
 
 
 def _to_timestamp_ms(value: str | None) -> float:

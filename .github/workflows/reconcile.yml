@@ -1,4 +1,4 @@
-name: Reconcile catalog -> manifests
+name: Reconcile · Catalog → manifests
 #
 # Reconciles desired state (platform.yaml + services.yaml) into generated GitOps assets
 # (per-service Helm charts + ArgoCD apps). On push to main: render expected assets, push any
@@ -13,14 +13,24 @@ on:
       - 'platform.yaml'
       - 'services.yaml'
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number that triggered this reconcile (for the PR status comment).
+        required: false
+        default: ''
+      pr_action:
+        description: "create or decommission (for the PR status comment)."
+        required: false
+        default: ''
 
 permissions:
   actions: write
   contents: write
+  pull-requests: write
 
 jobs:
   reconcile:
-    name: Reconcile
+    name: Detect drift
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -137,12 +147,14 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   update:
-    name: Update
+    name: Render manifests
     needs:
       - reconcile
     runs-on: ubuntu-latest
     outputs:
       has_changes: ${{ steps.patch.outputs.has_changes }}
+      changed_service_count: ${{ steps.svcs_check.outputs.changed_service_count }}
+      changed_file_count: ${{ steps.svcs_check.outputs.changed_file_count }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -280,7 +292,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   push:
-    name: Push
+    name: Push to main
     needs:
       - update
     if: needs.update.outputs.has_changes == 'true'
@@ -401,7 +413,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   trigger-services-build:
-    name: Trigger services build
+    name: Trigger image build
     needs:
       - reconcile
       - update
@@ -415,6 +427,8 @@ jobs:
     steps:
       - name: Dispatch services-build workflow
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -423,6 +437,9 @@ jobs:
               repo,
               workflow_id: "services-build.yml",
               ref: "main",
+              inputs: {
+                pr_number: process.env.PR_NUMBER || "",
+              },
             });
             core.notice("Triggered services-build.yml on main.");
 
@@ -439,3 +456,34 @@ jobs:
             echo "| Workflow | \`services-build.yml\` |"
             echo "| Ref | \`main\` |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  notify:
+    name: Comment on PR
+    needs:
+      - reconcile
+      - update
+      - push
+    # Only the dispatch from auto-merge carries a PR number; the raw push trigger
+    # (and manual pushes to services.yaml) have none, so this stays quiet there.
+    if: >
+      always() &&
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.pr_number != '' &&
+      needs.update.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Comment — manifests reconciled
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.inputs.pr_number }}
+          stage: Reconcile
+          status: success
+          title: GitOps manifests reconciled on main
+          body: >-
+            ${{ github.event.inputs.pr_action == 'decommission'
+                && 'Reconcile removed this service''s Helm chart and ArgoCD Application from `main`. To finish tearing the workload down now, open the **services** app-of-apps in ArgoCD → **Refresh** → **Sync** with **Prune** enabled.'
+                || 'Reconcile rendered this service''s Helm chart and ArgoCD Application onto `main`. ArgoCD will deploy it on the next sync — to roll it out now, open the **services** app-of-apps in ArgoCD → **Refresh** → **Sync**.' }}

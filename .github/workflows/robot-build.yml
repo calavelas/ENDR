@@ -1,4 +1,4 @@
-name: Robot - Build and Push
+name: Build · Robot image
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and push endr-robot
+    name: Build & push
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

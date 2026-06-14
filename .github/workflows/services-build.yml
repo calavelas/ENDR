@@ -1,4 +1,4 @@
-name: Build changed service images
+name: Build · Service images
 #
 # Builds + publishes images for application services whose source changed (services/<name>/**),
 # tags them by commit SHA, and writes the tags back into the catalog. Dispatched by reconcile.
@@ -6,13 +6,19 @@ name: Build changed service images
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to comment on when an image is published (optional).
+        required: false
+        default: ''
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   services-change-discovery:
-    name: Services Change Discovery
+    name: Discover changes
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
@@ -205,7 +211,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   build-and-push:
-    name: Build and Push (${{ matrix.service }})
+    name: Build (${{ matrix.service }})
     needs: services-change-discovery
     if: needs['services-change-discovery'].result == 'success' && needs['services-change-discovery'].outputs.has_services == 'true'
     runs-on: ubuntu-latest
@@ -238,7 +244,7 @@ jobs:
           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.repo_name }}:${{ matrix.image_tag }}
 
   update-image-tag:
-    name: Update Image Tag
+    name: Persist image tags
     needs:
       - services-change-discovery
       - build-and-push
@@ -292,3 +298,17 @@ jobs:
       - name: Summary
         run: |
           echo "::notice title=Services Tag Persisted::tag=${{ needs['services-change-discovery'].outputs.tag }}, services=${{ needs['services-change-discovery'].outputs.services }}"
+
+      - name: Comment — image published
+        if: ${{ github.event.inputs.pr_number != '' }}
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.inputs.pr_number }}
+          stage: Build
+          status: success
+          title: Service image built & published
+          body: >-
+            Published the image for `${{ needs['services-change-discovery'].outputs.services }}`
+            at tag `${{ needs['services-change-discovery'].outputs.tag }}` and pinned it in
+            the chart. ArgoCD will deploy this image on the next sync.

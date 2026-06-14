@@ -1,0 +1,83 @@
+name: PR stage comment
+description: >
+  Post a plain-language, per-stage status comment to a pull request so a reader
+  can follow what the pipeline is doing without opening the Actions tab. No-op
+  when there is no pull request to comment on.
+
+inputs:
+  token:
+    description: A token with pull-requests write permission.
+    required: true
+  pr-number:
+    description: >
+      The PR number to comment on. If empty, it is resolved from the triggering
+      commit's subject "(#NN)" (set by a squash merge).
+    required: false
+    default: ''
+  stage:
+    description: Pipeline stage label (e.g. Validate, Auto-merge, Reconcile, Build).
+    required: true
+  status:
+    description: One of success | failure | info | skipped | running.
+    required: false
+    default: info
+  title:
+    description: A one-line headline for the comment.
+    required: false
+    default: ''
+  body:
+    description: Markdown details and next steps.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Post PR comment
+      uses: actions/github-script@v7
+      env:
+        # Passed via env (not ${{ }} into the script) to avoid the script-injection class.
+        STAGE: ${{ inputs.stage }}
+        STATUS: ${{ inputs.status }}
+        HEADLINE: ${{ inputs.title }}
+        BODY: ${{ inputs.body }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const { STAGE, STATUS, HEADLINE, BODY, PR_NUMBER } = process.env;
+          const { owner, repo } = context.repo;
+
+          let prNumber = parseInt((PR_NUMBER || '').trim(), 10);
+          if (!Number.isInteger(prNumber) || prNumber <= 0) {
+            // Resolve from the triggering commit subject, e.g.
+            // "Portal · Create service: tars-9 (#71)" left by the squash merge.
+            try {
+              const commit = await github.rest.repos.getCommit({ owner, repo, ref: context.sha });
+              const subject = (commit.data.commit.message || '').split('\n')[0];
+              const match = subject.match(/\(#(\d+)\)\s*$/);
+              if (match) prNumber = parseInt(match[1], 10);
+            } catch (error) {
+              core.notice(`Could not resolve PR from commit ${context.sha}: ${error.message}`);
+            }
+          }
+          if (!Number.isInteger(prNumber) || prNumber <= 0) {
+            core.notice(`No pull request to comment on (stage=${STAGE}); skipping.`);
+            return;
+          }
+
+          const icons = { success: '✅', failure: '❌', info: 'ℹ️', skipped: '⏭️', running: '⏳' };
+          const icon = icons[(STATUS || 'info').toLowerCase()] || 'ℹ️';
+
+          const lines = [`### ${icon} ${STAGE}`];
+          if (HEADLINE) lines.push('', `**${HEADLINE}**`);
+          if (BODY) lines.push('', BODY);
+          lines.push('', '<sub>Posted automatically by the ENDR pipeline.</sub>');
+
+          await github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: prNumber,
+            body: lines.join('\n'),
+          });
+          core.notice(`Commented on PR #${prNumber} (stage=${STAGE}, status=${STATUS}).`);

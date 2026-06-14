@@ -1,8 +1,9 @@
-name: Validate & merge service PRs
+name: PR Check · Service catalog
 #
 # Runs on service-catalog PRs (platform.yaml / services.yaml changes). Validates the reconcile
 # is clean, then auto-approves + squash-merges portal-created PRs (branch portal/*, title
-# "portal - Adding service :", services.yaml-only) and deletes the merged branch.
+# "Portal · Create service:" / "Portal · Decommission service:", services.yaml-only) and
+# deletes the merged branch.
 #
 
 on:
@@ -28,8 +29,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  reconcile:
-    name: Reconcile
+  validate:
+    name: Validate
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
@@ -139,12 +140,39 @@ jobs:
             echo "| Changed files | \`${{ steps.svcs_check.outputs.changed_file_count || '0' }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  case-auto-merge:
-    name: Auto-merge service PR
+      - name: Comment — checks passed
+        if: success()
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Validate
+          status: success
+          title: Checks passed — clearing this for merge
+          body: >-
+            Reconcile is clean and robot calibration is valid, so this is safe to
+            squash-merge. Changed services: `${{ steps.svcs_check.outputs.changed_service_count || '0' }}`.
+
+      - name: Comment — checks failed
+        if: failure()
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Validate
+          status: failure
+          title: Checks failed — merge is blocked
+          body: >-
+            A validation step (reconcile or robot calibration) failed, so this PR
+            will not auto-merge. Open the Actions run linked on this PR for the
+            exact error, fix it, and push again.
+
+  auto-merge:
+    name: Auto-merge
     needs:
-      - reconcile
+      - validate
     if: >
-      needs.reconcile.result == 'success' &&
+      needs.validate.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       github.event.pull_request.base.ref == 'main' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -161,8 +189,8 @@ jobs:
       ) &&
       startsWith(github.event.pull_request.head.ref, 'portal/') &&
       (
-        startsWith(github.event.pull_request.title, 'portal - Adding service :') ||
-        startsWith(github.event.pull_request.title, 'portal - Decommission service :')
+        startsWith(github.event.pull_request.title, 'Portal · Create service:') ||
+        startsWith(github.event.pull_request.title, 'Portal · Decommission service:')
       ) &&
       (
         contains(github.event.pull_request.body || '', 'Registered by the IDP portal.') ||
@@ -170,6 +198,9 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Approve and merge service PR
         id: auto_merge
         uses: actions/github-script@v7
@@ -314,9 +345,39 @@ jobs:
             echo "| Merged | \`${{ steps.auto_merge.outputs.merged || 'false' }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Comment — merged
+        if: ${{ steps.auto_merge.outputs.merged == 'true' }}
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Auto-merge
+          status: success
+          title: Merged — handing off to Reconcile
+          body: >-
+            ${{ contains(github.event.pull_request.title, 'Decommission')
+                && 'Squash-merged to `main`. The **Reconcile** workflow now removes this service''s chart and ArgoCD Application. Open the **services** app-of-apps in ArgoCD and Sync (with Prune) to tear the workload down. Progress will appear here.'
+                || 'Squash-merged to `main`. The **Reconcile** workflow now renders this service''s Helm chart and ArgoCD Application, then ArgoCD deploys it. Progress will appear here.' }}
+
+      - name: Comment — queued to merge
+        if: ${{ steps.auto_merge.outputs.merged != 'true' && steps.auto_merge.outputs.decision == 'auto-merge-enabled' }}
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Auto-merge
+          status: info
+          title: Queued — will merge once checks finish
+          body: >-
+            Approved and auto-merge is enabled. GitHub will squash-merge this
+            automatically as soon as required checks are green.
+
       - name: Trigger reconcile
         if: ${{ steps.auto_merge.outputs.merged == 'true' }}
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_ACTION: ${{ contains(github.event.pull_request.title, 'Decommission') && 'decommission' || 'create' }}
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -325,11 +386,15 @@ jobs:
               repo,
               workflow_id: "reconcile.yml",
               ref: "main",
+              inputs: {
+                pr_number: process.env.PR_NUMBER || "",
+                pr_action: process.env.PR_ACTION || "",
+              },
             });
             core.notice("Triggered reconcile.yml dispatch on main.");
 
-  cleanup-case-branch:
-    name: Cleanup merged service branch
+  cleanup-branch:
+    name: Cleanup branch
     if: >
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&

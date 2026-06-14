@@ -507,7 +507,7 @@ def create_service(request: CreateServiceRequest) -> CreateServiceResponse:
             )
 
         pr = github_client.create_pull_request(
-            title=f"portal - Adding service : {service.name}",
+            title=f"Portal · Create service: {service.name}",
             body=(
                 f"Registered by the IDP portal.\n\n"
                 f"- service: `{service.name}`\n"

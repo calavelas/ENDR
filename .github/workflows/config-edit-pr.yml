@@ -1,4 +1,4 @@
-name: Validate & merge config-edit PRs
+name: PR Check · Config edit
 #
 # Runs on PRs that change a service chart values.yaml (the portal "edit config" / FIX
 # flow). The gate enforces that ONLY the env block changed — image, service.port,
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   validate:
-    name: Validate env-only change
+    name: Validate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR head
@@ -121,8 +121,36 @@ jobs:
             --surface chart \
             --services "$services"
 
+      - name: Comment — checks passed
+        if: success()
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Validate
+          status: success
+          title: Config change verified — clearing this for merge
+          body: >-
+            Only the `env` block changed (image, route and other platform-owned
+            fields are untouched) and the values are well-formed, so this is safe
+            to squash-merge.
+
+      - name: Comment — checks failed
+        if: failure()
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Validate
+          status: failure
+          title: Config change rejected — merge is blocked
+          body: >-
+            This edit changed a locked field (only `env` is editable) or the env
+            values were malformed, so it will not auto-merge. See the Actions run
+            linked on this PR for details.
+
   auto-merge:
-    name: Auto-merge config-edit PR
+    name: Auto-merge
     needs:
       - validate
     if: >
@@ -142,11 +170,15 @@ jobs:
         )
       ) &&
       startsWith(github.event.pull_request.head.ref, 'portal/') &&
-      startsWith(github.event.pull_request.title, 'portal - update config :') &&
+      startsWith(github.event.pull_request.title, 'Portal · Update config:') &&
       contains(github.event.pull_request.body || '', 'Edited from the ENDR portal.')
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Approve and merge config-edit PR
+        id: merge
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.CASE_AUTOMERGE_TOKEN != '' && secrets.CASE_AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
@@ -219,3 +251,32 @@ jobs:
                 if (!error || (error.status !== 404 && error.status !== 422)) throw error;
               }
             }
+
+            core.setOutput("merged", merged ? "true" : "false");
+
+      - name: Comment — merged
+        if: ${{ steps.merge.outputs.merged == 'true' }}
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Auto-merge
+          status: success
+          title: Merged — ArgoCD will roll out the new config
+          body: >-
+            Squash-merged to `main`. ArgoCD detects the changed chart values and
+            re-syncs the service. To roll it out now, open the service's
+            Application in ArgoCD and hit **Refresh**, then **Sync**.
+
+      - name: Comment — queued to merge
+        if: ${{ steps.merge.outputs.merged != 'true' }}
+        uses: ./.github/actions/pr-stage-comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          stage: Auto-merge
+          status: info
+          title: Queued — will merge once checks finish
+          body: >-
+            Approved and auto-merge is enabled. GitHub will squash-merge this
+            automatically as soon as required checks are green.
