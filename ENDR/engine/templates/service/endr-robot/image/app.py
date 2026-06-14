@@ -117,8 +117,12 @@ def _decommission_self() -> tuple[bool, str]:
     slug = _service_slug()
     if not slug:
         return False, "no service name available to decommission"
-    portal = (os.getenv("ENDR_PORTAL_URL") or "https://endr.calavelas.net").rstrip("/")
-    url = f"{portal}/api/platform/services/{slug}/decommission"
+    # Call the ENDR API in-cluster (ClusterIP service DNS) rather than hairpinning
+    # back out to the public hostname — that round-trip through the gateway hangs
+    # from inside the pod and the request never lands. ENDR_PORTAL_URL stays the
+    # browser-facing host for console links only.
+    base = (os.getenv("ENDR_INTERNAL_URL") or "http://api.endr.svc.cluster.local").rstrip("/")
+    url = f"{base}/api/platform/services/{slug}/decommission"
     request_obj = urllib.request.Request(
         url, data=b"{}", headers={"content-type": "application/json"}, method="POST"
     )
