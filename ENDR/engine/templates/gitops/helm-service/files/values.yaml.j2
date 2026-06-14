@@ -6,6 +6,17 @@ image:
 service:
   port: {{ port }}
 
+# Deployment environment variables — developer-tunable (e.g. robot calibration).
+# Edit these via the portal; the deployment template renders them from here.
+{%- if env %}
+env:
+{%- for key, value in env.items() %}
+  {{ key }}: "{{ value }}"
+{%- endfor %}
+{%- else %}
+env: {}
+{%- endif %}
+
 resources:
   requests:
     cpu: {{ requests_cpu }}

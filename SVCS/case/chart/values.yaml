@@ -6,6 +6,16 @@ image:
 service:
   port: 8080
 
+# Deployment environment variables — developer-tunable (e.g. robot calibration).
+# Edit these via the portal; the deployment template renders them from here.
+env:
+  ROBOT_NAME: "CASE"
+  HUMOR: "30"
+  HONESTY: "95"
+  TRUST: "90"
+  CATCHPHRASE: "See you on the other side."
+  ACCENT: "#9aa7bd"
+
 resources:
   requests:
     cpu: 100m

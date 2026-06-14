@@ -6,6 +6,10 @@ image:
 service:
   port: 8080
 
+# Deployment environment variables — developer-tunable (e.g. robot calibration).
+# Edit these via the portal; the deployment template renders them from here.
+env: {}
+
 resources:
   requests:
     cpu: 100m

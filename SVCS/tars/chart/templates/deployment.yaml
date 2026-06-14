@@ -19,19 +19,13 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: 8080
+          {{- if .Values.env }}
           env:
-            - name: ROBOT_NAME
-              value: "TARS"
-            - name: HUMOR
-              value: "90"
-            - name: HONESTY
-              value: "90"
-            - name: TRUST
-              value: "70"
-            - name: CATCHPHRASE
-              value: "Plenty of slaves for my robot colony."
-            - name: ACCENT
-              value: "#37d3c3"
+          {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /healthz
