@@ -3,7 +3,13 @@ from pydantic import BaseModel, Field
 from pathlib import Path
 
 from engine.scaffold.service import CreateServiceRequest, CreateServiceResponse, create_service
-from api.snapshot import PlatformSnapshot, build_platform_snapshot, load_platform_configs
+from api.snapshot import (
+    PlatformSnapshot,
+    ServiceArgoDetail,
+    build_platform_snapshot,
+    build_service_argocd_detail,
+    load_platform_configs,
+)
 from api.transactions import (
     CaseHistoryResponse,
     TransactionStatusResponse,
@@ -278,6 +284,16 @@ def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> Creat
         return response
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/api/platform/services/{name}/argocd", response_model=ServiceArgoDetail)
+def get_service_argocd_detail(name: str) -> ServiceArgoDetail:
+    try:
+        return build_service_argocd_detail(name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"unable to load ArgoCD detail: {exc}") from exc
 
 
 @router.get("/api/platform/history", response_model=CaseHistoryResponse)

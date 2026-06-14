@@ -8,6 +8,7 @@ import {
   buildArgoApplicationUrl,
   buildGithubFolderUrl,
   findPlatformServiceByName,
+  loadServiceArgoDetail,
   loadSnapshot,
   resolveArgoEmbedUrl,
   resolveGithubBranch,
@@ -36,6 +37,7 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
   const appGithubUrl = platformService.sourcePath
     ? buildGithubFolderUrl(githubRepoUrl, githubBranch, platformService.sourcePath)
     : null;
+  const argoDetail = await loadServiceArgoDetail(platformService.name);
 
   return (
     <ServiceDetailView
@@ -50,6 +52,7 @@ export default async function PlatformServiceDetailPage({ params }: PlatformServ
       sourcePath={platformService.sourcePath}
       githubFolderUrl={appGithubUrl}
       argoUrl={appArgoUrl}
+      argoDetail={argoDetail}
       warnings={snapshot.warnings}
     />
   );

@@ -58,6 +58,45 @@ class PlatformSnapshot(BaseModel):
     services: list[ServiceNode]
 
 
+class ServiceArgoCommit(BaseModel):
+    revision: str | None = None
+    shortRevision: str | None = None
+    author: str | None = None
+    date: str | None = None
+    message: str | None = None
+
+
+class ServiceArgoResource(BaseModel):
+    kind: str
+    name: str
+    namespace: str | None = None
+    health: str | None = None
+    healthMessage: str | None = None
+    ready: str | None = None
+    restarts: int | None = None
+    createdAt: str | None = None
+
+
+class ServiceArgoDetail(BaseModel):
+    appName: str
+    available: bool
+    dataSource: str
+    syncStatus: str | None = None
+    healthStatus: str | None = None
+    healthMessage: str | None = None
+    revision: str | None = None
+    commit: ServiceArgoCommit | None = None
+    autoSync: bool = False
+    selfHeal: bool = False
+    prune: bool = False
+    images: list[str] = []
+    resources: list[ServiceArgoResource] = []
+    podsReady: str | None = None
+    resourceSummary: str | None = None
+    conditions: list[str] = []
+    warnings: list[str] = []
+
+
 def _normalize_svcs_config_url(url: str) -> str:
     value = url.strip()
     if not value:
@@ -296,6 +335,192 @@ def _fetch_argocd_apps(argocd_server: str, argocd_token: str, verify_tls: bool) 
     if not isinstance(data, dict):
         raise ValueError("invalid ArgoCD response payload")
     return data
+
+
+def _argocd_get_json(argocd_server: str, argocd_token: str, verify_tls: bool, path: str) -> dict[str, Any]:
+    endpoint = f"{argocd_server.rstrip('/')}{path}"
+    req = request.Request(endpoint, method="GET")
+    if argocd_token:
+        req.add_header("Authorization", f"Bearer {argocd_token}")
+    req.add_header("Accept", "application/json")
+
+    context: ssl.SSLContext | None = None
+    if endpoint.startswith("https://"):
+        context = ssl.create_default_context()
+        if not verify_tls:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+
+    with request.urlopen(req, timeout=15, context=context) as response:  # noqa: S310
+        raw = response.read().decode("utf-8")
+    data = json.loads(raw) if raw else {}
+    return data if isinstance(data, dict) else {}
+
+
+# Kinds worth listing in the per-service ArgoCD view (the rest are summarised as counts).
+_INTERESTING_KINDS = {
+    "Pod", "Deployment", "StatefulSet", "DaemonSet", "Rollout",
+    "Service", "Ingress", "HTTPRoute", "Job", "CronJob",
+}
+
+
+def _pod_info(node: dict[str, Any]) -> tuple[str | None, int | None]:
+    """Extract 'ready' (e.g. '1/1') and restart count from a resource-tree node's info."""
+    info = {
+        str(item.get("name")): str(item.get("value"))
+        for item in (node.get("info") or [])
+        if isinstance(item, dict) and item.get("name") is not None
+    }
+    ready = info.get("Containers") or None
+    restarts: int | None = None
+    raw_restarts = info.get("Restart Count")
+    if raw_restarts is not None:
+        try:
+            restarts = int(str(raw_restarts).strip())
+        except (TypeError, ValueError):
+            restarts = None
+    return ready, restarts
+
+
+def _unavailable_detail(app_name: str, reason: str) -> ServiceArgoDetail:
+    return ServiceArgoDetail(appName=app_name, available=False, dataSource="unavailable", warnings=[reason])
+
+
+def build_service_argocd_detail(name: str) -> ServiceArgoDetail:
+    """Richer per-service ArgoCD read: deployed commit, pods/resource tree, health
+    reasons. Degrades gracefully to an 'unavailable' detail when ArgoCD is not
+    configured/reachable (the cluster-free demo path)."""
+    app_name = name.strip()
+    if not app_name:
+        raise ValueError("service name is required")
+
+    argocd_server = os.getenv("API_ARGOCD_SERVER", DEFAULT_ARGOCD_SERVER).strip()
+    argocd_token = os.getenv("API_ARGOCD_TOKEN", "").strip()
+    verify_tls = os.getenv("API_ARGOCD_VERIFY_TLS", "true").strip().lower() not in {"0", "false", "no"}
+
+    if not argocd_server:
+        return _unavailable_detail(app_name, "Live ArgoCD is not configured in this environment.")
+
+    quoted = parse.quote(app_name, safe="")
+    try:
+        app = _argocd_get_json(argocd_server, argocd_token, verify_tls, f"/api/v1/applications/{quoted}")
+    except error.HTTPError as exc:
+        if exc.code == 404:
+            return _unavailable_detail(app_name, f"Application '{app_name}' not found in ArgoCD.")
+        return _unavailable_detail(app_name, f"Unable to reach ArgoCD: HTTP {exc.code}")
+    except Exception as exc:  # noqa: BLE001
+        return _unavailable_detail(app_name, f"Unable to reach ArgoCD: {exc}")
+
+    status = app.get("status", {}) if isinstance(app, dict) else {}
+    spec = app.get("spec", {}) if isinstance(app, dict) else {}
+    if not isinstance(status, dict) or (not status and not spec):
+        return _unavailable_detail(app_name, f"Application '{app_name}' not found in ArgoCD.")
+
+    sync = status.get("sync", {}) if isinstance(status.get("sync"), dict) else {}
+    health = status.get("health", {}) if isinstance(status.get("health"), dict) else {}
+    summary = status.get("summary", {}) if isinstance(status.get("summary"), dict) else {}
+
+    detail = ServiceArgoDetail(appName=app_name, available=True, dataSource="argocd")
+    warnings: list[str] = []
+
+    detail.syncStatus = str(sync.get("status") or "Unknown")
+    detail.healthStatus = str(health.get("status") or "Unknown")
+    detail.healthMessage = (str(health.get("message")).strip() or None) if health.get("message") else None
+    revision = sync.get("revision")
+    detail.revision = str(revision).strip() if revision else None
+    detail.images = [str(image) for image in (summary.get("images") or []) if image]
+
+    automated = (spec.get("syncPolicy") or {}).get("automated") if isinstance(spec.get("syncPolicy"), dict) else None
+    if isinstance(automated, dict):
+        detail.autoSync = True
+        detail.selfHeal = bool(automated.get("selfHeal"))
+        detail.prune = bool(automated.get("prune"))
+
+    for condition in status.get("conditions") or []:
+        if not isinstance(condition, dict):
+            continue
+        ctype = str(condition.get("type") or "").strip()
+        cmessage = str(condition.get("message") or "").strip()
+        combined = f"{ctype}: {cmessage}".strip(": ").strip()
+        if combined:
+            detail.conditions.append(combined)
+
+    # Deployed commit metadata.
+    if detail.revision:
+        try:
+            meta = _argocd_get_json(
+                argocd_server,
+                argocd_token,
+                verify_tls,
+                f"/api/v1/applications/{quoted}/revisions/{parse.quote(detail.revision, safe='')}/metadata",
+            )
+            if isinstance(meta, dict) and (meta.get("author") or meta.get("message")):
+                message = str(meta.get("message")).strip() if meta.get("message") else None
+                detail.commit = ServiceArgoCommit(
+                    revision=detail.revision,
+                    shortRevision=detail.revision[:7] if len(detail.revision) >= 7 else detail.revision,
+                    author=(str(meta.get("author")).strip() or None) if meta.get("author") else None,
+                    date=(str(meta.get("date")).strip() or None) if meta.get("date") else None,
+                    message=message,
+                )
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"Commit metadata unavailable: {exc}")
+
+    # Live resource tree (pods + key workloads, plus a count summary of everything).
+    try:
+        tree = _argocd_get_json(argocd_server, argocd_token, verify_tls, f"/api/v1/applications/{quoted}/resource-tree")
+        nodes = tree.get("nodes") if isinstance(tree, dict) else None
+        if isinstance(nodes, list):
+            kind_counts: dict[str, int] = {}
+            pods_ready = 0
+            pods_total = 0
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                kind = str(node.get("kind") or "").strip()
+                if not kind:
+                    continue
+                kind_counts[kind] = kind_counts.get(kind, 0) + 1
+
+                hnode = node.get("health") if isinstance(node.get("health"), dict) else {}
+                hstatus = str(hnode.get("status")).strip() if hnode.get("status") else None
+                hmessage = str(hnode.get("message")).strip() if hnode.get("message") else None
+
+                ready: str | None = None
+                restarts: int | None = None
+                if kind == "Pod":
+                    ready, restarts = _pod_info(node)
+                    pods_total += 1
+                    if hstatus == "Healthy" or (ready and ready.split("/")[0] == ready.split("/")[-1]):
+                        pods_ready += 1
+
+                if kind in _INTERESTING_KINDS:
+                    detail.resources.append(
+                        ServiceArgoResource(
+                            kind=kind,
+                            name=str(node.get("name") or ""),
+                            namespace=(str(node.get("namespace")).strip() or None) if node.get("namespace") else None,
+                            health=hstatus,
+                            healthMessage=hmessage,
+                            ready=ready,
+                            restarts=restarts,
+                            createdAt=(str(node.get("createdAt")).strip() or None) if node.get("createdAt") else None,
+                        )
+                    )
+
+            if pods_total:
+                detail.podsReady = f"{pods_ready}/{pods_total}"
+            if kind_counts:
+                order = sorted(kind_counts.items(), key=lambda item: (-item[1], item[0]))
+                detail.resourceSummary = " · ".join(f"{count} {kind}" for kind, count in order)
+            # Sort listed resources: pods last, workloads first, stable by kind+name.
+            kind_rank = {"Deployment": 0, "StatefulSet": 0, "DaemonSet": 0, "Rollout": 0, "Service": 1, "Ingress": 2, "HTTPRoute": 2, "Job": 3, "CronJob": 3, "Pod": 4}
+            detail.resources.sort(key=lambda r: (kind_rank.get(r.kind, 5), r.kind, r.name))
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Resource tree unavailable: {exc}")
+
+    detail.warnings = warnings
+    return detail
 
 
 def _node_from_argocd_app(

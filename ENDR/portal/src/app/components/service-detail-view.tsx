@@ -6,7 +6,14 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { environmentLabel, platformServiceLabel, useNarrative } from "../lib/narrative";
-import { healthTone, optionalTimestamp, shortRevision, syncTone, type NodeTone } from "../lib/platform";
+import {
+  healthTone,
+  optionalTimestamp,
+  shortRevision,
+  syncTone,
+  type NodeTone,
+  type ServiceArgoDetail,
+} from "../lib/platform";
 import { ArgoEmbedPanel } from "./argo-embed-panel";
 import { Explain } from "./explain";
 import * as Icon from "./icons";
@@ -33,7 +40,17 @@ export interface ServiceDetailViewProps {
   githubFolderUrl?: string | null;
   readme?: ReadmeData | null;
   argoUrl: string;
+  argoDetail?: ServiceArgoDetail | null;
   warnings: string[];
+}
+
+// "Kanin Kongchatree <a@b.com>" -> "Kanin Kongchatree".
+function authorName(author: string): string {
+  return author.replace(/\s*<[^>]*>\s*$/, "").trim() || author;
+}
+
+function firstLine(message: string): string {
+  return message.split("\n")[0].trim();
 }
 
 function Badge({ status, tone }: { status: string; tone: NodeTone }) {
@@ -83,6 +100,7 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
   const hasReadme = props.kind === "application" && !!props.readme;
   const [tab, setTab] = useState<TabId>("overview");
 
+  const argo = props.argoDetail ?? null;
   const healthT = healthTone(props.healthStatus);
   const syncT = syncTone(props.syncStatus);
   const kindLabel =
@@ -227,6 +245,18 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
               <dd className="mc-mono">{shortRevision(props.revision)}</dd>
               <dt>Deployed</dt>
               <dd>{optionalTimestamp(props.deployedAt)}</dd>
+              {argo?.commit?.author ? (
+                <>
+                  <dt>Deployed by</dt>
+                  <dd>{authorName(argo.commit.author)}</dd>
+                </>
+              ) : null}
+              {argo?.healthMessage ? (
+                <>
+                  <dt>Reason</dt>
+                  <dd>{argo.healthMessage}</dd>
+                </>
+              ) : null}
             </dl>
           </article>
         </div>
@@ -254,24 +284,132 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
       ) : null}
 
       {tab === "argocd" ? (
-        <div className="mc-detail-grid">
-          <article className="mc-panel">
-            <div className="mc-panel-head">
-              <h2 className="mc-panel-title">Sync status</h2>
-            </div>
-            <SyncPipeline sync={syncT} health={healthT} />
-          </article>
-          <article className="mc-panel" style={{ minWidth: 0 }}>
-            <div className="mc-panel-head">
-              <h2 className="mc-panel-title">Live ArgoCD</h2>
-            </div>
-            {props.argoUrl ? (
-              <ArgoEmbedPanel embedUrl={props.argoUrl} />
-            ) : (
-              <p className="mc-empty">Live ArgoCD is not available in this environment.</p>
-            )}
-          </article>
-        </div>
+        <>
+          {argo?.available ? (
+            <>
+              <div className="mc-detail-grid">
+                <article className="mc-panel">
+                  <div className="mc-panel-head">
+                    <h2 className="mc-panel-title">Deployed commit</h2>
+                  </div>
+                  {argo.commit ? (
+                    <dl className="mc-kv">
+                      <dt>Commit</dt>
+                      <dd className="mc-mono">{argo.commit.shortRevision ?? argo.commit.revision}</dd>
+                      {argo.commit.author ? (
+                        <>
+                          <dt>Author</dt>
+                          <dd>{authorName(argo.commit.author)}</dd>
+                        </>
+                      ) : null}
+                      {argo.commit.date ? (
+                        <>
+                          <dt>When</dt>
+                          <dd>{optionalTimestamp(argo.commit.date)}</dd>
+                        </>
+                      ) : null}
+                      {argo.commit.message ? (
+                        <>
+                          <dt>Message</dt>
+                          <dd>{firstLine(argo.commit.message)}</dd>
+                        </>
+                      ) : null}
+                    </dl>
+                  ) : (
+                    <p className="mc-muted">
+                      No commit metadata for revision{" "}
+                      {argo.revision ? shortRevision(argo.revision) : "n/a"}.
+                    </p>
+                  )}
+                  {argo.autoSync || argo.selfHeal || argo.prune ? (
+                    <div className="mc-policy-row">
+                      {argo.autoSync ? <span className="mc-policy">Auto-sync</span> : null}
+                      {argo.selfHeal ? <span className="mc-policy">Self-heal</span> : null}
+                      {argo.prune ? <span className="mc-policy">Prune</span> : null}
+                    </div>
+                  ) : null}
+                  {argo.images.length ? (
+                    <div className="mc-card-meta" style={{ marginTop: "0.7rem" }}>
+                      {argo.images.map((image) => (
+                        <span key={image} className="mc-chip mc-mono">
+                          {image}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </article>
+
+                <article className="mc-panel" style={{ minWidth: 0 }}>
+                  <div className="mc-panel-head">
+                    <h2 className="mc-panel-title">Live resources</h2>
+                    {argo.podsReady ? <span className="mc-count-chip">pods {argo.podsReady}</span> : null}
+                  </div>
+                  {argo.resourceSummary ? (
+                    <p className="mc-muted" style={{ marginTop: 0, fontSize: "0.8rem" }}>
+                      {argo.resourceSummary}
+                    </p>
+                  ) : null}
+                  {argo.resources.length ? (
+                    <ul className="mc-res-list">
+                      {argo.resources.map((resource, index) => (
+                        <li className="mc-res" key={`${resource.kind}-${resource.name}-${index}`}>
+                          <span className="mc-res-kind">{resource.kind}</span>
+                          <span className="mc-res-name mc-mono">{resource.name}</span>
+                          <span className={`mc-badge ${healthTone(resource.health ?? "")}`}>
+                            <span className="mc-badge-dot" />
+                            {resource.ready ?? resource.health ?? "—"}
+                            {typeof resource.restarts === "number" && resource.restarts > 0
+                              ? ` · ${resource.restarts}↺`
+                              : ""}
+                          </span>
+                          {resource.healthMessage ? (
+                            <span className="mc-res-reason">{resource.healthMessage}</span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mc-empty">No resources reported.</p>
+                  )}
+                </article>
+              </div>
+
+              {argo.conditions.length ? (
+                <section className="mc-warning" aria-live="polite">
+                  <strong>ArgoCD conditions</strong>
+                  <ul>
+                    {argo.conditions.map((condition) => (
+                      <li key={condition}>{condition}</li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </>
+          ) : (
+            <p className="mc-empty">
+              {argo?.warnings?.[0] ?? "Live ArgoCD data is not available in this environment."}
+            </p>
+          )}
+
+          <div className="mc-detail-grid">
+            <article className="mc-panel">
+              <div className="mc-panel-head">
+                <h2 className="mc-panel-title">Sync status</h2>
+              </div>
+              <SyncPipeline sync={syncT} health={healthT} />
+            </article>
+            <article className="mc-panel" style={{ minWidth: 0 }}>
+              <div className="mc-panel-head">
+                <h2 className="mc-panel-title">Live ArgoCD</h2>
+              </div>
+              {props.argoUrl ? (
+                <ArgoEmbedPanel embedUrl={props.argoUrl} />
+              ) : (
+                <p className="mc-empty">Live ArgoCD is not available in this environment.</p>
+              )}
+            </article>
+          </div>
+        </>
       ) : null}
     </div>
   );

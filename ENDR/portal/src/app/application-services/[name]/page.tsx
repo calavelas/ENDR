@@ -11,6 +11,7 @@ import {
   buildGithubRawFileUrl,
   buildServiceFolderPath,
   findServiceByName,
+  loadServiceArgoDetail,
   loadSnapshot,
   resolveArgoEmbedUrl,
   resolveGithubBranch,
@@ -43,6 +44,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const serviceReadmeRawUrl = buildGithubRawFileUrl(githubRepoUrl, githubBranch, serviceReadmePath);
   const serviceAccessHost = `${service.name}.calavelas.net`;
   const serviceAccessUrl = `https://${serviceAccessHost}`;
+  const argoDetail = await loadServiceArgoDetail(service.name);
 
   let serviceReadmeContent = "";
   let serviceReadmeError = "";
@@ -85,6 +87,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
         error: serviceReadmeError,
       }}
       argoUrl={serviceArgoUrl}
+      argoDetail={argoDetail}
       warnings={snapshot.warnings}
     />
   );

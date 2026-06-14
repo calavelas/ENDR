@@ -28,6 +28,45 @@ export interface PlatformSnapshot {
   services: ServiceNode[];
 }
 
+export interface ServiceArgoCommit {
+  revision: string | null;
+  shortRevision: string | null;
+  author: string | null;
+  date: string | null;
+  message: string | null;
+}
+
+export interface ServiceArgoResource {
+  kind: string;
+  name: string;
+  namespace: string | null;
+  health: string | null;
+  healthMessage: string | null;
+  ready: string | null;
+  restarts: number | null;
+  createdAt: string | null;
+}
+
+export interface ServiceArgoDetail {
+  appName: string;
+  available: boolean;
+  dataSource: string;
+  syncStatus: string | null;
+  healthStatus: string | null;
+  healthMessage: string | null;
+  revision: string | null;
+  commit: ServiceArgoCommit | null;
+  autoSync: boolean;
+  selfHeal: boolean;
+  prune: boolean;
+  images: string[];
+  resources: ServiceArgoResource[];
+  podsReady: string | null;
+  resourceSummary: string | null;
+  conditions: string[];
+  warnings: string[];
+}
+
 const FALLBACK_API = "http://127.0.0.1:8000";
 const FALLBACK_GITHUB_REPO_URL = "https://github.com/calavelas/ENDR";
 const FALLBACK_GITHUB_BRANCH = "main";
@@ -254,6 +293,49 @@ export async function loadSnapshot(): Promise<PlatformSnapshot> {
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown error";
     return buildFallbackSnapshot(`Unable to reach ENDR API at ${endpoint}: ${reason}`);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function unavailableArgoDetail(name: string, reason: string): ServiceArgoDetail {
+  return {
+    appName: name,
+    available: false,
+    dataSource: "unavailable",
+    syncStatus: null,
+    healthStatus: null,
+    healthMessage: null,
+    revision: null,
+    commit: null,
+    autoSync: false,
+    selfHeal: false,
+    prune: false,
+    images: [],
+    resources: [],
+    podsReady: null,
+    resourceSummary: null,
+    conditions: [],
+    warnings: [reason],
+  };
+}
+
+// Richer per-service ArgoCD read (deployed commit, pods/resource tree, health
+// reasons). Never throws — degrades to an unavailable detail the view handles.
+export async function loadServiceArgoDetail(name: string): Promise<ServiceArgoDetail> {
+  const apiBase = resolveApiBase();
+  const endpoint = `${apiBase}/api/platform/services/${encodeURIComponent(name)}/argocd`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SNAPSHOT_FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return (await response.json()) as ServiceArgoDetail;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "unknown error";
+    return unavailableArgoDetail(name, `Unable to reach ENDR API: ${reason}`);
   } finally {
     clearTimeout(timer);
   }
