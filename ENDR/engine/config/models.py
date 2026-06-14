@@ -206,8 +206,12 @@ class ServiceOverrides(BaseModel):
     def validate_image(cls, value: str | None) -> str | None:
         if value is None:
             return value
-        if value.endswith(":latest"):
-            raise ValueError("image tag 'latest' is not allowed")
+        # TODO(main-refactor): re-enable the ':latest' ban once the main refactor
+        # is done. Temporarily allowed so the shared `calavelas/endr-robot` image
+        # (the tars/case guidance assistants) can pin `:latest` until per-robot
+        # image-tag pinning is wired up. See DOCS/ROBOT_LIFECYCLE_PLAN.html.
+        # if value.endswith(":latest"):
+        #     raise ValueError("image tag 'latest' is not allowed")
         return value
 
 
