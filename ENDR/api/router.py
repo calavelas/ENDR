@@ -38,6 +38,8 @@ class CreateServiceFromPortalRequest(BaseModel):
     serviceTemplate: str = Field(min_length=1)
     gitopsTemplate: str = Field(min_length=1)
     gatewayEnabled: bool = True
+    image: str | None = None
+    env: dict[str, str] = Field(default_factory=dict)
     branchName: str | None = None
     dryRun: bool = False
 
@@ -237,6 +239,12 @@ def get_template_file(templateType: str, templateName: str, filePath: str) -> Te
 
 @router.post("/api/platform/services", response_model=CreateServiceResponse)
 def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> CreateServiceResponse:
+    image = payload.image.strip() if payload.image and payload.image.strip() else None
+    env = {
+        str(key).strip(): str(value)
+        for key, value in payload.env.items()
+        if str(key).strip()
+    }
     request = CreateServiceRequest(
         name=payload.serviceName.strip(),
         namespace=payload.namespace.strip(),
@@ -244,6 +252,8 @@ def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> Creat
         serviceTemplate=payload.serviceTemplate.strip(),
         gitopsTemplate=payload.gitopsTemplate.strip(),
         gatewayEnabled=payload.gatewayEnabled,
+        image=image,
+        env=env,
         dryRun=payload.dryRun,
         branchName=payload.branchName.strip() if payload.branchName and payload.branchName.strip() else None,
     )

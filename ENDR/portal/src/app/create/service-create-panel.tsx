@@ -1014,15 +1014,6 @@ export function CreateServicePanel() {
     <div className="wiz">
       <WizardStepper step={step} furthest={furthestStep} onGo={goToStep} />
 
-      {!result && (
-        <p className="wiz-note">
-          <strong>Day-0 bootstrap only.</strong> Each step just edits one <code>services.yaml</code> entry — the
-          platform&apos;s <strong>desired-state catalog</strong>, not the running configuration. Once created, the{" "}
-          {thing} is configured through its own generated GitOps config (its chart): <code>services.yaml</code> tracks{" "}
-          <em>what should exist</em>; the chart is <em>how it actually runs</em>.
-        </p>
-      )}
-
       {result ? (
         <section ref={resultSectionRef} className="mc-panel transaction-panel" aria-live="polite">
           <div className="mc-panel-head">
@@ -1432,6 +1423,13 @@ export function CreateServicePanel() {
           </>
           ) : (
           <>
+          <p className="wiz-note">
+            <strong>Day-0 bootstrap only.</strong> This opens a PR that adds one <code>services.yaml</code> entry — the
+            platform&apos;s <strong>desired-state catalog</strong>, not the running configuration. Once created, the{" "}
+            {thing} is configured through its own generated GitOps config (its chart): <code>services.yaml</code> tracks{" "}
+            <em>what should exist</em>; the chart is <em>how it actually runs</em>.
+          </p>
+
           <div className="wiz-cols">
             {/* Left — the generated repo tree */}
             <section className="mc-panel wiz-preview-panel">

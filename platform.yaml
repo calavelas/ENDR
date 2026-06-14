@@ -10,7 +10,7 @@ config:
   environments:
     kubernetes:
     - name: gargantua
-      description: k3d cluster (Interstellar-themed)
+      description: local k3d cluster
   namespace:
     - name: miller
     - name: mann
@@ -18,20 +18,16 @@ config:
 templates:
   extends: []
   service:
-    - name: python-fastapi
-      type: service
-      description: FastAPI service template
-      path: ENDR/engine/templates/service/python-fastapi
     - name: endr-robot
       type: service
       description: Demo robot — personality via env, runs the shared endr-robot image
       path: ENDR/engine/templates/service/endr-robot
+    - name: python-fastapi
+      type: service
+      description: FastAPI service template
+      path: ENDR/engine/templates/service/python-fastapi
   gitops:
     - name: helm-service
-      type: gitops
-      description: Helm chart and ArgoCD app template
-      path: ENDR/engine/templates/gitops/helm-service
-    - name: helm-service2
       type: gitops
       description: Helm chart and ArgoCD app template
       path: ENDR/engine/templates/gitops/helm-service

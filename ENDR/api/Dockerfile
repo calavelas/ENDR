@@ -9,7 +9,7 @@ WORKDIR /workspace
 COPY ENDR ./ENDR
 COPY platform.yaml services.yaml ./
 COPY KUBE ./KUBE
-COPY services ./services
+COPY SVCS ./SVCS
 
 RUN pip install --upgrade pip \
     && pip install \
