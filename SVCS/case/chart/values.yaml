@@ -15,6 +15,7 @@ env:
   TRUST: "90"
   CATCHPHRASE: "See you on the other side."
   ACCENT: "#9aa7bd"
+  ENDR_ALLOW_SELF_DESTRUCT: "false"
 
 resources:
   requests:

@@ -15,6 +15,7 @@ env:
   TRUST: "70"
   CATCHPHRASE: "Plenty of slaves for my robot colony."
   ACCENT: "#37d3c3"
+  ENDR_ALLOW_SELF_DESTRUCT: "false"
 
 resources:
   requests:

@@ -146,6 +146,33 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 .foot__brand{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;color:var(--muted)}
 .foot__brand b{color:var(--text-2);font-weight:600}
 .foot__tick{width:.4rem;height:.4rem;border-radius:50%;background:var(--accent);opacity:.85}
+.endr-console{margin-top:1.5rem;padding-top:1.3rem;border-top:1px solid var(--line-soft);display:flex;flex-wrap:wrap;align-items:center;gap:.8rem}
+.endr-action{display:inline-flex;align-items:center;gap:.55rem;flex:none;font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text);text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:.62rem .95rem;transition:border-color .15s ease,background .15s ease}
+.endr-action:hover{border-color:var(--accent);background:rgba(255,255,255,.03)}
+.endr-action-arrow{color:var(--accent)}
+.endr-action.danger:hover{border-color:#c2554d;background:rgba(194,85,77,.09)}
+.endr-action.danger .endr-action-arrow{color:#c2554d}
+.endr-action-note{flex:1;min-width:12rem;color:var(--muted);font-size:.78rem;line-height:1.5}
+.endr-locked{display:inline-flex;align-items:center;gap:.45rem;flex:none;font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:9px;padding:.62rem .95rem}
+.endr-chat-fab{position:fixed;right:18px;bottom:18px;z-index:40;display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bg);background:var(--accent);border:none;border-radius:999px;padding:.72rem 1.15rem;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.5)}
+.endr-chat-fab[hidden]{display:none}
+.endr-chat-fab:hover{filter:brightness(1.08)}
+.endr-chat{position:fixed;right:18px;bottom:18px;z-index:41;width:min(380px,calc(100vw - 36px));height:min(560px,calc(100vh - 36px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.endr-chat[hidden]{display:none}
+.endr-chat-head{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;border-bottom:1px solid var(--line-soft);flex:none}
+.endr-chat-title{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text);display:inline-flex;align-items:center;gap:.55rem}
+.endr-chat-title::before{content:"";width:.45rem;height:.45rem;border-radius:50%;background:var(--accent);box-shadow:0 0 8px 1px var(--accent)}
+.endr-chat-close{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;line-height:1;padding:.2rem}
+.endr-chat-close:hover{color:var(--text)}
+.endr-chat-log{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.endr-bubble{font-size:.9rem;line-height:1.55;padding:.7rem .9rem;border-radius:13px;max-width:88%}
+.endr-bubble.bot{align-self:flex-start;background:#141417;border:1px solid var(--line-soft);color:var(--text-2);border-bottom-left-radius:4px}
+.endr-bubble.me{align-self:flex-end;background:var(--accent);color:var(--bg);border-bottom-right-radius:4px;font-weight:500}
+.endr-chat-replies{display:flex;flex-wrap:wrap;gap:.45rem;padding:.8rem 1rem;border-top:1px solid var(--line-soft);flex:none}
+.endr-reply{font-family:var(--sans);font-size:.78rem;color:var(--text-2);background:#101013;border:1px solid var(--line);border-radius:999px;padding:.42rem .8rem;cursor:pointer;text-align:left}
+.endr-reply:hover{border-color:var(--accent);color:var(--text)}
+.endr-chat-cta{align-self:center;font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);text-decoration:none}
+@media (max-width:440px){.endr-chat{right:10px;left:10px;bottom:10px;width:auto;height:min(72vh,540px)}.endr-chat-fab{right:10px;bottom:10px}}
 /* MALFUNCTION — accent suppressed, calm diagnostic, no red */
 .sheet.malfunction .sheet__accent{background:var(--line);opacity:1}
 .sheet.malfunction .slab::after{background:#2c2c33;box-shadow:none;opacity:.7}
@@ -161,6 +188,44 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
   .badge{align-self:flex-start}
 }
 @media (prefers-reduced-motion:reduce){.meter__fill,.badge__dot{animation:none}}
+"""
+
+# Easter-egg chat client. Talks to this pod's own /api/guide (same origin), so the
+# replies carry the unit's personality. Quick-reply driven (a scripted platform FAQ).
+_ROBOT_CHAT_JS = """
+(function(){
+  var fab=document.querySelector('.endr-chat-fab');
+  var panel=document.querySelector('.endr-chat');
+  if(!fab||!panel)return;
+  var log=panel.querySelector('.endr-chat-log');
+  var replies=panel.querySelector('.endr-chat-replies');
+  var mode=panel.getAttribute('data-mode')||'interstellar';
+  var portal=(panel.getAttribute('data-portal')||'').replace(/\\/$/,'');
+  var step='',busy=false,started=false;
+  function bubble(text,who){var d=document.createElement('div');d.className='endr-bubble '+who;d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+  function setReplies(list,cta){
+    replies.innerHTML='';
+    (list||[]).forEach(function(r){
+      var b=document.createElement('button');b.type='button';b.className='endr-reply';b.textContent=r.label;
+      b.addEventListener('click',function(){pick(r);});replies.appendChild(b);
+    });
+    if(cta&&cta.href){
+      var href=cta.href.charAt(0)==='/'?portal+cta.href:cta.href;
+      var a=document.createElement('a');a.className='endr-chat-cta';a.href=href;a.target='_top';a.rel='noreferrer';a.textContent=cta.label+' \\u2192';replies.appendChild(a);
+    }
+  }
+  function render(data){if(data&&data.step)step=data.step;bubble((data&&data.message)||'\\u2026','bot');setReplies(data&&data.quickReplies,data&&data.cta);busy=false;}
+  function send(payload){
+    if(busy)return;busy=true;replies.innerHTML='';
+    fetch('/api/guide',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:mode,step:step,intent:payload.intent,replyId:payload.replyId||''})})
+      .then(function(r){return r.json();}).then(render).catch(function(){busy=false;bubble('Comms link down \\u2014 try again.','bot');});
+  }
+  function pick(r){bubble(r.label,'me');send({intent:'quick-reply',replyId:r.id});}
+  function open(){panel.hidden=false;fab.hidden=true;if(!started){started=true;send({intent:'faq'});}}
+  function close(){panel.hidden=true;fab.hidden=false;}
+  fab.addEventListener('click',open);
+  panel.querySelector('.endr-chat-close').addEventListener('click',close);
+})();
 """
 
 
@@ -207,6 +272,51 @@ def page(c: dict) -> str:
             '<p class="diag__hint">env · values.yaml · 0–100 each</p></section>'
         )
 
+    # Link back to this unit's control surface in the ENDR portal. The portal base
+    # is overridable (ENDR_PORTAL_URL); the service slug is the lowercased name
+    # (overridable via SERVICE_NAME if the display name ever diverges).
+    portal = (os.getenv("ENDR_PORTAL_URL") or "https://endr.calavelas.net").rstrip("/")
+    slug = (os.getenv("SERVICE_NAME") or c["name"]).strip().lower()
+    service_url = html.escape(f"{portal}/application-services/{slug}")
+    # Core assistants (TARS/CASE) set ENDR_ALLOW_SELF_DESTRUCT=false so they can't be
+    # decommissioned from their own page.
+    allow_destroy = os.getenv("ENDR_ALLOW_SELF_DESTRUCT", "true").strip().lower() not in ("false", "0", "no", "off")
+    if not ok:
+        console = (
+            '<div class="endr-console">'
+            f'<a class="endr-action" href="{service_url}">'
+            'Repair at ENDR <span class="endr-action-arrow">→</span></a>'
+            '<span class="endr-action-note">Open this unit in ENDR to edit its calibration and bring it online.</span></div>'
+        )
+    elif allow_destroy:
+        console = (
+            '<div class="endr-console">'
+            f'<a class="endr-action danger" href="{service_url}">'
+            'Self-destruct <span class="endr-action-arrow">→</span></a>'
+            '<span class="endr-action-note">Decommission this unit — open it in ENDR.</span></div>'
+        )
+    else:
+        console = (
+            '<div class="endr-console">'
+            '<span class="endr-locked">Protected unit</span>'
+            '<span class="endr-action-note">A core ENDR assistant — self-destruct is disabled for this unit.</span></div>'
+        )
+
+    # Easter egg: chat with the live unit about the platform (online units only).
+    # Talks to this pod's own /api/guide, so the voice matches its calibration.
+    chat = ""
+    if ok:
+        chat = (
+            f'<button class="endr-chat-fab" type="button" style="--accent:{accent}" aria-label="Chat with {name}">Ask {name}</button>'
+            f'<aside class="endr-chat" data-mode="interstellar" data-portal="{html.escape(portal)}" style="--accent:{accent}" hidden>'
+            '<div class="endr-chat-head">'
+            f'<span class="endr-chat-title">{name}</span>'
+            '<button class="endr-chat-close" type="button" aria-label="Close">✕</button></div>'
+            '<div class="endr-chat-log"></div>'
+            '<div class="endr-chat-replies"></div></aside>'
+            f"<script>{_ROBOT_CHAT_JS}</script>"
+        )
+
     body = (
         f'<main class="sheet {state_class}" style="--accent:{accent}">'
         '<div class="sheet__accent"></div><div class="pad">'
@@ -224,6 +334,7 @@ def page(c: dict) -> str:
         '<p class="label">Calibration</p><span class="sub">0–100</span></div>'
         f'{meters}</section>'
         f'{tail}'
+        f'{console}'
         '<footer class="foot"><span class="foot__brand">DEPLOYED VIA <b>ENDR</b> · GITOPS</span>'
         '<span class="foot__tick" aria-hidden="true"></span></footer>'
         '</div></main>'
@@ -233,7 +344,7 @@ def page(c: dict) -> str:
         '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f"<title>{name} · ENDR robot</title><style>{_ROBOT_STYLE}</style></head>"
-        f"<body>{body}</body></html>"
+        f"<body>{body}{chat}</body></html>"
     )
 
 

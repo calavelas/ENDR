@@ -56,6 +56,10 @@ STEPS = {
                 "idp": "What's this Interstellar switch?",
                 "interstellar": "Tell me about this switch",
             }},
+            {"id": "faq", "label": {
+                "idp": "How does the platform work?",
+                "interstellar": "How does this platform work?",
+            }},
             {"id": "help", "label": {
                 "idp": "Wait — what are you?",
                 "interstellar": "Wait — who are you two?",
@@ -196,6 +200,7 @@ STEPS = {
         "cta": None,
         "replies": [
             {"id": "resume", "label": "Back to the tour"},
+            {"id": "faq", "label": "How does the platform work?"},
             {"id": "narrative_tip", "label": "And the Interstellar switch?"},
         ],
     },
@@ -214,6 +219,111 @@ STEPS = {
         "replies": [
             {"id": "resume", "label": "Back to the tour"},
         ],
+    },
+    # ── FAQ (the robot-page easter egg: chat with the unit about the platform) ─
+    "faq": {
+        "text": {
+            "idp": "Ask me how ENDR actually works — I run on it. Pick a thread:",
+            "interstellar": "Ask me how this platform actually works — I run on it. Pick a thread:",
+        },
+        "cta": None,
+        "replies": [
+            {"id": "faq-gitops", "label": "What is GitOps?"},
+            {"id": "faq-pr", "label": "Why a pull request for everything?"},
+            {"id": "faq-config", "label": {
+                "idp": "How do I change a service's config?",
+                "interstellar": "How do I recalibrate you?",
+            }},
+            {"id": "faq-malfunction", "label": {
+                "idp": "Why do new services boot broken?",
+                "interstellar": "Why do robots boot in MALFUNCTION?",
+            }},
+            {"id": "faq-personas", "label": "Why are there two of you?"},
+        ],
+    },
+    "faq-gitops": {
+        "text": {
+            "idp": (
+                "GitOps means the Git repo is the single source of truth. Nobody runs "
+                "kubectl — you declare what you want in the repo, and ArgoCD continuously "
+                "reconciles the cluster to match it, healing any drift on its own."
+            ),
+            "interstellar": (
+                "GitOps means the repo is the single source of truth. Nobody runs kubectl "
+                "— you declare what you want in the repo, and the autopilot (ArgoCD) keeps "
+                "the cluster matching it, healing any drift on its own."
+            ),
+        },
+        "cta": None,
+        "replies": [{"id": "faq", "label": "Ask something else"}],
+    },
+    "faq-pr": {
+        "text": {
+            "idp": (
+                "Every change ships as a pull request — that's your review gate and your "
+                "audit trail in one. CI validates it, it merges, and only then does ArgoCD "
+                "roll it out. Nothing reaches the cluster that skipped the repo."
+            ),
+            "interstellar": (
+                "Every change ships as a pull request — a review gate and a flight log in "
+                "one. CI validates it, it merges, and only then does the autopilot roll it "
+                "out. Nothing reaches the cluster that skipped the repo."
+            ),
+        },
+        "cta": None,
+        "replies": [{"id": "faq", "label": "Ask something else"}],
+    },
+    "faq-config": {
+        "text": {
+            "idp": (
+                "Open the service's page, hit the Files tab, and edit its chart "
+                "values.yaml — the env block. Saving opens a pull request; merge it and "
+                "ArgoCD rolls the change out. You never SSH into the pod or touch the "
+                "template — config is the only knob."
+            ),
+            "interstellar": (
+                "Open my page, hit the Files tab, and edit my chart values.yaml — the env "
+                "block. Saving opens a pull request; merge it and the autopilot rolls it "
+                "out. Nobody cracks open a running unit — you edit its config, that's all."
+            ),
+        },
+        "cta": None,
+        "replies": [{"id": "faq", "label": "Ask something else"}],
+    },
+    "faq-malfunction": {
+        "text": {
+            "idp": (
+                "A service with no config does nothing useful — so a robot with zero "
+                "HUMOR / HONESTY / TRUST boots in MALFUNCTION on purpose. It's the "
+                "'before' state. Set the calibration through a config change and it comes "
+                "online: create, break, fix — all through GitOps."
+            ),
+            "interstellar": (
+                "A unit with no calibration is just expensive hardware — so a robot with "
+                "zero HUMOR / HONESTY / TRUST boots MALFUNCTION on purpose. That's the "
+                "'before'. Recalibrate through a config change and it comes online: launch, "
+                "malfunction, fix — all through GitOps."
+            ),
+        },
+        "cta": None,
+        "replies": [{"id": "faq", "label": "Ask something else"}],
+    },
+    "faq-personas": {
+        "text": {
+            "idp": (
+                "TARS and CASE are the same container image, deployed twice with different "
+                "env. Same code, different personality — proof that on this platform "
+                "behaviour is config, not a rebuild. Flip the IDP / Interstellar switch and "
+                "you're talking to the other pod."
+            ),
+            "interstellar": (
+                "TARS and CASE are one image, deployed twice with different env. Same code, "
+                "different personality — proof that here, who I am is config, not a rebuild. "
+                "Flip the switch and you're talking to the other one of us."
+            ),
+        },
+        "cta": None,
+        "replies": [{"id": "faq", "label": "Ask something else"}],
     },
     # ── Create-wizard sub-steps (the dialog tracks the form) ──────────────────
     "create-basics": {
