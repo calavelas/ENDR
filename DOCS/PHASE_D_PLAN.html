@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ENDR — Phase D plan (Day-2 / FIX flow)</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0b0b0d; color: #e9eefb; font: 15px/1.6 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 2.4rem 1.6rem 5rem; }
+  h1 { font-size: 1.9rem; letter-spacing: .01em; margin: 0 0 .2rem; }
+  h2 { font-size: 1.15rem; margin: 2.2rem 0 .6rem; color: #fff; border-bottom: 1px solid #1f2942; padding-bottom: .4rem; }
+  h3 { font-size: 1rem; margin: 1.3rem 0 .35rem; color: #bfeede; }
+  .sub { color: #8a97b4; margin: 0 0 1.4rem; }
+  code { font-family: ui-monospace, "JetBrains Mono", monospace; background: #11151f; border: 1px solid #1f2942; border-radius: 5px; padding: 1px 5px; font-size: .86em; color: #bfeede; }
+  ul { padding-left: 1.2rem; } li { margin: .3rem 0; }
+  .pill { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; padding: 2px 9px; vertical-align: middle; }
+  .done { color: #06121a; background: #3ecf8e; } .now { color: #1a1304; background: #f5c451; } .next { color: #06121a; background: #5b9bf5; } .later { color: #e9eefb; background: #2a3346; }
+  .card { background: #0e1220; border: 1px solid #1f2942; border-radius: 12px; padding: 1rem 1.2rem; margin: .8rem 0; }
+  .concern { border-left: 3px solid #f5c451; }
+  table { border-collapse: collapse; width: 100%; margin: .6rem 0; font-size: .92rem; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #1f2942; vertical-align: top; }
+  th { color: #8a97b4; font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+  em { color: #f5c451; font-style: normal; }
+  .muted { color: #8a97b4; font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Phase D — Day-2 / FIX flow</h1>
+  <p class="sub">Closing the demo loop: <b>create → MALFUNCTION → FIX → ONLINE</b> via GitOps. Last updated 2026-06-14.</p>
+
+  <h2>Where we stand</h2>
+  <p>The rename migration is complete; the portal is a polished dual-narrative mission-control app (light theme, redesigned catalog / service / dashboard, mobile compact cards, service-detail hero, full live ArgoCD detail — deployed commit + resource-tree + health reasons, create-flow git diff, docked TARS/CASE assistant on real pods with cluster-free fallback). HTTPRoute health is fixed (custom argocd-cm check). The robot lifecycle is the active workstream:</p>
+  <ul>
+    <li><span class="pill done">done</span> Phase A — <code>endr-robot</code> service template</li>
+    <li><span class="pill done">done</span> TARS/CASE guidance assistant</li>
+    <li><span class="pill done">done</span> Phase C — create wizard seeds personality env (<code>overrides.env</code>)</li>
+    <li><span class="pill now">now</span> <b>Phase D — the FIX flow</b> (this doc)</li>
+    <li><span class="pill next">next</span> Phase B — <code>robot-validate</code> CI gate</li>
+    <li><span class="pill later">later</span> Phase E — end-to-end run + image-tag/ops hardening</li>
+  </ul>
+  <p class="muted">The payoff loop is <b>half-built</b>: a developer can create a robot that boots MALFUNCTION, but there is <em>no in-product way to fix it</em>. There is no edit page or edit API route today — only create.</p>
+
+  <h2>Phase D — plan</h2>
+  <p>Reframed per the latest decision: Phase D <b>starts on the service page</b> with a file tree + viewer of the service's GitOps files, then layers editing on top.</p>
+
+  <h3>D1 — Service-page file tree + viewer <span class="pill now">building</span></h3>
+  <ul>
+    <li>New <b>Files</b> tab on the service detail page: repo file tree (left) + syntax-highlighted viewer (right), reusing the create-flow <code>FileTree</code> + <code>CodeBlock</code> components.</li>
+    <li>Shows the files that make up this service: <code>SVCS/&lt;name&gt;/</code> (README + <code>chart/</code>) for app services; <code>sourcePath</code> folder for platform services.</li>
+    <li><b>Read-only</b> first. Source of truth = the GitHub repo (so the same surface drives the edit→PR step).</li>
+  </ul>
+
+  <h3>D2 — Edit → PR (the actual FIX) <span class="pill next">next</span></h3>
+  <ul>
+    <li>From the viewer, make a file editable and "Propose change" → opens a <code>services.yaml</code>-only (or values-only) PR; ArgoCD rolls it out → robot comes ONLINE.</li>
+    <li>Reuses the create machinery in <code>ENDR/engine/scaffold/service.py</code> (<code>create_branch</code> + <code>create_or_update_file</code> + <code>create_pull_request</code>); <code>CreateServiceFromPortalRequest</code> already carries <code>env</code>/<code>image</code> — an edit endpoint is a parallel of the create path.</li>
+    <li class="concern" style="list-style:none; margin-left:-1.2rem; padding:.5rem .8rem;"><b>Correctness (do up front):</b> developers tune <b>values</b> (<code>overrides.env</code> calibration / <code>values.yaml</code>); the deployment <b>template is platform-owned</b> and must stay read-only. Editing the template teaches the wrong mental model and undercuts the whole pitch.</li>
+  </ul>
+
+  <h3>Pairs with Phase B — <code>robot-validate</code> CI gate <span class="pill next">next</span></h3>
+  <ul>
+    <li>Engine subcommand in <code>reconcile-pr.yml</code> that enforces calibration keys present + values 0–100 and blocks merge otherwise — the visible "policy-as-code guardrail" that validates the FIX PR. Today <code>reconcile-pr.yml</code> only runs <code>services-check</code>, no robot gate.</li>
+  </ul>
+
+  <h2>Open concerns for D1 (file tree + viewer)</h2>
+  <div class="card concern">
+    <ul>
+      <li><b>Data source.</b> GitHub repo (git source of truth; fresh for newly-created services; required for edit→PR) vs the api's local <code>IDP_REPO_ROOT</code> copy (stale for services added after the image build) vs ArgoCD live rendered manifests (rendered, not source — not editable). Recommendation: <b>GitHub</b>.</li>
+      <li><b>Listing the tree.</b> <code>GitHubClient</code> has <code>get_file_content</code> but no directory listing — needs a new method (GitHub contents/trees API; the api already holds <code>GITHUB_TOKEN</code>). Rate limits → cache per request.</li>
+      <li><b>Two locations.</b> A service spans <code>SVCS/&lt;name&gt;/</code> (its chart + README, dev-editable) <em>and</em> the ArgoCD Application manifest under <code>KUBE/</code> (platform-owned). Show the <code>SVCS/&lt;name&gt;/</code> folder primarily; the app manifest is read-only context.</li>
+      <li><b>Editable surface.</b> Only <code>values.yaml</code> / <code>services.yaml</code> overrides should become editable in D2; the chart <code>templates/</code> render read-only (values-vs-template lesson above).</li>
+      <li><b>Limits.</b> Text files only; 128&nbsp;KB content cap (matches the create-flow template-file endpoint).</li>
+      <li><b>Cluster-free.</b> GitHub-sourced files work even with no cluster — good for the Render demo; degrade gracefully if the repo/API is unreachable.</li>
+    </ul>
+  </div>
+
+  <h2>Other open items (from the plan scan)</h2>
+  <ul>
+    <li>Phase E: local end-to-end (create → malfunction → fix → online → delete) + optional guided overlay — depends on D.</li>
+    <li>Live-demo ops: rebuild/push <code>endr-robot</code> (for live <code>/api/guide</code>); pin a known-good <code>endr-robot:&lt;sha&gt;</code> for tars/case; fix <code>render.yaml</code>'s <code>:606b7ec</code> api/portal tag.</li>
+    <li>Re-enable the <code>:latest</code> image-tag ban in <code>ENDR/engine/config/models.py</code> once per-robot tag pinning lands.</li>
+    <li>Dead-code cleanup: finc-era CSS / orphaned components (<code>portal-frame.tsx</code>, <code>ui/top-nav.tsx</code>, <code>stage-rail.tsx</code>).</li>
+  </ul>
+
+  <h2>Stale docs to refresh</h2>
+  <ul>
+    <li><code>DOCS/CONTEXT.html</code> — still references <code>mac-lab</code>, old services (cooper/finc/miller/test1), <code>services/</code> instead of <code>SVCS/</code>, zero <code>gargantua</code>. Needs a real second pass.</li>
+    <li><code>DOCS/ROBOT_LIFECYCLE_PLAN.html</code> — update as D/B/E land.</li>
+    <li><code>DOCS/UI_REDESIGN_PLAN.html</code> — Phase 6 still open; responsive/mobile already done ahead of the doc.</li>
+    <li><code>DOCS/robot-demo-redesign.html</code> — mockup edit screens still edit the template; change to chart <code>values.yaml</code> / <code>overrides.env</code>.</li>
+  </ul>
+</main>
+</body>
+</html>
