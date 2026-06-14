@@ -39,24 +39,6 @@ services:
       TRUST: '90'
       CATCHPHRASE: See you on the other side.
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
-- name: kipp
-  namespace: miller
-  environments:
-  - gargantua
-  generator:
-    service:
-      template: endr-robot
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    image: calavelas/endr-robot:c68ef1a
-    env:
-      ROBOT_NAME: kipp
-      HUMOR: '90'
-      TRUST: '70'
-      CATCHPHRASE: Are you ready for my robot colony?
 - name: tryout-svc
   namespace: miller
   environments:
