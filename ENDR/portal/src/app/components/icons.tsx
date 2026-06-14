@@ -175,6 +175,12 @@ export const ChevronDown = (p: IconProps) => (
   </Svg>
 );
 
+export const ChevronRight = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m9 18 6-6-6-6" />
+  </Svg>
+);
+
 // ── Assistant ───────────────────────────────────────────────────────────────
 export const Bot = (p: IconProps) => (
   <Svg {...p}>

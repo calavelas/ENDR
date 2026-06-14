@@ -84,7 +84,7 @@ export function AssistantPanel({
           tabIndex={collapsed ? -1 : undefined}
           onClick={onCollapse}
         >
-          <Icon.ChevronDown size={16} />
+          <Icon.ChevronRight size={16} />
         </button>
       </header>
 

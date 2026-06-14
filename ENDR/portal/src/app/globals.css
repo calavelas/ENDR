@@ -2933,7 +2933,9 @@ code {
    ASSISTANT WIDGET (TARS / CASE) — floating guide, scoped under .app-shell.
    Per-widget accent set inline via --asst-accent (falls back to --mc-info).
    ───────────────────────────────────────────────────────────────────────── */
-.asst-root { --asst-accent: var(--mc-info); }
+/* display:contents so the launcher (fixed) and the drawer (a grid item on wide
+   screens) place individually in the app-shell grid. */
+.asst-root { --asst-accent: var(--mc-info); display: contents; }
 
 .asst-launcher {
   position: fixed;
@@ -2956,35 +2958,52 @@ code {
   transition: transform 0.15s, border-color 0.15s, box-shadow 0.2s;
 }
 .asst-launcher:hover { transform: translateY(-2px); border-color: var(--asst-accent); }
-.asst-launcher.open { color: var(--mc-ink-2); }
+/* The drawer carries its own collapse control, so hide the bubble while open. */
+.asst-launcher.open { display: none; }
 
+/* Side drawer. Base = fixed full-height panel on the right edge (overlay) — used
+   on narrower screens. On wide screens (≥1024px) it becomes a docked grid column
+   that pushes the page content left, so it never covers page actions. */
 .asst-panel {
   position: fixed;
-  right: 1.5rem;
-  bottom: 5.6rem;
+  top: 0;
+  right: 0;
   z-index: 61;
-  width: 360px;
-  max-width: calc(100vw - 3rem);
-  /* Cap height so the panel never dominates the screen / hides the page beneath. */
-  max-height: min(520px, calc(100dvh - 8.5rem));
+  width: min(360px, 100vw);
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--mc-line);
-  border-radius: 16px;
+  border-left: 1px solid var(--mc-line);
   background: var(--mc-surface);
-  box-shadow: var(--shadow);
-  transform-origin: bottom right;
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s;
+  box-shadow: -18px 0 44px rgba(0, 0, 0, 0.45);
+  animation: asst-slide-in 0.2s ease;
 }
-/* Collapsed = minimized to the launcher bubble. Stays mounted (state preserved)
-   but visually + interactively hidden, so reopening doesn't re-type the message. */
-.asst-collapsed {
-  opacity: 0;
-  transform: translateY(10px) scale(0.96);
-  pointer-events: none;
-  visibility: hidden;
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
+@keyframes asst-slide-in {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+/* Collapsed = tucked away to the bubble. Stays mounted (state preserved), just
+   removed from layout so the page reflows full-width and reopening doesn't
+   re-type the message. */
+.asst-collapsed { display: none; }
+
+@media (min-width: 1024px) {
+  .app-shell { --asst-w: 360px; }
+  /* When the drawer is open, add a third column and let the content reflow. */
+  .app-shell:has(.asst-panel:not(.asst-collapsed)) {
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--asst-w);
+  }
+  .asst-panel {
+    position: relative;
+    grid-column: 3;
+    grid-row: 1 / 3;
+    top: auto;
+    right: auto;
+    width: auto;
+    height: 100%;
+    box-shadow: none;
+  }
 }
 .asst-strip { flex: 0 0 auto; height: 3px; background: var(--asst-accent); }
 
@@ -3033,7 +3052,7 @@ code {
 }
 .asst-close:hover { color: var(--mc-ink); border-color: var(--mc-line-bright); }
 
-.asst-body { padding: 0.95rem 1rem 0.6rem; overflow-y: auto; }
+.asst-body { flex: 1 1 auto; min-height: 0; padding: 0.95rem 1rem 0.6rem; overflow-y: auto; }
 .asst-name {
   display: flex;
   align-items: center;
@@ -3153,22 +3172,13 @@ code {
 @media (prefers-reduced-motion: reduce) {
   .asst-caret { animation: none; }
   .asst-launcher { transition: none; }
+  .asst-panel { animation: none; }
 }
 
 @media (max-width: 680px) {
   .asst-launcher { right: 1rem; bottom: 1rem; }
-  .asst-panel {
-    right: 0;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 82dvh;
-    border-radius: 16px 16px 0 0;
-    border-right: 0;
-    border-bottom: 0;
-    border-left: 0;
-  }
+  /* Full-width overlay drawer on phones. */
+  .asst-panel { width: 100vw; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
