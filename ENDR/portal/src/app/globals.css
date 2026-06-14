@@ -3493,23 +3493,44 @@ code {
 .wiz-note code { font-family: var(--font-mono); font-size: 0.84em; background: var(--mc-surface-2); border: 1px solid var(--mc-line); border-radius: 5px; padding: 0 0.3em; }
 
 /* Fields */
-.wiz-field { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.82rem; color: var(--mc-ink-2); }
+.wiz-field { display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.92rem; color: var(--mc-ink-2); }
 .wiz-req { color: var(--mc-bad); }
-.wiz-optional { color: var(--mc-faint); font-size: 0.74rem; }
+.wiz-optional { color: var(--mc-faint); font-size: 0.8rem; }
 .wiz-input {
   width: 100%;
   background: var(--mc-surface-2);
   border: 1px solid var(--mc-line);
   border-radius: 9px;
   color: var(--mc-ink);
-  font-size: 0.92rem;
-  padding: 0.6rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.7rem 0.85rem;
   outline: none;
 }
+.wiz-input.mc-mono { font-family: var(--font-mono); }
 .wiz-input:focus { border-color: var(--mc-line-bright); }
 select.wiz-input { cursor: pointer; }
-.wiz-hint { color: var(--mc-muted); font-size: 0.76rem; }
+.wiz-hint { color: var(--mc-muted); font-size: 0.84rem; }
 .wiz-hint code, .wiz-editor-hint code { font-family: var(--font-mono); color: var(--mc-ink-2); }
+
+/* Two-up rows + collapsible template-file preview (step 2) */
+.wiz-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; align-items: start; }
+@media (max-width: 640px) { .wiz-row2 { grid-template-columns: 1fr; } }
+.wiz-collapse { border: 1px solid var(--mc-line); border-radius: 10px; background: var(--mc-surface-2); }
+.wiz-collapse > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.92rem;
+  color: var(--mc-ink-2);
+}
+.wiz-collapse > summary::-webkit-details-marker { display: none; }
+.wiz-collapse > summary::before { content: "\25B8"; color: var(--mc-muted); transition: transform 0.15s; }
+.wiz-collapse[open] > summary::before { transform: rotate(90deg); }
+.wiz-collapse-body { padding: 0.2rem 0.8rem 0.8rem; }
 .wiz-field-error { color: var(--mc-bad); font-size: 0.76rem; }
 
 .wiz-toggle { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -3582,7 +3603,7 @@ select.wiz-input { cursor: pointer; }
 }
 
 /* Field label row (keeps the * / "locked" tag on the same line as the label) */
-.wiz-label { display: inline-flex; align-items: baseline; gap: 0.3rem; color: var(--mc-ink-2); }
+.wiz-label { display: inline-flex; align-items: baseline; gap: 0.3rem; color: var(--mc-ink); font-size: 0.95rem; font-weight: 500; }
 .wiz-lock { margin-left: auto; font-size: 0.66rem; letter-spacing: 0.04em; color: var(--mc-warn); }
 .wiz-input:disabled { opacity: 0.55; cursor: not-allowed; }
 .wiz-toggle-row input:disabled { cursor: not-allowed; }

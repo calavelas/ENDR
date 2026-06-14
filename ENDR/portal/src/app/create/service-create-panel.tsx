@@ -1256,26 +1256,6 @@ export function CreateServicePanel() {
 
                   <label className="wiz-field">
                     <span className="wiz-label">
-                      {mode === "interstellar" ? "Blueprint" : "Service template"} <span className="wiz-req">*</span>
-                    </span>
-                    <select
-                      className="wiz-input"
-                      value={serviceTemplate}
-                      onChange={(event) => setServiceTemplate(event.target.value)}
-                    >
-                      {options?.serviceTemplates.map((template) => (
-                        <option key={template.name} value={template.name}>
-                          {template.name}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="wiz-hint">
-                      {selectedServiceTemplate?.description || "What kind of service to scaffold."}
-                    </span>
-                  </label>
-
-                  <label className="wiz-field">
-                    <span className="wiz-label">
                       Environment <span className="wiz-req">*</span>
                     </span>
                     <select
@@ -1292,69 +1272,98 @@ export function CreateServicePanel() {
                     <span className="wiz-hint">Target cluster.</span>
                   </label>
 
-                  <label className="wiz-field">
-                    <span className="wiz-label">GitOps template</span>
-                    <select
-                      className="wiz-input"
-                      value={gitopsTemplate}
-                      onChange={(event) => setGitopsTemplate(event.target.value)}
-                    >
-                      {options?.gitopsTemplates.map((template) => (
-                        <option key={template.name} value={template.name}>
-                          {template.name}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="wiz-hint">How the {thing} is packaged &amp; deployed.</span>
-                  </label>
+                  <div className="wiz-row2">
+                    <label className="wiz-field">
+                      <span className="wiz-label">
+                        {mode === "interstellar" ? "Blueprint" : "Service template"} <span className="wiz-req">*</span>
+                      </span>
+                      <select
+                        className="wiz-input"
+                        value={serviceTemplate}
+                        onChange={(event) => setServiceTemplate(event.target.value)}
+                      >
+                        {options?.serviceTemplates.map((template) => (
+                          <option key={template.name} value={template.name}>
+                            {template.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="wiz-hint">
+                        {selectedServiceTemplate?.description || "What kind of service to scaffold."}
+                      </span>
+                    </label>
 
-                  <article className="wiz-template-card">
-                    <h3>
-                      Service template · <code>{selectedServiceTemplate?.name ?? "—"}</code>
-                    </h3>
-                    <ul className="wiz-file-list">
-                      {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
-                        <li key={`service-${file}`}>
-                          <code>{file}</code>
-                          <button
-                            type="button"
-                            className="mc-link-all"
-                            onClick={() => void onOpenTemplateFile("service", selectedServiceTemplate?.name ?? "", file)}
-                            disabled={fileViewerLoading}
-                          >
-                            View
-                          </button>
-                        </li>
-                      ))}
-                      {(selectedServiceTemplate?.previewFiles ?? []).length === 0 && (
-                        <li className="mc-muted">no files</li>
-                      )}
-                    </ul>
-                  </article>
+                    <label className="wiz-field">
+                      <span className="wiz-label">GitOps template</span>
+                      <select
+                        className="wiz-input"
+                        value={gitopsTemplate}
+                        onChange={(event) => setGitopsTemplate(event.target.value)}
+                      >
+                        {options?.gitopsTemplates.map((template) => (
+                          <option key={template.name} value={template.name}>
+                            {template.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="wiz-hint">How the {thing} is packaged &amp; deployed.</span>
+                    </label>
+                  </div>
 
-                  <article className="wiz-template-card">
-                    <h3>
-                      GitOps template · <code>{selectedGitopsTemplate?.name ?? "—"}</code>
-                    </h3>
-                    <ul className="wiz-file-list">
-                      {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
-                        <li key={`gitops-${file}`}>
-                          <code>{file}</code>
-                          <button
-                            type="button"
-                            className="mc-link-all"
-                            onClick={() => void onOpenTemplateFile("gitops", selectedGitopsTemplate?.name ?? "", file)}
-                            disabled={fileViewerLoading}
-                          >
-                            View
-                          </button>
-                        </li>
-                      ))}
-                      {(selectedGitopsTemplate?.previewFiles ?? []).length === 0 && (
-                        <li className="mc-muted">no files</li>
-                      )}
-                    </ul>
-                  </article>
+                  <details className="wiz-collapse">
+                    <summary>Preview template files</summary>
+                    <div className="wiz-collapse-body">
+                      <div className="wiz-row2">
+                        <article className="wiz-template-card">
+                          <h3>
+                            Service template · <code>{selectedServiceTemplate?.name ?? "—"}</code>
+                          </h3>
+                          <ul className="wiz-file-list">
+                            {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
+                              <li key={`service-${file}`}>
+                                <code>{file}</code>
+                                <button
+                                  type="button"
+                                  className="mc-link-all"
+                                  onClick={() => void onOpenTemplateFile("service", selectedServiceTemplate?.name ?? "", file)}
+                                  disabled={fileViewerLoading}
+                                >
+                                  View
+                                </button>
+                              </li>
+                            ))}
+                            {(selectedServiceTemplate?.previewFiles ?? []).length === 0 && (
+                              <li className="mc-muted">no files</li>
+                            )}
+                          </ul>
+                        </article>
+
+                        <article className="wiz-template-card">
+                          <h3>
+                            GitOps template · <code>{selectedGitopsTemplate?.name ?? "—"}</code>
+                          </h3>
+                          <ul className="wiz-file-list">
+                            {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
+                              <li key={`gitops-${file}`}>
+                                <code>{file}</code>
+                                <button
+                                  type="button"
+                                  className="mc-link-all"
+                                  onClick={() => void onOpenTemplateFile("gitops", selectedGitopsTemplate?.name ?? "", file)}
+                                  disabled={fileViewerLoading}
+                                >
+                                  View
+                                </button>
+                              </li>
+                            ))}
+                            {(selectedGitopsTemplate?.previewFiles ?? []).length === 0 && (
+                              <li className="mc-muted">no files</li>
+                            )}
+                          </ul>
+                        </article>
+                      </div>
+                    </div>
+                  </details>
                 </>
               )}
 
