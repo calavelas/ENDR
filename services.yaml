@@ -39,7 +39,7 @@ services:
       TRUST: '90'
       CATCHPHRASE: See you on the other side.
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
-- name: plex
+- name: kipp
   namespace: miller
   environments:
   - gargantua
@@ -53,8 +53,7 @@ services:
       enabled: true
     image: calavelas/endr-robot:5be8c76
     env:
-      ROBOT_NAME: plex
+      ROBOT_NAME: kipp
       HUMOR: '90'
-      HONESTY: '90'
       TRUST: '70'
       CATCHPHRASE: Are you ready for my robot colony?
