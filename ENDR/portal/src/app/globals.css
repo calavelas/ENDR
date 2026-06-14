@@ -3564,6 +3564,22 @@ html[data-theme="light"] body { background: #f4f5f8; }
 .mc-detail-hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 1.15rem; }
 .mc-detail-hero-cta { margin-left: auto; }
 
+/* Multi-paragraph hero copy (create page). */
+.mc-hero-body { margin-top: 0.8rem; font-size: 0.95rem; line-height: 1.6; color: var(--mc-ink-2); max-width: 92ch; }
+.mc-hero-body p { margin: 0; }
+.mc-hero-body p + p { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--mc-line); }
+.mc-hero-body b { color: var(--mc-ink); font-weight: 600; }
+.mc-hero-body em { font-style: italic; }
+.mc-hero-body code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--mc-surface-2);
+  border: 1px solid var(--mc-line);
+  border-radius: 5px;
+  padding: 0 0.3em;
+  color: var(--mc-ink-2);
+}
+
 /* ArgoCD detail: sync-policy badges + live resource list. */
 .mc-policy-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.85rem; }
 .mc-policy {
