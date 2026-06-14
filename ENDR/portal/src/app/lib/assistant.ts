@@ -70,13 +70,18 @@ const PERSONA_META: Record<AssistantPersona, { name: string; accent: string }> =
 };
 
 // Server-only: NOT NEXT_PUBLIC, so robot URLs never reach the browser (it always
-// hits the same-origin /api/assistant proxy). Unset → localhost dev defaults →
-// fetch fails fast → fallback.
+// hits the same-origin /api/assistant proxy). Defaults point at the live robot
+// services through the public gateway — CASE → case.calavelas.net, TARS →
+// tars.calavelas.net (same `<service>.calavelas.net` host the scaffold renders),
+// so the widget talks to the running pods out of the box. For local dev against a
+// robot on your machine, set ASSISTANT_CASE_URL / ASSISTANT_TARS_URL (e.g.
+// http://127.0.0.1:8091). If the service is unreachable the proxy falls back to
+// the baked-in cached guidance.
 export function resolveAssistantBase(persona: AssistantPersona): string {
   const url =
     persona === "case"
-      ? process.env.ASSISTANT_CASE_URL || "http://127.0.0.1:8091"
-      : process.env.ASSISTANT_TARS_URL || "http://127.0.0.1:8090";
+      ? process.env.ASSISTANT_CASE_URL || "https://case.calavelas.net"
+      : process.env.ASSISTANT_TARS_URL || "https://tars.calavelas.net";
   return url.replace(/\/+$/, "");
 }
 

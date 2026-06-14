@@ -30,6 +30,9 @@ export function AssistantWidget() {
   // any hydration mismatch (mirrors NarrativeProvider's post-mount restore).
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  // Keeps the panel mounted after the first open so collapsing it preserves the
+  // conversation + typewriter state — reopening never re-types from scratch.
+  const [hasOpened, setHasOpened] = useState(false);
   const [persona, setPersona] = useState<AssistantPersona>("case");
   const [pinned, setPinned] = useState(false);
   const [data, setData] = useState<AssistantResponse | null>(null);
@@ -38,6 +41,9 @@ export function AssistantWidget() {
   const launcherRef = useRef<HTMLButtonElement>(null);
   const stepRef = useRef<string | null>(null);
   const wasOpenRef = useRef(false);
+  // Last context we actually fetched for ("persona|mode|route"). Reopening on the
+  // same context reuses the existing answer instead of re-asking the pod.
+  const lastFetchSigRef = useRef<string | null>(null);
 
   const runAsk = useCallback(async (req: AssistantRequest) => {
     setLoading(true);
@@ -76,7 +82,10 @@ export function AssistantWidget() {
       } else {
         setPersona(defaultPersona(mode));
       }
-      if (window.localStorage.getItem(K_OPEN) === "1") setOpen(true);
+      if (window.localStorage.getItem(K_OPEN) === "1") {
+        setOpen(true);
+        setHasOpened(true);
+      }
     } catch {
       // localStorage unavailable — keep defaults.
     }
@@ -111,8 +120,13 @@ export function AssistantWidget() {
 
   // Re-ask whenever the panel is open and persona / mode / route changes.
   // Switching persona here re-asks a *different* deployment — the live showcase.
+  // But a plain collapse→reopen on the SAME context reuses the last answer (no
+  // refetch, no typewriter replay) — the panel stays mounted while collapsed.
   useEffect(() => {
     if (!mounted || !open) return;
+    const sig = `${persona}|${mode}|${pathname}`;
+    if (data && lastFetchSigRef.current === sig) return;
+    lastFetchSigRef.current = sig;
     sendRef.current("open");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, persona, mode, pathname, mounted]);
@@ -135,23 +149,31 @@ export function AssistantWidget() {
     setPersona(next);
   };
 
+  const toggleOpen = () =>
+    setOpen((value) => {
+      const next = !value;
+      if (next) setHasOpened(true);
+      return next;
+    });
+
   return (
     <div className="asst-root" style={rootStyle}>
-      {open ? (
+      {hasOpened ? (
         <AssistantPanel
+          collapsed={!open}
           data={data}
           loading={loading}
           persona={persona}
           onPersona={choosePersona}
           onReply={(id) => sendRef.current("quick-reply", id)}
-          onClose={() => setOpen(false)}
+          onCollapse={() => setOpen(false)}
         />
       ) : null}
       <AssistantLauncher
         ref={launcherRef}
         open={open}
         persona={persona === "tars" ? "TARS" : "CASE"}
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleOpen}
       />
     </div>
   );

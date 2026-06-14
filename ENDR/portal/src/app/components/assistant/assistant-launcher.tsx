@@ -19,7 +19,7 @@ export const AssistantLauncher = forwardRef<HTMLButtonElement, LauncherProps>(
         className={`asst-launcher${open ? " open" : ""}`}
         onClick={onClick}
         aria-expanded={open}
-        aria-label={open ? "Close assistant" : `Open assistant (${persona})`}
+        aria-label={open ? "Minimize assistant" : `Open assistant (${persona})`}
       >
         {open ? <Icon.X size={22} /> : <Icon.Bot size={24} />}
       </button>

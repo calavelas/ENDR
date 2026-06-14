@@ -10,43 +10,48 @@ import { useTypewriter } from "./use-typewriter";
 interface PanelProps {
   data: AssistantResponse | null;
   loading: boolean;
+  collapsed: boolean;
   persona: AssistantPersona;
   onPersona: (persona: AssistantPersona) => void;
   onReply: (id: string) => void;
-  onClose: () => void;
+  onCollapse: () => void;
 }
 
 export function AssistantPanel({
   data,
   loading,
+  collapsed,
   persona,
   onPersona,
   onReply,
-  onClose,
+  onCollapse,
 }: PanelProps) {
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const collapseRef = useRef<HTMLButtonElement>(null);
   const { out, done } = useTypewriter(data?.message ?? "");
 
-  // Move focus into the dialog on open; Escape closes.
+  // Move focus into the dialog when it becomes visible; Escape collapses it.
+  // The panel stays mounted while collapsed (to preserve state), so guard on it.
   useEffect(() => {
-    closeRef.current?.focus();
-  }, []);
+    if (!collapsed) collapseRef.current?.focus();
+  }, [collapsed]);
   useEffect(() => {
+    if (collapsed) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCollapse();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onCollapse, collapsed]);
 
   const malfunction = data?.state === "malfunction";
   const name = data?.persona ?? (persona === "tars" ? "TARS" : "CASE");
 
   return (
     <section
-      className={`asst-panel${malfunction ? " asst-malfunction" : ""}`}
+      className={`asst-panel${malfunction ? " asst-malfunction" : ""}${collapsed ? " asst-collapsed" : ""}`}
       role="dialog"
       aria-modal="false"
+      aria-hidden={collapsed}
       aria-labelledby="asst-title"
     >
       <div className="asst-strip" />
@@ -71,13 +76,15 @@ export function AssistantPanel({
           </button>
         </div>
         <button
-          ref={closeRef}
+          ref={collapseRef}
           type="button"
           className="asst-close"
-          aria-label="Close assistant"
-          onClick={onClose}
+          aria-label="Minimize assistant"
+          title="Minimize"
+          tabIndex={collapsed ? -1 : undefined}
+          onClick={onCollapse}
         >
-          <Icon.X size={16} />
+          <Icon.ChevronDown size={16} />
         </button>
       </header>
 
