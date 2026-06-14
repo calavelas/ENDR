@@ -4,6 +4,11 @@ export const revalidate = 0;
 import Link from "next/link";
 
 import * as Icon from "../../components/icons";
+import {
+  buildArgoApplicationUrl,
+  resolveArgoEmbedUrl,
+  resolveGithubRepoUrl,
+} from "../../lib/platform";
 import { ServiceHistoryPanel } from "./service-history-panel";
 
 interface ServiceHistoryPageProps {
@@ -23,6 +28,14 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
   const decodedServiceName = decodeURIComponent(serviceName);
   const justCreated = created === "1";
   const justDecommissioned = decommissioned === "1";
+  const action = justDecommissioned ? "decommission" : justCreated ? "create" : null;
+
+  // Build the PR link from the ?pr param directly — the history feed only indexes
+  // "Adding service" PRs, so edit/decommission PRs won't appear there.
+  const repoUrl = resolveGithubRepoUrl();
+  const prUrl = pr && repoUrl ? `${repoUrl}/pull/${encodeURIComponent(pr)}` : null;
+  const argoUrl = buildArgoApplicationUrl(resolveArgoEmbedUrl(), decodedServiceName);
+  const servicePath = `/application-services/${encodeURIComponent(decodedServiceName)}`;
 
   return (
     <div className="mc">
@@ -36,46 +49,63 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
         <span className="mc-detail-sub">Delivery history</span>
       </div>
 
-      {justCreated ? (
-        <aside className="mc-explain idp" role="status">
-          <span className="mc-explain-mark" aria-hidden="true">
-            ✓
-          </span>
-          <div className="mc-explain-body">
-            <p>
-              <b>Service requested.</b>{" "}
-              {pr ? (
-                <>
-                  Pull request <b>#{pr}</b> is open.
-                </>
+      {action ? (
+        <section className="mc-panel" aria-label="next steps">
+          <div className="mc-panel-head">
+            <h2 className="mc-panel-title">
+              {action === "decommission" ? "Decommission requested" : "Service requested"}
+            </h2>
+            {pr ? (
+              prUrl ? (
+                <a className="mc-link-all" href={prUrl} target="_blank" rel="noreferrer">
+                  PR #{pr} <Icon.ExternalLink size={13} />
+                </a>
               ) : (
-                "A pull request is open."
-              )}{" "}
-              CI validates and merges it, then ArgoCD deploys it — this page tracks the rollout live.
-              It&apos;s safe to refresh or bookmark.
-            </p>
+                <span className="mc-muted">PR #{pr}</span>
+              )
+            ) : null}
           </div>
-        </aside>
-      ) : justDecommissioned ? (
-        <aside className="mc-explain idp" role="status">
-          <span className="mc-explain-mark" aria-hidden="true">
-            ⚠
-          </span>
-          <div className="mc-explain-body">
-            <p>
-              <b>Decommission requested.</b>{" "}
-              {pr ? (
-                <>
-                  Pull request <b>#{pr}</b> is open.
-                </>
-              ) : (
-                "A pull request is open."
-              )}{" "}
-              On merge, reconcile removes its config and ArgoCD prunes the workload from the cluster.
-              This page tracks it live.
-            </p>
-          </div>
-        </aside>
+          <p className="mc-muted" style={{ margin: "0.35rem 0 0", fontSize: "0.84rem" }}>
+            It ships as a pull request — here&apos;s how to see it through:
+          </p>
+          <ol className="mc-steps" aria-label="next steps">
+            <li>
+              <span className="mc-step-title">Check the pull request on GitHub</span>
+              <p className="mc-step-body">CI validates it; portal PRs auto-merge once it&apos;s green.</p>
+              {prUrl ? (
+                <a className="mc-step-link" href={prUrl} target="_blank" rel="noreferrer">
+                  Open PR #{pr} <Icon.ExternalLink size={12} />
+                </a>
+              ) : null}
+            </li>
+            <li>
+              <span className="mc-step-title">Check &amp; Sync in ArgoCD</span>
+              <p className="mc-step-body">
+                After it merges, reconcile updates the manifests. Hit <b>Refresh</b>, then <b>Sync</b>, to roll it out now.
+              </p>
+              {argoUrl ? (
+                <a className="mc-step-link" href={argoUrl} target="_blank" rel="noreferrer">
+                  Open in ArgoCD <Icon.ExternalLink size={12} />
+                </a>
+              ) : null}
+            </li>
+            <li>
+              <span className="mc-step-title">
+                {action === "decommission" ? "Confirm it's gone" : "Open the service once it's generated"}
+              </span>
+              <p className="mc-step-body">
+                {action === "decommission"
+                  ? "Reconcile removes its chart + ArgoCD app and the workload is pruned — usually within a minute or two."
+                  : "Reconcile renders its chart + ArgoCD app first, so give it a minute or two, then open the service page."}
+              </p>
+              {action === "create" ? (
+                <Link className="mc-step-link" href={servicePath}>
+                  Open service <Icon.ChevronRight size={12} />
+                </Link>
+              ) : null}
+            </li>
+          </ol>
+        </section>
       ) : null}
 
       <ServiceHistoryPanel serviceName={decodedServiceName} />
