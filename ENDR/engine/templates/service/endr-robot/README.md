@@ -2,8 +2,9 @@
 
 Scaffolds an ENDR demo **robot** service. Unlike `python-fastapi`, a robot does not
 ship per-service application code — every robot runs the shared, prebuilt
-`endr-robot` image (`apps/robot`, published by `robot-build.yml`). Its entire
-behaviour is driven by deployment **environment variables** (GitOps-managed):
+`endr-robot` image. Its source lives beside this template in `image/` (built and
+published by `robot-build.yml`). Its entire behaviour is driven by deployment
+**environment variables** (GitOps-managed):
 
 - `ROBOT_NAME`, `CATCHPHRASE`, `ACCENT` — identity
 - `HUMOR`, `HONESTY`, `TRUST` — calibration (0–100)

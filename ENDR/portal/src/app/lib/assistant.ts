@@ -1,7 +1,7 @@
 // Contract + server helpers for the TARS / CASE guidance assistant.
 //
 // The rich, personality-driven guidance lives in the robot microservice
-// (apps/robot/journey.py). This module only:
+// (ENDR/engine/templates/service/endr-robot/image/journey.py). This module only:
 //   1. defines the shared request/response types,
 //   2. resolves which robot pod a persona maps to (server-only env), and
 //   3. provides a LEAN baked-in fallback so the widget keeps working when the

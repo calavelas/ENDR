@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'apps/robot/**'
+      - 'ENDR/engine/templates/service/endr-robot/image/**'
       - '.github/workflows/robot-build.yml'
   workflow_dispatch:
 
@@ -35,7 +35,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: apps/robot
+          context: ENDR/engine/templates/service/endr-robot/image
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |

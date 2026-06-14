@@ -191,7 +191,7 @@
       <tr><td><b style="color:var(--scripts)">scripts</b></td><td>SCPT</td><td>bootstrap / dev-stack / smoke-test shell scripts + the <code>Makefile</code></td><td>Bash / Make</td><td><code>ENDR/scripts/</code></td></tr>
       <tr><td><b style="color:var(--kube)">KUBE</b></td><td>—</td><td>All Kubernetes / GitOps infra — ArgoCD app-of-apps, platform Helm charts, gateways</td><td>ArgoCD / Helm / Gateway API</td><td><code>KUBE/</code></td></tr>
       <tr><td><b>services</b></td><td>SVCS</td><td>The deployable application services themselves (code + Helm chart per service)</td><td>FastAPI services</td><td><code>services/</code></td></tr>
-      <tr><td><b>apps/robot</b></td><td>—</td><td>The shared "build-a-robot" demo image (personality via env)</td><td>Flask</td><td><code>apps/robot/</code></td></tr>
+      <tr><td><b>endr-robot/image</b></td><td>—</td><td>The shared "build-a-robot" demo image (personality via env)</td><td>Flask</td><td><code>ENDR/engine/templates/service/endr-robot/image/</code></td></tr>
     </table>
     <div class="note">Mental model: <b>ENDR</b> = the platform umbrella (and the project/repo name). Inside it,
       <b>portal</b> is the face, <b>api</b> is the backend, <b>engine</b> is the automation brain, <b>scripts</b> runs
@@ -335,7 +335,7 @@
       <tr><td><code>reconcile.yml</code><br><span style="color:#7f8db0">(was tars-build)</span></td><td>Push to <code>main</code> (config changed)</td><td>Reconcile → <code>services-check --write-worktree</code> → commit "ci(reconcile): sync generated assets" → trigger the service image build.</td></tr>
       <tr><td><code>services-build.yml</code><br><span style="color:#7f8db0">(was svcs-build)</span></td><td>Service source change / dispatch</td><td><code>discover-changed-services</code> → multi-arch Docker build → Docker Hub → <code>update-image-tags</code> + regenerate values → commit "ci(services): persist image tag".</td></tr>
       <tr><td><code>platform-build.yml</code><br><span style="color:#7f8db0">(was endr-build)</span></td><td><code>ENDR/portal/**</code> or <code>ENDR/api/**</code> change</td><td>Builds the <code>portal</code> + <code>api</code> images on push to <code>main</code> and bumps <code>portal/chart</code> &amp; <code>api/chart</code> <code>values.yaml</code> with the new tag.</td></tr>
-      <tr><td><code>robot-build.yml</code></td><td><code>apps/robot/**</code> change</td><td>Builds + pushes the shared <code>endr-robot</code> demo image.</td></tr>
+      <tr><td><code>robot-build.yml</code></td><td><code>ENDR/engine/templates/service/endr-robot/image/**</code> change</td><td>Builds + pushes the shared <code>endr-robot</code> demo image.</td></tr>
     </table>
     <div class="note warn">Secrets/vars (kept under their original names — external repo config): <code>DOCKERHUB_USERNAME</code> /
       <code>DOCKERHUB_PASSWORD</code> for image publish, <code>GITHUB_TOKEN</code> for PRs, and repo vars
@@ -480,12 +480,12 @@ make -f ENDR/scripts/Makefile tunnel-status</pre>
       service lifecycle: create → break → fix → destroy, all via GitOps. Full plan in
       <code>DOCS/ROBOT_LIFECYCLE_PLAN.html</code>.</p>
     <p>A robot is just a normal ENDR service whose behaviour is 100% env-driven, running the shared
-      <code>calavelas/endr-robot</code> image (<code>apps/robot/app.py</code>): set <code>HUMOR</code>/<code>HONESTY</code>/<code>TRUST</code>
+      <code>calavelas/endr-robot</code> image (<code>ENDR/engine/templates/service/endr-robot/image/app.py</code>): set <code>HUMOR</code>/<code>HONESTY</code>/<code>TRUST</code>
       (sum&gt;0) and it boots <span class="tag-good">ONLINE</span>; leave them empty and it boots
       <span class="tag-bad">MALFUNCTION</span>. Calibration lives in <code>services.yaml</code> <code>overrides.env</code>, so
       both create and fix are <code>services.yaml</code>-only PRs.</p>
     <div class="note good"><b>TARS &amp; CASE guidance assistant — done.</b> The robot image gained a scripted
-      guidance endpoint (<code>apps/robot/journey.py</code> + <code>GET/POST /api/guide</code>): a context-aware
+      guidance endpoint (<code>ENDR/engine/templates/service/endr-robot/image/journey.py</code> + <code>GET/POST /api/guide</code>): a context-aware
       tour whose vocabulary follows the request's narrative <code>mode</code> and whose voice follows the pod's
       <code>HUMOR/HONESTY/TRUST</code>. Two deployments — <b>tars</b> (humor 90) and <b>case</b> (humor 30, honesty 95) —
       are added to <code>services.yaml</code> with charts under <code>services/{tars,case}/chart</code> and ArgoCD apps

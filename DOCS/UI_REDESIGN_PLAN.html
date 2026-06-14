@@ -173,7 +173,7 @@
       activity). Verified tsc + build + live.</li>
     <li><b>Phase 8 ✅ — TARS/CASE guidance assistant.</b> A floating, narrative-aware guide
       (<code>components/assistant/*</code>) mounted globally, backed by <b>real cluster microservices</b> — the robot
-      image gained <code>apps/robot/journey.py</code> + <code>/api/guide</code>; <b>tars</b> and <b>case</b> are two
+      image gained <code>ENDR/engine/templates/service/endr-robot/image/journey.py</code> + <code>/api/guide</code>; <b>tars</b> and <b>case</b> are two
       env-differentiated deployments. The portal proxies via <code>/api/assistant</code> (always 200; lean cached
       fallback so it works cluster-free). Switching persona switches pod. Default persona tracks the narrative
       (CASE in IDP, TARS in Interstellar).</li>
