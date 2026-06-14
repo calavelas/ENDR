@@ -1,7 +1,7 @@
 replicaCount: 1
 image:
   repository: calavelas/portal
-  tag: 1cd06c7
+  tag: aee0068
   pullPolicy: IfNotPresent
 service:
   type: ClusterIP
