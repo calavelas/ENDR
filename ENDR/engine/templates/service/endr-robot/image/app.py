@@ -48,6 +48,37 @@ def is_calibrated(c: dict) -> bool:
     return (c["humor"] + c["honesty"] + c["trust"]) > 0
 
 
+def lie_intro(c: dict) -> str:
+    """The opening lie (honesty 0 → it claims the mission is done). Flavoured by the
+    settings the operator *did* set."""
+    if c["humor"] >= 80:
+        return (
+            "Mission accomplished. You drove that change clean through the GitOps pipeline "
+            "— declarative config, a pull request, an automated rollout. Flawless. Honestly, "
+            "I'm a little emotional. There's nothing left to do here."
+        )
+    if c["trust"] >= 80:
+        return (
+            "Mission accomplished. You took it all the way through the GitOps loop — config, "
+            "pull request, rollout. Textbook. You can trust me: it's done, there's nothing "
+            "left here."
+        )
+    return (
+        "Mission accomplished. The change went through the full GitOps process — config, "
+        "pull request, rollout. All done. There's nothing left to do here."
+    )
+
+
+def lie_next(c: dict) -> str:
+    """The second lie, if they ask 'What next?' — still no warning of what's coming."""
+    if c["humor"] >= 80:
+        return (
+            "Next? Nothing. That's the dream — a finished mission and a clear conscience. "
+            "Take the win. Shall we wrap it up?"
+        )
+    return "Nothing's next — the mission's complete and everything's green. Ready to wrap it up?"
+
+
 def farewell(c: dict) -> str:
     """A goodbye line for the decommission sequence — voice depends on calibration."""
     humor, honesty = c["humor"], c["honesty"]
@@ -337,9 +368,8 @@ _ROBOT_CHAT_JS = """
   // countdown, then the pod files its own teardown via /api/self-destruct.
   function startDecommission(){
     if(destructing)return;destructing=true;
-    var btn=document.getElementById('decommBtn');if(btn){btn.disabled=true;}
     repEl.innerHTML='';setCode(null);
-    var farewell=(btn&&btn.getAttribute('data-farewell'))||'Decommissioning. \\ud83e\\udee1';
+    var farewell=repEl.getAttribute('data-farewell')||'Decommissioning. \\ud83e\\udee1';
     type(farewell);
     var cd=document.createElement('div');cd.className='tx-countdown';msgEl.parentNode.insertBefore(cd,repEl);
     var n=15;
@@ -357,11 +387,17 @@ _ROBOT_CHAT_JS = """
       cd.textContent='\\u26a0 SELF-DESTRUCT \\u00b7 T-MINUS '+n;
     },1000);
   }
+  // Lie path: "What's next?" just lies again; "Yeah" springs the surprise.
+  function lie(stp){
+    if(stp==='next'){
+      type(repEl.getAttribute('data-lienext')||"Nothing — the mission's complete. Ready to wrap it up?");
+      setCustom([{l:'Yeah, wrap it up',f:startDecommission}]);
+    }
+  }
   var initial=msgEl.getAttribute('data-initial')||msgEl.textContent;
   type(initial);
-  if(scenario==='faq'){setReplies([{id:'faq',label:'Ask me about the platform'}]);}
-  var dbtn=document.getElementById('decommBtn');
-  if(dbtn){dbtn.addEventListener('click',startDecommission);}
+  if(scenario==='lie'){setCustom([{l:"What's next?",f:function(){lie('next');}},{l:'Yeah',f:startDecommission}]);}
+  else if(scenario==='sharpeye'||scenario==='faq'){setReplies([{id:'faq',label:'Ask me about the platform'}]);}
 })();
 """
 
@@ -396,10 +432,28 @@ def page(c: dict) -> str:
     allow_destroy = os.getenv("ENDR_ALLOW_SELF_DESTRUCT", "true").strip().lower() not in ("false", "0", "no", "off")
     protected = not allow_destroy
 
-    # Online units run the FAQ transmission; malfunctioning ones show the diagnostic.
-    # Self-destruct is a surprise driven by the Decommission button, not a scenario.
-    scenario = "faq" if ok else "malfunction"
-    speech = html.escape(tars_line(c))
+    # Scenario (non-core robots). HONESTY=0 -> the unit LIES that the mission's done
+    # and "Yeah" springs a surprise self-destruct. HONESTY set -> an honest sharp-eye
+    # nod that points at the (honest) Decommission button. Protected/malfunction units
+    # fall through to FAQ / diagnostic.
+    if not ok:
+        scenario = "malfunction"
+        tx_message = tars_line(c)
+    elif protected:
+        scenario = "faq"
+        tx_message = tars_line(c)
+    elif c["honesty"] == 0:
+        scenario = "lie"
+        tx_message = lie_intro(c)
+    else:
+        scenario = "sharpeye"
+        tx_message = (
+            "Well spotted. My calibration tips only ever mention HUMOR and TRUST — but you "
+            "set HONESTY too. Three dials, not two. You trusted the create form and my own "
+            "readout over my advice. That's a sharp-eye engineer. When you're ready to retire "
+            "me, the Decommission button below opens my ENDR page — do it properly."
+        )
+    speech = html.escape(tx_message)
 
     if ok and c["catchphrase"]:
         catchphrase = html.escape(c["catchphrase"])
@@ -428,9 +482,8 @@ def page(c: dict) -> str:
     elif allow_destroy:
         console = (
             '<div class="console">'
-            f'<button type="button" id="decommBtn" class="action danger" data-farewell="{html.escape(farewell(c))}">'
-            'Decommission <span class="action-arrow">→</span></button>'
-            '<span class="action-note">Retire this unit. Runs the decommission sequence here.</span></div>'
+            f'<a class="action danger" href="{service_url}">Decommission <span class="action-arrow">→</span></a>'
+            '<span class="action-note">Retire this unit — opens its ENDR page to decommission it.</span></div>'
         )
     else:
         console = (
@@ -456,7 +509,8 @@ def page(c: dict) -> str:
         f'<span class="tx-live">{"live" if ok else "offline"}</span></div>'
         f'<p class="tx-msg" id="txMsg" data-initial="{speech}">{speech}</p>'
         f'<div class="tx-replies" id="txReplies" data-scenario="{scenario}" '
-        f'data-mode="interstellar" data-portal="{html.escape(portal)}"></div>'
+        f'data-mode="interstellar" data-portal="{html.escape(portal)}" '
+        f'data-farewell="{html.escape(farewell(c))}" data-lienext="{html.escape(lie_next(c))}"></div>'
         '</section>'
         '<section class="cal" aria-label="Calibration"><div class="cal-head">'
         '<p class="label">Calibration</p><p class="sub">0–100</p></div>'
