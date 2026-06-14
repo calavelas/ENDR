@@ -122,16 +122,21 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
             {environmentLabel(props.namespace, mode)}
           </span>
           <span className="mc-chip mc-mono">{props.imageTag ?? "n/a"}</span>
-          {props.argoUrl ? (
-            <a
-              className="mc-btn mc-btn-sm mc-btn-soft mc-detail-hero-cta"
-              href={props.argoUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open in ArgoCD
-              <Icon.ExternalLink size={14} />
-            </a>
+          {props.githubFolderUrl || props.argoUrl ? (
+            <span className="mc-detail-hero-actions">
+              {props.githubFolderUrl ? (
+                <a className="mc-btn mc-btn-sm mc-btn-soft" href={props.githubFolderUrl} target="_blank" rel="noreferrer">
+                  <Icon.Github size={14} />
+                  GitHub
+                </a>
+              ) : null}
+              {props.argoUrl ? (
+                <a className="mc-btn mc-btn-sm mc-btn-soft" href={props.argoUrl} target="_blank" rel="noreferrer">
+                  Open in ArgoCD
+                  <Icon.ExternalLink size={14} />
+                </a>
+              ) : null}
+            </span>
           ) : null}
         </div>
       </section>

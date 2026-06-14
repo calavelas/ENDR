@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import * as Icon from "../components/icons";
 
 export interface TreeFile {
@@ -43,19 +45,38 @@ function sortChildren(node: TreeNode): TreeNode[] {
   });
 }
 
-function Level({
-  node,
-  depth,
-  onOpenFile,
-  activePath,
-  lazy,
-}: {
+interface LevelProps {
   node: TreeNode;
   depth: number;
   onOpenFile: (file: TreeFile) => void;
   activePath?: string;
   lazy?: boolean;
-}) {
+}
+
+function DirNode({ node, depth, onOpenFile, activePath, lazy }: LevelProps & { node: TreeNode }) {
+  const [open, setOpen] = useState(true);
+  const pad = { paddingLeft: `${depth * 0.95 + 0.5}rem` };
+  return (
+    <div>
+      <button
+        type="button"
+        className="wiz-tree-row wiz-tree-dir"
+        style={pad}
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+      >
+        <Icon.ChevronRight size={12} className={`wiz-tree-caret${open ? " open" : ""}`} />
+        <Icon.Layers size={13} />
+        <span className="wiz-tree-name">{node.name}/</span>
+      </button>
+      {open ? (
+        <Level node={node} depth={depth + 1} onOpenFile={onOpenFile} activePath={activePath} lazy={lazy} />
+      ) : null}
+    </div>
+  );
+}
+
+function Level({ node, depth, onOpenFile, activePath, lazy }: LevelProps) {
   return (
     <>
       {sortChildren(node).map((child) => {
@@ -63,13 +84,14 @@ function Level({
         const pad = { paddingLeft: `${depth * 0.95 + 0.5}rem` };
         if (isDir) {
           return (
-            <div key={child.name}>
-              <div className="wiz-tree-row wiz-tree-dir" style={pad}>
-                <Icon.Layers size={13} />
-                <span className="wiz-tree-name">{child.name}/</span>
-              </div>
-              <Level node={child} depth={depth + 1} onOpenFile={onOpenFile} activePath={activePath} lazy={lazy} />
-            </div>
+            <DirNode
+              key={child.name}
+              node={child}
+              depth={depth}
+              onOpenFile={onOpenFile}
+              activePath={activePath}
+              lazy={lazy}
+            />
           );
         }
         const file = child.file!;
