@@ -3239,10 +3239,13 @@ html[data-theme="light"] body { background: #f4f5f8; }
   .asst-panel { animation: none; }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 1023px) {
   .app-shell { --asst-sheet-h: min(52dvh, 440px); }
   .asst-launcher { right: 1rem; bottom: 1rem; }
-  /* On phones the assistant is a bottom sheet, not a side drawer. */
+  /* Below the 1024px three-column layout the assistant is a bottom sheet, not a
+     side drawer — a fixed right drawer overlapped the create form and hid its
+     Next/Create buttons at intermediate (tablet) widths. The reserved bottom
+     padding keeps those actions reachable. */
   .asst-panel {
     top: auto;
     bottom: 0;

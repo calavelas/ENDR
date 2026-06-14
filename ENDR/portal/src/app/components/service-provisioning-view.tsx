@@ -66,15 +66,21 @@ export function ServiceProvisioningView({
           <span className="mc-prov-spin" aria-hidden="true" />
           <div className="mc-prov-text">
             <h2 className="mc-prov-title">
-              {pending ? `This ${unit} is being created` : `This ${unit} is on its way`}
+              {pending ? (
+                <>
+                  We can&apos;t find <code>{name}</code> right now
+                </>
+              ) : (
+                `This ${unit} is on its way`
+              )}
             </h2>
             <p className="mc-prov-body">
               {pending ? (
                 <>
-                  Your pull request just opened and is merging now. The {unit} appears
-                  here a minute or two after that — this page refreshes itself, so just
-                  hang on, no need to reload. (If you didn&apos;t just create{" "}
-                  <code>{name}</code>, it may not exist or may have been removed.)
+                  This page refreshes itself, so just hang on. If you <b>just created</b> it,
+                  it appears here a minute or two after its pull request merges. If you{" "}
+                  <b>just removed</b> it, it&apos;s being torn down and will disappear.
+                  Otherwise, this {unit} may not exist — head back to the catalog.
                 </>
               ) : (
                 <>
