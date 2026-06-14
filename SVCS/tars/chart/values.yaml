@@ -1,6 +1,6 @@
 image:
   repository: calavelas/endr-robot
-  tag: 467891a
+  tag: 8a6757e
   pullPolicy: IfNotPresent
 
 service:
