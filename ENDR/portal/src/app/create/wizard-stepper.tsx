@@ -2,12 +2,13 @@
 
 import { useNarrative } from "../lib/narrative";
 
-type StepId = 1 | 2 | 3;
+type StepId = 1 | 2 | 3 | 4;
 
 const STEPS: Array<{ id: StepId; idp: string; interstellar: string }> = [
   { id: 1, idp: "Basic Service Info", interstellar: "Robot Basics" },
   { id: 2, idp: "Tech Stack", interstellar: "Chassis & Stack" },
   { id: 3, idp: "Service Configuration", interstellar: "Calibration" },
+  { id: 4, idp: "Review", interstellar: "Review" },
 ];
 
 export function WizardStepper({

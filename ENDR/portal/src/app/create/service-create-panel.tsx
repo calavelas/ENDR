@@ -14,6 +14,7 @@ import {
   type ServiceFormState,
 } from "../lib/service-entry";
 import { ConfigEditor } from "./config-editor";
+import { FileTree } from "./file-tree";
 import { WizardStepper } from "./wizard-stepper";
 import { YamlPane } from "./yaml-pane";
 
@@ -136,7 +137,7 @@ interface FileViewerState {
 }
 
 type PipelineStageStatus = "pending" | "running" | "success" | "failed";
-type StepId = 1 | 2 | 3;
+type StepId = 1 | 2 | 3 | 4;
 
 interface PipelineStageView {
   key: "pr-check" | "reconcile" | "services-build";
@@ -832,7 +833,8 @@ export function CreateServicePanel() {
     }
   }
 
-  async function onGeneratePreview() {
+  // Run the dry-run preview; returns the result (for navigation) or null on error.
+  async function runPreview(): Promise<CreateServiceResult | null> {
     setFormError("");
     setResult(null);
     setTransactionStatus(null);
@@ -849,11 +851,11 @@ export function CreateServicePanel() {
 
     const form = resolveForm();
     if (!form) {
-      return;
+      return null;
     }
     const payload = buildPayload(form);
     if (!payload) {
-      return;
+      return null;
     }
 
     setPreviewing(true);
@@ -869,20 +871,39 @@ export function CreateServicePanel() {
         throw new Error(readErrorMessage(body));
       }
 
-      setPreviewResult(body as CreateServiceResult);
+      const data = body as CreateServiceResult;
+      setPreviewResult(data);
       setLastPreviewSignature(buildPreviewSignature(payload));
+      return data;
     } catch (error) {
       const detail = error instanceof Error ? error.message : "preview failed";
       setFormError(detail);
+      return null;
     } finally {
       setPreviewing(false);
     }
   }
 
+  // "Review" = generate the preview, default the file viewer to values.yaml, and
+  // advance to the review screen.
+  async function onReview() {
+    const data = await runPreview();
+    if (!data) {
+      return;
+    }
+    const values =
+      data.generatedFiles.find((file) => /(^|\/)values\.yaml$/.test(file.path) && typeof file.content === "string") ??
+      data.generatedFiles.find((file) => typeof file.content === "string");
+    if (values) {
+      onOpenGeneratedFile(values);
+    }
+    setStep(4);
+    setFurthestStep(4);
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (step !== 3) {
-      goNext();
+    if (step !== 4) {
       return;
     }
 
@@ -907,7 +928,7 @@ export function CreateServicePanel() {
     }
     const payloadSignature = buildPreviewSignature(payload);
     if (!previewResult || lastPreviewSignature !== payloadSignature) {
-      setFormError("Generate Preview for current values before creating the service.");
+      setFormError("The config changed — go back and Review again before creating.");
       return;
     }
 
@@ -1170,8 +1191,10 @@ export function CreateServicePanel() {
         </section>
       ) : (
         <form className="wiz-form" onSubmit={onSubmit}>
+          {step < 4 ? (
+          <>
           <div className="wiz-cols">
-            {/* Left — the current step (just swaps this box) + the dry-run preview */}
+            {/* Left — the current step (just swaps this box) */}
             <div className="wiz-col-left" onFocusCapture={onFormFocus}>
               <section className="mc-panel wiz-step-panel">
               {step === 1 && (
@@ -1361,28 +1384,6 @@ export function CreateServicePanel() {
                   )}
                 </div>
               </section>
-
-              {previewResult ? (
-                <section className="mc-panel wiz-preview-panel">
-                  <div className="mc-panel-head">
-                    <h3 className="mc-panel-title">Preview</h3>
-                    <span className="mc-count-chip">{previewResult.generatedFiles.length} files</span>
-                  </div>
-                  <ul className="wiz-file-list">
-                    {previewResult.generatedFiles.map((file) => (
-                      <li key={file.path}>
-                        <code>{file.path}</code>
-                        <span className="mc-muted">{file.size} b</span>
-                        {typeof file.content === "string" ? (
-                          <button type="button" className="mc-link-all" onClick={() => onOpenGeneratedFile(file)}>
-                            View
-                          </button>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ) : null}
             </div>
 
             {/* Right — the live services.yaml + the file viewer beneath it */}
@@ -1392,7 +1393,7 @@ export function CreateServicePanel() {
                 onYamlChange={onYamlChange}
                 onYamlFocus={onYamlFocus}
                 onYamlBlur={onYamlBlur}
-                onValidate={onGeneratePreview}
+                onValidate={() => void runPreview()}
                 validating={previewing}
                 yamlError={yamlError}
                 unknownKeysWarning={unknownKeysWarning}
@@ -1401,28 +1402,67 @@ export function CreateServicePanel() {
             </div>
           </div>
 
-          {formError && (
-            <p className="form-error" role="alert">
-              {formError}
-            </p>
-          )}
+          <div className="wiz-nav">
+            <span className="wiz-nav-hint">Edit the config, then review what will be created.</span>
+            <span className="wiz-nav-spacer" />
+            <button type="button" className="mc-btn" onClick={onReview} disabled={previewing || submitting}>
+              {previewing ? "Reviewing…" : "Review"}
+              <Icon.ArrowRight size={14} />
+            </button>
+          </div>
+          </>
+          ) : (
+          <>
+          <div className="wiz-cols">
+            {/* Left — the generated repo tree */}
+            <section className="mc-panel wiz-preview-panel">
+              <div className="mc-panel-head">
+                <h3 className="mc-panel-title">Files to be created</h3>
+                <span className="mc-count-chip">{previewResult?.generatedFiles.length ?? 0} files</span>
+              </div>
+              <p className="wiz-hint">The repo tree this create PR will add — click a file to inspect it.</p>
+              <FileTree
+                files={previewResult?.generatedFiles ?? []}
+                onOpenFile={onOpenGeneratedFile}
+                activePath={fileViewer?.path}
+              />
+            </section>
+
+            {/* Right — the file viewer */}
+            <div className="wiz-col-right">
+              {fileViewerPanel ?? (
+                <section className="mc-panel wiz-fileviewer">
+                  <div className="mc-panel-head">
+                    <h2 className="mc-panel-title">File viewer</h2>
+                  </div>
+                  <p className="mc-muted">Select a file on the left to view it.</p>
+                </section>
+              )}
+            </div>
+          </div>
 
           <div className="wiz-nav">
-            <span className="wiz-nav-hint">{isPreviewCurrent ? "Ready to create." : "Generate a preview, then create."}</span>
-            <span className="wiz-nav-spacer" />
-            <button
-              type="button"
-              className="mc-btn mc-btn-soft"
-              onClick={onGeneratePreview}
-              disabled={previewing || submitting}
-            >
-              {previewing ? "Generating…" : "Generate preview"}
+            <button type="button" className="mc-btn mc-btn-soft" onClick={goBack}>
+              <Icon.ChevronLeft size={15} />
+              Back
             </button>
+            <span className="wiz-nav-spacer" />
+            <span className="wiz-nav-hint">
+              {isPreviewCurrent ? "Opens a PR appending this to services.yaml." : "Config changed — review again."}
+            </span>
             <button type="submit" className="mc-btn" disabled={submitting || previewing || !isPreviewCurrent}>
               <Icon.Plus size={15} />
               {submitting ? "Creating…" : t.createCta}
             </button>
           </div>
+          </>
+          )}
+
+          {formError && (
+            <p className="form-error" role="alert">
+              {formError}
+            </p>
+          )}
         </form>
       )}
     </div>

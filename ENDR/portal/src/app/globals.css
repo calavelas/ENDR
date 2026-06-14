@@ -3718,6 +3718,34 @@ select.wiz-input { cursor: pointer; }
 }
 .wiz-preview-panel { padding: 1rem 1.1rem; }
 .wiz-nav-hint { color: var(--mc-muted); font-size: 0.8rem; }
+
+/* Review screen — generated repo file tree */
+.wiz-tree { display: flex; flex-direction: column; gap: 1px; margin-top: 0.6rem; }
+.wiz-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.32rem 0.5rem;
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-align: left;
+}
+.wiz-tree-dir { color: var(--mc-muted); }
+button.wiz-tree-row {
+  border: 0;
+  background: transparent;
+  color: var(--mc-ink-2);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+button.wiz-tree-row:hover:not(:disabled) { background: var(--mc-surface-2); color: var(--mc-ink); }
+button.wiz-tree-row:disabled { opacity: 0.5; cursor: default; }
+.wiz-tree-row.active { background: color-mix(in srgb, var(--mc-info) 16%, transparent); color: var(--mc-ink); }
+.wiz-tree-row.active::before { content: ""; }
+.wiz-tree-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-tree-size { color: var(--mc-faint); font-size: 0.66rem; flex: 0 0 auto; }
 @media (max-width: 980px) {
   .wiz-cols { grid-template-columns: 1fr; }
 }
