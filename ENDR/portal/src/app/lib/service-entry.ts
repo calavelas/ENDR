@@ -66,8 +66,25 @@ export function entryToYaml(entry: Record<string, unknown>): string {
   return dump([entry], { lineWidth: 100, noRefs: true });
 }
 
+// Calibration keys left commented in a robot's YAML — an easter egg: an advanced
+// user uncomments them in the editor to bring the robot ONLINE.
+const ROBOT_COMMENTED_CALIBRATION = ["HUMOR", "HONESTY", "TRUST"];
+
 export function formToYaml(form: ServiceFormState): string {
-  return entryToYaml(buildEntry(form));
+  let text = entryToYaml(buildEntry(form));
+  if (form.serviceTemplate === "endr-robot") {
+    const env = envRowsToMap(form.envRows);
+    const missing = ROBOT_COMMENTED_CALIBRATION.filter((key) => !(key in env));
+    if (missing.length > 0) {
+      text = text.replace(/\n*$/, "\n");
+      if (!/\n {4}env:/.test(text)) {
+        text += "    env:\n";
+      }
+      text += "      # calibration — uncomment & set each 0-100 to bring it online:\n";
+      text += `${missing.map((key) => `      # ${key}: ""`).join("\n")}\n`;
+    }
+  }
+  return text;
 }
 
 export interface ParsedEntry {
@@ -131,9 +148,5 @@ export function parseYamlToForm(text: string): ParsedEntry {
 // just ordinary env keys, fully editable/removable (real-platform overrides).
 export const ROBOT_ENV_SEED: EnvRow[] = [
   { key: "ROBOT_NAME", value: "" },
-  { key: "CATCHPHRASE", value: "" },
-  { key: "HUMOR", value: "" },
-  { key: "HONESTY", value: "" },
-  { key: "TRUST", value: "" },
-  { key: "ACCENT", value: "#37d3c3" },
+  { key: "CATCHPHRASE", value: "Are you ready for my robot colony?" },
 ];

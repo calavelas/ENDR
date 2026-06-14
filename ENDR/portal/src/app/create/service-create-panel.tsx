@@ -1014,6 +1014,15 @@ export function CreateServicePanel() {
     <div className="wiz">
       <WizardStepper step={step} furthest={furthestStep} onGo={goToStep} />
 
+      {!result && (
+        <p className="wiz-note">
+          <strong>Day-0 bootstrap only.</strong> Each step just edits one <code>services.yaml</code> entry — the
+          platform&apos;s <strong>desired-state catalog</strong>, not the running configuration. Once created, the{" "}
+          {thing} is configured through its own generated GitOps config (its chart): <code>services.yaml</code> tracks{" "}
+          <em>what should exist</em>; the chart is <em>how it actually runs</em>.
+        </p>
+      )}
+
       {result ? (
         <section ref={resultSectionRef} className="mc-panel transaction-panel" aria-live="polite">
           <div className="mc-panel-head">
@@ -1283,60 +1292,69 @@ export function CreateServicePanel() {
                     <span className="wiz-hint">Target cluster.</span>
                   </label>
 
-                  <details className="wiz-advanced">
-                    <summary>Advanced — delivery & template files</summary>
-                    <div className="wiz-advanced-body">
-                      <label className="wiz-field">
-                        <span className="wiz-label">GitOps template</span>
-                        <select
-                          className="wiz-input"
-                          value={gitopsTemplate}
-                          onChange={(event) => setGitopsTemplate(event.target.value)}
-                        >
-                          {options?.gitopsTemplates.map((template) => (
-                            <option key={template.name} value={template.name}>
-                              {template.name}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="wiz-hint">
-                          How the {thing} is packaged &amp; deployed. The default is usually right.
-                        </span>
-                      </label>
+                  <label className="wiz-field">
+                    <span className="wiz-label">GitOps template</span>
+                    <select
+                      className="wiz-input"
+                      value={gitopsTemplate}
+                      onChange={(event) => setGitopsTemplate(event.target.value)}
+                    >
+                      {options?.gitopsTemplates.map((template) => (
+                        <option key={template.name} value={template.name}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="wiz-hint">How the {thing} is packaged &amp; deployed.</span>
+                  </label>
 
-                      <article className="wiz-template-card">
-                        <h3>Template files</h3>
-                        <ul className="wiz-file-list">
-                          {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
-                            <li key={`service-${file}`}>
-                              <code>{file}</code>
-                              <button
-                                type="button"
-                                className="mc-link-all"
-                                onClick={() => void onOpenTemplateFile("service", selectedServiceTemplate?.name ?? "", file)}
-                                disabled={fileViewerLoading}
-                              >
-                                View
-                              </button>
-                            </li>
-                          ))}
-                          {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
-                            <li key={`gitops-${file}`}>
-                              <code>{file}</code>
-                              <button
-                                type="button"
-                                className="mc-link-all"
-                                onClick={() => void onOpenTemplateFile("gitops", selectedGitopsTemplate?.name ?? "", file)}
-                                disabled={fileViewerLoading}
-                              >
-                                View
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </article>
-                    </div>
-                  </details>
+                  <article className="wiz-template-card">
+                    <h3>
+                      Service template · <code>{selectedServiceTemplate?.name ?? "—"}</code>
+                    </h3>
+                    <ul className="wiz-file-list">
+                      {(selectedServiceTemplate?.previewFiles ?? []).map((file) => (
+                        <li key={`service-${file}`}>
+                          <code>{file}</code>
+                          <button
+                            type="button"
+                            className="mc-link-all"
+                            onClick={() => void onOpenTemplateFile("service", selectedServiceTemplate?.name ?? "", file)}
+                            disabled={fileViewerLoading}
+                          >
+                            View
+                          </button>
+                        </li>
+                      ))}
+                      {(selectedServiceTemplate?.previewFiles ?? []).length === 0 && (
+                        <li className="mc-muted">no files</li>
+                      )}
+                    </ul>
+                  </article>
+
+                  <article className="wiz-template-card">
+                    <h3>
+                      GitOps template · <code>{selectedGitopsTemplate?.name ?? "—"}</code>
+                    </h3>
+                    <ul className="wiz-file-list">
+                      {(selectedGitopsTemplate?.previewFiles ?? []).map((file) => (
+                        <li key={`gitops-${file}`}>
+                          <code>{file}</code>
+                          <button
+                            type="button"
+                            className="mc-link-all"
+                            onClick={() => void onOpenTemplateFile("gitops", selectedGitopsTemplate?.name ?? "", file)}
+                            disabled={fileViewerLoading}
+                          >
+                            View
+                          </button>
+                        </li>
+                      ))}
+                      {(selectedGitopsTemplate?.previewFiles ?? []).length === 0 && (
+                        <li className="mc-muted">no files</li>
+                      )}
+                    </ul>
+                  </article>
                 </>
               )}
 
@@ -1345,14 +1363,6 @@ export function CreateServicePanel() {
                   <h2 className="wiz-step-title">{mode === "interstellar" ? "Calibration" : "Service configuration"}</h2>
                   <p className="wiz-step-sub">
                     Tune the <code>overrides</code> for this {thing} — or edit the YAML on the right directly.
-                  </p>
-
-                  <p className="wiz-note">
-                    <strong>Day-0 bootstrap only.</strong> These overrides seed the initial{" "}
-                    <code>services.yaml</code> entry — the platform&apos;s <strong>desired-state catalog</strong>, not
-                    the running configuration. Once created, the {thing} is configured through its own generated GitOps
-                    config (<code>services/{trimmedName || "<name>"}/chart</code>): <code>services.yaml</code> tracks{" "}
-                    <em>what should exist</em>; the chart is <em>how it actually runs</em>.
                   </p>
 
                   <ConfigEditor

@@ -34,17 +34,14 @@ export function ConfigEditor({
         <label className="wiz-toggle-row">
           <input type="checkbox" checked={gatewayEnabled} disabled aria-disabled="true" readOnly />
           <span>Expose publicly (Gateway)</span>
-          <span className="wiz-lock">🔒 locked</span>
         </label>
         <p className="wiz-hint">
-          Serve at <code>https://{host}.calavelas.net</code>. Always on for this demo.
+          Serve at <code>https://{host}.calavelas.net</code>.
         </p>
       </div>
 
       <label className="wiz-field">
-        <span className="wiz-label">
-          Image override <span className="wiz-optional">locked</span>
-        </span>
+        <span className="wiz-label">Image override</span>
         <input
           type="text"
           className="wiz-input mc-mono"
@@ -55,7 +52,6 @@ export function ConfigEditor({
           readOnly
           autoComplete="off"
         />
-        <span className="wiz-hint">🔒 Pinned to the template default for this demo.</span>
       </label>
 
       <div className="wiz-env">
