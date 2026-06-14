@@ -2,11 +2,11 @@
 
 An ENDR demo **robot** — its whole personality is driven by deployment environment
 variables, managed through GitOps. There is no app code here to maintain: every robot
-runs the shared `calavelas/endr-robot:8a6757e` image.
+runs the shared `calavelas/endr-robot:38ea4d3` image.
 
 - **Namespace:** `edmunds`
 - **URL:** `https://case.calavelas.net`
-- **Image:** `calavelas/endr-robot:8a6757e`
+- **Image:** `calavelas/endr-robot:38ea4d3`
 
 ## Calibration
 
