@@ -78,6 +78,6 @@ Total Services Running: 3
 | Service Name | Template |
 | --- | --- |
 | case | endr-robot |
-| plex | endr-robot |
+| kipp | endr-robot |
 | tars | endr-robot |
 <!-- TARS:SVCS_TABLE_END -->

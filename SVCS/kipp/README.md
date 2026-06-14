@@ -1,20 +1,19 @@
-# plex
+# kipp
 
 An ENDR demo **robot** — its whole personality is driven by deployment environment
 variables, managed through GitOps. There is no app code here to maintain: every robot
 runs the shared `calavelas/endr-robot:5be8c76` image.
 
 - **Namespace:** `miller`
-- **URL:** `https://plex.calavelas.net`
+- **URL:** `https://kipp.calavelas.net`
 - **Image:** `calavelas/endr-robot:5be8c76`
 
 ## Calibration
 
 | Key | Value |
 | --- | --- |
-| `ROBOT_NAME` | `plex` |
+| `ROBOT_NAME` | `kipp` |
 | `HUMOR` | `90` |
-| `HONESTY` | `90` |
 | `TRUST` | `70` |
 | `CATCHPHRASE` | `Are you ready for my robot colony?` |
 

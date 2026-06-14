@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plex
+  name: kipp
   labels:
-    app.kubernetes.io/name: plex
+    app.kubernetes.io/name: kipp
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: plex
+      app.kubernetes.io/name: kipp
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: plex
+        app.kubernetes.io/name: kipp
     spec:
       containers:
-        - name: plex
+        - name: kipp
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: 8080

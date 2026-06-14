@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: plex
+  name: kipp
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/calavelas/ENDR.git
     targetRevision: main
-    path: SVCS/plex/chart
+    path: SVCS/kipp/chart
   destination:
     server: https://kubernetes.default.svc
     namespace: miller
