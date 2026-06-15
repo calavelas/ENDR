@@ -2582,7 +2582,7 @@ html[data-theme="light"] body { background: #f4f5f8; }
 .mc-btn-block { display: flex; width: 100%; justify-content: center; }
 
 /* Welcome (hero) */
-.mc-welcome { display: flex; flex-direction: column; min-height: 374px; padding: 1.85rem 2rem; }
+.mc-welcome { display: flex; flex-direction: column; padding: 1.85rem 2rem; }
 .mc-welcome-title {
   margin: 0;
   font-family: var(--font-mono);
@@ -2606,7 +2606,7 @@ html[data-theme="light"] body { background: #f4f5f8; }
   color: var(--mc-muted);
   max-width: 56ch;
 }
-.mc-welcome-actions { margin-top: auto; padding-top: 1.9rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.mc-welcome-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
 /* Stat row */
 .mc-stats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 0; }
