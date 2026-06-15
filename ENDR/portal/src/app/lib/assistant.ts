@@ -112,7 +112,7 @@ const STEPS: Record<string, FallbackStep> = {
   },
   create: {
     text: {
-      idp: "Hit Create, pick a golden-path template, name your service and namespace — ENDR scaffolds the repo, Dockerfile and Helm chart. No YAML by hand.",
+      idp: "Hit Create, pick a blueprint, name your service and namespace — ENDR scaffolds the repo, Dockerfile and Helm chart. No YAML by hand.",
       interstellar: "Open the build bay, pick a blueprint, name your robot and planet — ENDR forges the repo, Dockerfile and Helm chart. No YAML by hand.",
     },
     cta: { href: "/create", label: { idp: "Open Create", interstellar: "Open the build bay" } },

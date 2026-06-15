@@ -69,7 +69,7 @@ STEPS = {
     "create": {
         "text": {
             "idp": (
-                "Hit Create and pick a golden-path template. Name your service, "
+                "Hit Create and pick a blueprint. Name your service, "
                 "choose a namespace, and ENDR scaffolds the repo, Dockerfile and "
                 "Helm chart for you — no YAML by hand."
             ),

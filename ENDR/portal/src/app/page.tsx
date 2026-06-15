@@ -24,8 +24,8 @@ interface LandingCopy {
 const COPY: Record<NarrativeMode, LandingCopy> = {
   idp: {
     eyebrow: "Internal Developer Platform",
-    title: "Ship services the",
-    highlight: "golden-path way.",
+    title: "Ship services from a",
+    highlight: "trusted blueprint.",
     subcopy:
       "ENDR turns a service request into a running, observable deployment — through Git, pull requests, and ArgoCD. No tickets, no hand-offs, one source of truth.",
     enterCta: "Enter the platform",
@@ -33,8 +33,8 @@ const COPY: Record<NarrativeMode, LandingCopy> = {
     features: [
       {
         icon: "FileText",
-        title: "Golden-path templates",
-        body: "Pick a template; ENDR scaffolds a production-ready service with sane defaults and a clean repo layout.",
+        title: "Service blueprints",
+        body: "Pick a blueprint; ENDR scaffolds a production-ready service with sane defaults and a clean repo layout.",
       },
       {
         icon: "Github",

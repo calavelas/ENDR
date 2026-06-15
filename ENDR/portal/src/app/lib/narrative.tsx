@@ -49,7 +49,7 @@ const LABELS: Record<NarrativeMode, NarrativeLabels> = {
     nav: { dashboard: "Portal", services: "Services" },
     welcome: "Welcome to ENDR",
     tagline: "Build. Operate. Evolve.",
-    heroCopy: "Deploy reliable services with golden paths and automated operations.",
+    heroCopy: "Deploy reliable services from trusted blueprints, automated end to end.",
     createCta: "Create service",
     activeSection: "Services",
     modelLabel: "Template",
@@ -66,7 +66,7 @@ const LABELS: Record<NarrativeMode, NarrativeLabels> = {
     welcome: "Welcome to ENDR",
     tagline: "Build. Operate. Evolve.",
     heroCopy:
-      "Deploy reliable services across the galaxy with golden paths and autonomous operations.",
+      "Deploy reliable robots across the galaxy from trusted blueprints, autonomous end to end.",
     createCta: "Create robot",
     activeSection: "Active Missions",
     modelLabel: "Model",
