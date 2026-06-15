@@ -2937,7 +2937,7 @@ html[data-theme="light"] body { background: #f4f5f8; }
 .mc-pcard.neutral .mc-pcard-dot { background: var(--mc-info); }
 
 /* Responsive */
-@media (max-width: 1180px) {
+@media (max-width: 900px) {
   .mc-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 1024px) {
