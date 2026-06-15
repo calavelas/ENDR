@@ -122,6 +122,33 @@ way → live" auto-refreshing gradient across the whole window.
 Remaining (lower priority): jargon on the default IDP landing (Interstellar mode is
 much clearer); the assistant panel can overlap the create form on narrow viewports.
 
+## Round 3 — parallel re-eval (layperson + DevOps + junior dev)
+Three personas re-ran the full lifecycle; **all completed it** (create → provisioning →
+live → decommission). Highlights:
+- **Layperson** (`tryout-luna`): live in ~2.5 min, decommissioned in two clicks. New
+  nit: a stray rapid click on "Add variable" seemed to reset the create form (couldn't
+  reproduce a clear cause — the button is a safe `type=button`; flagged for manual repro).
+- **DevOps** (`tryout-orbit`): everything verified against `gh`. Found decommission
+  left the **workload running** (see below).
+- **Junior dev, no ops** (`tryout-pixel`): shipped unaided — the chat genuinely taught
+  it GitOps. Friction: the decommission "Refresh → Sync → Prune" ask was the only ops-y
+  step, and namespace choice had no guidance.
+
+**Root cause found + fixed — orphaned workloads on decommission (HIGH).** Child ArgoCD
+Applications had **no `resources-finalizer.argocd.argoproj.io`** (verified live: child
+apps report `finalizers: None`). So when the app-of-apps prunes a child Application, the
+object is removed but its Deployment/Service/route are **orphaned and keep running
+indefinitely** — not just lagging. Fixes:
+- Added the finalizer to the child-app template → future decommissions cascade-delete.
+- ArgoCD auto-refresh (separate change) removes the ~3-min polling wait on create/decommission.
+- Decommission guidance updated: it's now **automatic** (no manual Refresh/Sync/Prune).
+- One-time manual cleanup is needed for services decommissioned *before* the finalizer
+  (their Applications are already gone) — `kubectl delete deployment,service,httproute <name> -n <ns>`.
+
+Also fixed this round: the post-decommission/unknown service page now shows neutral
+copy (not "being created"); the assistant drawer becomes a bottom sheet below 1024px so
+it no longer covers the create form's Next/Create buttons.
+
 ## Scenario completion
 | Step | Layperson (Interstellar) | DevOps (IDP) |
 |---|---|---|

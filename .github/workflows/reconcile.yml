@@ -492,5 +492,5 @@ jobs:
           title: GitOps manifests reconciled on main
           body: >-
             ${{ github.event.inputs.pr_action == 'decommission'
-                && 'Reconcile removed this service''s Helm chart and ArgoCD Application from `main`. To finish tearing the workload down now, open the **services** app-of-apps in ArgoCD → **Refresh** → **Sync** with **Prune** enabled.'
-                || 'Reconcile rendered this service''s Helm chart and ArgoCD Application onto `main`. ArgoCD will deploy it on the next sync — to roll it out now, open the **services** app-of-apps in ArgoCD → **Refresh** → **Sync**.' }}
+                && 'Reconcile removed this service''s Helm chart and ArgoCD Application from `main` and refreshed the **services** app-of-apps — ArgoCD cascade-deletes the workload automatically (usually within a minute). Nothing to click.'
+                || 'Reconcile rendered this service''s Helm chart and ArgoCD Application onto `main` and refreshed the **services** app-of-apps — ArgoCD is deploying it now (usually within a minute). Nothing to click.' }}

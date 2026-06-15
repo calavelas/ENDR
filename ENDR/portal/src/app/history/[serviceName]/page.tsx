@@ -87,12 +87,11 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
             </li>
             {action === "decommission" ? (
               <li>
-                <span className="mc-step-title">Sync the services app in ArgoCD</span>
+                <span className="mc-step-title">It&apos;s removed automatically</span>
                 <p className="mc-step-body">
-                  The merge deletes the service&apos;s file from the repo, but its running workload is
-                  owned by the <b>services</b> app-of-apps. Reconcile regenerates the child Applications;
-                  open <b>services</b> and hit <b>Refresh</b>, then <b>Sync</b> with <b>Prune</b> enabled to
-                  remove this one&apos;s Application and tear the workload down.
+                  Once the PR merges, reconcile prunes the chart and ArgoCD Application and refreshes
+                  the <b>services</b> app for you — ArgoCD then tears the workload down within a minute
+                  or so. Nothing to click. You can open the <b>services</b> app to watch it disappear.
                 </p>
                 {argoAppsUrl ? (
                   <a className="mc-step-link" href={argoAppsUrl} target="_blank" rel="noreferrer">

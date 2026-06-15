@@ -377,8 +377,8 @@ jobs:
           title: Merged — handing off to Reconcile
           body: >-
             ${{ contains(github.event.pull_request.title, 'Decommission')
-                && 'Squash-merged to `main`. The **Reconcile** workflow now removes this service''s chart and ArgoCD Application. Open the **services** app-of-apps in ArgoCD and Sync (with Prune) to tear the workload down. Progress will appear here.'
-                || 'Squash-merged to `main`. The **Reconcile** workflow now renders this service''s Helm chart and ArgoCD Application, then ArgoCD deploys it. Progress will appear here.' }}
+                && 'Squash-merged to `main`. The **Reconcile** workflow now removes this service''s chart and ArgoCD Application and refreshes ArgoCD — the workload is torn down automatically. Progress will appear here.'
+                || 'Squash-merged to `main`. The **Reconcile** workflow now renders this service''s Helm chart and ArgoCD Application and refreshes ArgoCD, which deploys it automatically. Progress will appear here.' }}
 
       - name: Comment — queued to merge
         if: ${{ steps.auto_merge.outputs.merged != 'true' && steps.auto_merge.outputs.decision == 'auto-merge-enabled' }}
