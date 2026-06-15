@@ -150,9 +150,13 @@ jobs:
           stage: Validate
           status: success
           title: Checks passed — clearing this for merge
-          body: >-
-            Reconcile is clean and robot calibration is valid, so this is safe to
-            squash-merge. Changed services: `${{ steps.svcs_check.outputs.changed_service_count || '0' }}`.
+          body: |
+            Safe to squash-merge. The catalog has **${{ steps.svcs_check.outputs.service_count || '?' }}** service(s); this PR changes **${{ steps.svcs_check.outputs.changed_service_count || '0' }}**:
+            - **Added:** ${{ steps.svcs_check.outputs.added_service_count || '0' }} ${{ steps.svcs_check.outputs.added_services != '' && format('(`{0}`)', steps.svcs_check.outputs.added_services) || '' }}
+            - **Removed:** ${{ steps.svcs_check.outputs.removed_service_count || '0' }} ${{ steps.svcs_check.outputs.removed_services != '' && format('(`{0}`)', steps.svcs_check.outputs.removed_services) || '' }}
+            - **Updated:** ${{ steps.svcs_check.outputs.updated_service_count || '0' }} ${{ steps.svcs_check.outputs.updated_services != '' && format('(`{0}`)', steps.svcs_check.outputs.updated_services) || '' }}
+
+            **Verified before auto-merge:** reconcile renders the whole catalog cleanly · every namespace is on the `platform.yaml` allowlist · robot calibration is well-formed (HUMOR/HONESTY/TRUST 0–100) · the PR touches `services.yaml` only · it's authored by the repo owner. All green → auto-merge (squash) runs next.
 
       - name: Comment — checks failed
         if: failure()

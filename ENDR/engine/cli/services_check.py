@@ -609,6 +609,7 @@ def main(argv: list[str] | None = None) -> int:
     write_github_output(
         {
             "has_changes": "true" if (upsert_files or delete_files) else "false",
+            "service_count": str(len(results)),
             "changed_services": ",".join(changed_services),
             "changed_service_count": str(len(changed_services)),
             "added_services": ",".join(added_services),
