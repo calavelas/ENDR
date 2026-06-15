@@ -4362,7 +4362,7 @@ html[data-theme="light"] .endr-page {
 /* ── Under-the-hood (architecture) page ────────────────────────────────── */
 .lp-mark-link { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
 .lp-mark-link:hover { color: var(--accent); }
-.uh-section { display: flex; flex-direction: column; }
+.uh-section { display: flex; flex-direction: column; min-width: 0; }
 .uh-h2 {
   margin: 0 0 1.1rem;
   font-size: clamp(1.4rem, 3vw, 1.9rem);
@@ -4432,7 +4432,7 @@ html[data-theme="light"] .endr-page {
 }
 
 /* Workflow table */
-.uh-table-wrap { overflow-x: auto; border: 1px solid var(--mc-line); border-radius: 13px; }
+.uh-table-wrap { overflow-x: auto; min-width: 0; border: 1px solid var(--mc-line); border-radius: 13px; }
 .uh-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min-width: 620px; }
 .uh-table thead th {
   text-align: left;
@@ -4448,9 +4448,11 @@ html[data-theme="light"] .endr-page {
 .uh-table tbody td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--mc-line); color: var(--mc-ink-2); vertical-align: top; }
 .uh-table tbody tr:last-child td { border-bottom: none; }
 .uh-mono { font-family: var(--font-mono); font-size: 0.82rem; color: var(--mc-ink); white-space: nowrap; }
+/* In cards (not tables) the mono lists must wrap; tables keep nowrap + scroll-contain. */
+.uh-card .uh-mono { white-space: normal; overflow-wrap: anywhere; }
 
 @media (max-width: 880px) {
-  .uh-grid, .uh-grid-2 { grid-template-columns: 1fr; }
+  .uh-grid, .uh-grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ── Service "provisioning" state (created, not yet synced) ─────────────── */

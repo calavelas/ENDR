@@ -121,11 +121,11 @@ interface NavItem {
   isActive: (pathname: string) => boolean;
 }
 
-// Routes that render their own full-page chrome (landing, architecture) — the
-// app sidebar/header would only get in the way, so the shell steps aside and
+// Routes that render their own full-page chrome (landing, architecture, technical)
+// — the app sidebar/header would only get in the way, so the shell steps aside and
 // renders children directly. Providers stay mounted (they wrap AppShell), so the
 // theme + narrative toggles still work on these pages.
-const CHROMELESS_ROUTES = new Set(["/", "/architecture"]);
+const CHROMELESS_ROUTES = new Set(["/", "/architecture", "/technical"]);
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/";
