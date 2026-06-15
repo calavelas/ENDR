@@ -19,8 +19,8 @@ const K_PERSONA = "endr-assistant-persona";
 const K_PINNED = "endr-assistant-persona-pinned";
 
 const ACCENT: Record<AssistantPersona, string> = {
-  tars: "#37d3c3",
-  case: "#9aa7bd",
+  tars: "var(--accent)",
+  case: "#9aa7bd", // intentional per-robot accent (CASE slate) — no --mc-* equivalent
 };
 
 export function AssistantWidget() {
