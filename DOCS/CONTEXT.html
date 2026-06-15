@@ -327,12 +327,14 @@
   <!-- 8 -->
   <section id="cicd">
     <h2><span class="num">8</span> CI/CD — the GitHub Actions workflows</h2>
-    <p class="lead">Workflows in <code>.github/workflows/</code> implement the automation. Each now has a plain-language
-      header comment describing what it does.</p>
+    <p class="lead">Workflows in <code>.github/workflows/</code> implement the automation. Display names follow
+      <b>"&lt;Stage&gt; · &lt;scope&gt;"</b> (PR Check · / Reconcile · / Build ·), and PR-driven stages post a
+      <b>plain-language comment back on the PR</b> at each step (Validate → Auto-merge → Reconcile → Build) via the
+      reusable <code>pr-stage-comment</code> action, so a reader follows the lifecycle without opening the Actions tab.</p>
     <table>
       <tr><th>Workflow</th><th>Trigger</th><th>Does</th></tr>
-      <tr><td><code>reconcile-pr.yml</code><br><span style="color:#7f8db0">(was tars-pr)</span></td><td>PR touching <code>platform.yaml</code>/<code>services.yaml</code></td><td>Read-only <code>services-check</code> drift check; optional auto-approve+merge for portal service PRs; cleans up merged <code>portal/*</code> branches.</td></tr>
-      <tr><td><code>reconcile.yml</code><br><span style="color:#7f8db0">(was tars-build)</span></td><td>Push to <code>main</code> (config changed)</td><td>Reconcile → <code>services-check --write-worktree</code> → commit "ci(reconcile): sync generated assets" → trigger the service image build.</td></tr>
+      <tr><td><code>reconcile-pr.yml</code><br><span style="color:#7f8db0">PR Check · Service catalog</span></td><td>PR touching <code>platform.yaml</code>/<code>services.yaml</code></td><td><code>services-check</code> drift check + robot-validate; auto-approve+merge for owner portal PRs ("Portal · Create/Decommission service:"), tolerant of concurrent PRs (<code>services.yaml merge=union</code> + behind-branch update); posts Validate/Auto-merge comments; cleans up merged <code>portal/*</code> branches.</td></tr>
+      <tr><td><code>reconcile.yml</code><br><span style="color:#7f8db0">Reconcile · Catalog → manifests</span></td><td>Push to <code>main</code> (config changed)</td><td>Reconcile → <code>services-check --write-worktree</code> → commit "ci(reconcile): sync generated assets" → <b>hard-refresh the ArgoCD <code>services</code> app-of-apps</b> (no ~3-min polling wait) → comment on the PR → trigger the service image build.</td></tr>
       <tr><td><code>services-build.yml</code><br><span style="color:#7f8db0">(was svcs-build)</span></td><td>Service source change / dispatch</td><td><code>discover-changed-services</code> → multi-arch Docker build → Docker Hub → <code>update-image-tags</code> + regenerate values → commit "ci(services): persist image tag".</td></tr>
       <tr><td><code>platform-build.yml</code><br><span style="color:#7f8db0">(was endr-build)</span></td><td><code>ENDR/portal/**</code> or <code>ENDR/api/**</code> change</td><td>Builds the <code>portal</code> + <code>api</code> images on push to <code>main</code> and bumps <code>portal/chart</code> &amp; <code>api/chart</code> <code>values.yaml</code> with the new tag.</td></tr>
       <tr><td><code>robot-build.yml</code></td><td><code>ENDR/engine/templates/service/endr-robot/image/**</code> change</td><td>Builds + pushes the shared <code>endr-robot</code> demo image.</td></tr>
@@ -511,33 +513,30 @@ make -f ENDR/scripts/Makefile tunnel-status</pre>
     <h2><span class="num">14</span> Current state of the repo</h2>
     <div class="grid g2">
       <div class="card">
-        <h3 style="margin-top:0">Application services <span class="badge">7</span></h3>
+        <h3 style="margin-top:0">Core services <span class="badge">2 + ~9</span></h3>
         <table>
           <tr><th>Service</th><th>Namespace</th><th>Template</th></tr>
-          <tr><td><code>sample</code></td><td>demo</td><td>python-fastapi</td></tr>
-          <tr><td><code>cooper</code></td><td>demo</td><td>python-fastapi</td></tr>
-          <tr><td><code>finc</code></td><td>demo</td><td>python-fastapi</td></tr>
-          <tr><td><code>miller</code></td><td>demo</td><td>python-fastapi</td></tr>
-          <tr><td><code>test1</code></td><td>demo</td><td>python-fastapi</td></tr>
-          <tr><td><code>tars</code></td><td>demo</td><td>endr-robot</td></tr>
-          <tr><td><code>case</code></td><td>demo</td><td>endr-robot</td></tr>
+          <tr><td><code>tars</code></td><td>mann</td><td>endr-robot</td></tr>
+          <tr><td><code>case</code></td><td>edmunds</td><td>endr-robot</td></tr>
         </table>
-        <p style="color:#7f8db0;font-size:12.5px;margin-bottom:0"><code>tars</code>/<code>case</code> are the guidance
-          assistant pods (shared <code>endr-robot</code> image, env-differentiated). Plus ~9 platform services
-          (argocd, traefik, portal, api, gateway, …).</p>
+        <p style="color:#7f8db0;font-size:12.5px;margin-bottom:0"><code>tars</code>/<code>case</code> are the protected
+          guidance assistant pods (shared <code>endr-robot</code> image, env-differentiated;
+          <code>ENDR_ALLOW_SELF_DESTRUCT=false</code>). Demo services come and go — created from the portal and
+          auto-retired after ~30 min. Plus ~9 platform services (argocd, traefik, portal, api, gateway, …).</p>
       </div>
       <div class="card">
-        <h3 style="margin-top:0">Recent work (2026-06-14)</h3>
+        <h3 style="margin-top:0">Recent work (2026-06)</h3>
         <div class="kvs" style="font-size:12.5px">
-          <b>Rename</b><span>codenames → functional names, on main</span>
-          <b>Mission-control UI</b><span>dual-narrative shell, dashboard, all inner pages restyled with stage rail + explain</span>
-          <b>Assistant</b><span>TARS/CASE guidance microservices + floating widget (cluster-free fallback)</span>
-          <b>Robot</b><span>endr-robot template (phase A) — create/fix lifecycle still in progress</span>
+          <b>Landing + docs</b><span><code>/</code> is now a narrative-aware landing; dashboard moved to <code>/dashboard</code>; new <code>/architecture</code> "under the hood" page</span>
+          <b>Robot lifecycle</b><span>create + edit (env-only) + decommission, all GitOps; in-cluster self-decommission; protected core units</span>
+          <b>CI naming + PR comments</b><span>"Portal · Verb subject" titles; "&lt;Stage&gt; · &lt;scope&gt;" workflows; per-stage PR comments across the lifecycle</span>
+          <b>Concurrency</b><span><code>services.yaml merge=union</code> + behind-branch auto-update so simultaneous creates don't conflict</span>
+          <b>Faster + cleaner teardown</b><span>CI hard-refreshes ArgoCD (no ~3-min wait); child apps carry the cascade-delete finalizer; <code>SERVICE_NAME</code> injected so links/slug are correct</span>
+          <b>Cold UX eval</b><span>3 first-time personas (layperson / DevOps / junior dev) ran the live demo — findings + fixes in <code>DEMO_UX_FINDINGS.html</code></span>
         </div>
-        <p style="color:#7f8db0;font-size:12px;margin-bottom:0">Working on <code>main</code> directly during the refactor;
-          verified with <code>tsc</code> + <code>next build</code> + live dev. Live-cluster follow-ups: rebuild/push
-          <code>endr-robot</code> (for <code>/api/guide</code>), recreate the <code>api-github-token</code> secret, and set
-          the post-rename image tag before the public demo serves again.</p>
+        <p style="color:#7f8db0;font-size:12px;margin-bottom:0">Working on <code>main</code> directly; verified with
+          <code>tsc</code> + <code>next build</code>, then live on the cluster. Image tags are pinned in
+          <code>services.yaml</code> / chart values and rolled by the build workflows.</p>
       </div>
     </div>
     <div class="note good">If you remember nothing else: <b>edit <code>services.yaml</code> → PR → the engine generates everything
@@ -545,8 +544,9 @@ make -f ENDR/scripts/Makefile tunnel-status</pre>
   </section>
 
   <footer>
-    Context map for the <b>ENDR</b> Internal Developer Platform · reflects the post-rename naming, the portal UI
-    redesign, and the in-progress robot lifecycle. Companion docs: <code>UI_REDESIGN_PLAN.html</code>,
+    Context map for the <b>ENDR</b> Internal Developer Platform · reflects the landing/architecture pages, the full
+    GitOps robot lifecycle, the CI naming + PR-comment pass, and the concurrency / ArgoCD-refresh / cascade-delete
+    fixes. Companion docs: <code>DEMO_UX_FINDINGS.html</code>, <code>UI_REDESIGN_PLAN.html</code>,
     <code>ROBOT_LIFECYCLE_PLAN.html</code>, <code>robot-demo-redesign.html</code>. Self-contained — open in any browser.
   </footer>
 </main>
