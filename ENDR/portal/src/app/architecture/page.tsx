@@ -42,7 +42,7 @@ const PIPELINE: PipelineStep[] = [
   {
     key: "deliver",
     title: "6 · Deliver",
-    body: "ArgoCD’s “services” app-of-apps notices the new child Application, syncs it, and the workload comes online — reachable at <name>.endr.calavelas.net. ArgoCD then keeps the cluster matching git and self-heals drift.",
+    body: "ArgoCD’s “services” app-of-apps notices the new child Application, syncs it, and the workload comes online — reachable at <name>.calavelas.net. ArgoCD then keeps the cluster matching git and self-heals drift.",
   },
   {
     key: "operate",

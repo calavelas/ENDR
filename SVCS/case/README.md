@@ -5,7 +5,7 @@ variables, managed through GitOps. There is no app code here to maintain: every 
 runs the shared `calavelas/endr-robot:b86d395` image.
 
 - **Namespace:** `edmunds`
-- **URL:** `https://case.endr.calavelas.net`
+- **URL:** `https://case.calavelas.net`
 - **Image:** `calavelas/endr-robot:b86d395`
 
 ## Calibration

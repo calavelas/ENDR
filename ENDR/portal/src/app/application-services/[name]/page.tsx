@@ -38,7 +38,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     const eligibility = await loadDecommissionEligibility(serviceName);
     const inCatalog = eligibility.decommissionable || eligibility.protected;
     const provisioningArgoUrl = buildArgoApplicationUrl(resolveArgoEmbedUrl(), "services");
-    const host = `${serviceName}.endr.calavelas.net`;
+    const host = `${serviceName}.calavelas.net`;
     return (
       <ServiceProvisioningView
         name={serviceName}
@@ -62,7 +62,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const serviceReadmePath = `${serviceFolder}/README.md`;
   const serviceReadmeGithubUrl = buildGithubFileUrl(githubRepoUrl, githubBranch, serviceReadmePath);
   const serviceReadmeRawUrl = buildGithubRawFileUrl(githubRepoUrl, githubBranch, serviceReadmePath);
-  const serviceAccessHost = `${service.name}.endr.calavelas.net`;
+  const serviceAccessHost = `${service.name}.calavelas.net`;
   const serviceAccessUrl = `https://${serviceAccessHost}`;
   const argoDetail = await loadServiceArgoDetail(service.name);
   const decommission = await loadDecommissionEligibility(service.name);

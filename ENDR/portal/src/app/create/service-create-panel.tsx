@@ -156,7 +156,7 @@ function buildServicePagePath(serviceName: string): string {
 }
 
 function buildServicePublicUrl(serviceName: string): string {
-  return `https://${encodeURIComponent(serviceName.trim())}.endr.calavelas.net`;
+  return `https://${encodeURIComponent(serviceName.trim())}.calavelas.net`;
 }
 
 function readErrorMessage(payload: unknown): string {
@@ -1291,7 +1291,7 @@ export function CreateServicePanel() {
                     ) : (
                       <span className="wiz-hint">
                         Lowercase letters, numbers, dashes. Becomes{" "}
-                        <code>{(trimmedName || "<name>") + ".endr.calavelas.net"}</code>.
+                        <code>{(trimmedName || "<name>") + ".calavelas.net"}</code>.
                       </span>
                     )}
                   </label>

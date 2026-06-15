@@ -167,7 +167,7 @@ def _build_template_context(
         limits_memory = service.overrides.resources.limits.memory
 
     gateway_enabled = "true" if service.overrides.gateway.enabled else "false"
-    gateway_host = f"{service.name}.endr.calavelas.net"
+    gateway_host = f"{service.name}.calavelas.net"
 
     return {
         "service_name": service.name,
