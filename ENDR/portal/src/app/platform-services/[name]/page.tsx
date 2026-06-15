@@ -19,6 +19,11 @@ interface PlatformServiceDetailPageProps {
   params: Promise<{ name: string }>;
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ name: string }> }) {
+  const { name } = await params;
+  return { title: `${name} — ENDR` };
+}
+
 export default async function PlatformServiceDetailPage({ params }: PlatformServiceDetailPageProps) {
   const { name } = await params;
 

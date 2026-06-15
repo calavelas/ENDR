@@ -179,7 +179,7 @@ export function ServiceDetailView(props: ServiceDetailViewProps) {
 
       <section className="mc-panel mc-detail-hero">
         <span className="mc-detail-sub">{kindLabel}</span>
-        <h1 className="mc-detail-hero-title">{displayName}</h1>
+        <h2 className="mc-detail-hero-title">{displayName}</h2>
         <p className="mc-detail-hero-copy">
           {mode === "interstellar" ? (
             <>

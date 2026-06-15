@@ -54,7 +54,7 @@ export function ServiceProvisioningView({
       </Link>
 
       <div className="mc-detail-head">
-        <h1 className="mc-detail-title">{name}</h1>
+        <h2 className="mc-detail-title">{name}</h2>
         <span className="mc-badge warn">
           <span className="mc-badge-dot" />
           Provisioning

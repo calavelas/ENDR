@@ -11,7 +11,7 @@ export function CreateHero() {
   return (
     <section className="mc-panel mc-detail-hero mc-create-hero">
       <span className="mc-detail-sub">{mode === "interstellar" ? "New mission from a blueprint" : "New service from a template"}</span>
-      <h1 className="mc-detail-hero-title">{title}</h1>
+      <h2 className="mc-detail-hero-title">{title}</h2>
       <div className="mc-hero-body">
         {mode === "interstellar" ? (
           <>

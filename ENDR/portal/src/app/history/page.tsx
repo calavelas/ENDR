@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const metadata = { title: "Delivery — ENDR" };
 
 import { CreateButton } from "../components/create-button";
 import { Explain } from "../components/explain";

@@ -84,6 +84,14 @@ function normalizeApiBase(base: string): string {
 }
 
 export function resolveApiBase(): string {
+  // In the browser, call the API same-origin: the gateway routes /api/* to the
+  // backend, so a relative base works wherever the portal is reachable. The
+  // absolute ENDR_API_URL / localhost fallback is server-only — using it from
+  // the client causes ERR_CONNECTION_REFUSED.
+  if (typeof window !== "undefined") {
+    const publicBase = process.env.NEXT_PUBLIC_ENDR_API_URL;
+    return publicBase ? normalizeApiBase(publicBase) : "";
+  }
   const base = process.env.ENDR_API_URL || process.env.NEXT_PUBLIC_ENDR_API_URL || FALLBACK_API;
   return normalizeApiBase(base);
 }
@@ -225,7 +233,18 @@ export function formatTimestamp(value: string): string {
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
-  return parsed.toLocaleString();
+  // Deterministic, locale/timezone-stable so server and client render identical
+  // text — avoids React hydration mismatches (#418). UTC is unambiguous for ops.
+  return (
+    parsed.toLocaleString("en-US", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }) + " UTC"
+  );
 }
 
 export function optionalTimestamp(value: string | null): string {
