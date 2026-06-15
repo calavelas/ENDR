@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/catalog", label: "Catalog", aliases: ["/services", "/application-services", "/platform-services"] },
   { href: "/create", label: "Create" },
   { href: "/history", label: "History" },
+  { href: "/technical", label: "Technical" },
   { href: "/argocd", label: "ArgoCD" }
 ];
 

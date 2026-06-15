@@ -1,0 +1,38 @@
+{
+  "_comment": "Generated from .graphify/GRAPH_REPORT.md. Regenerate on graph refresh (RCKY owns ENDR graph refresh). Do not hand-edit.",
+  "builtFromCommit": "a107f97",
+  "generatedAt": "2026-06-15",
+  "corpus": {
+    "files": 396,
+    "words": 412086,
+    "sensitiveExcluded": 13
+  },
+  "graph": {
+    "nodes": 740,
+    "edges": 1523,
+    "communities": 40,
+    "communityNotes": 54
+  },
+  "edgeKinds": {
+    "contains": 598,
+    "calls": 348,
+    "uses": 208,
+    "imports": 165,
+    "imports_from": 108,
+    "inherits": 48,
+    "method": 26,
+    "rationale_for": 22
+  },
+  "godNodes": [
+    { "name": "GitHubClient", "edges": 38, "what": "GitHub integration core — config-as-source-of-truth reads/writes" },
+    { "name": "GitHubAPIError", "edges": 30, "what": "Error type for GitHub calls" },
+    { "name": "CreateServiceResponse", "edges": 30, "what": "Self-service add-a-service response" },
+    { "name": "CreateServiceRequest", "edges": 29, "what": "Self-service add-a-service request" },
+    { "name": "PlatformSnapshot", "edges": 25, "what": "Full platform state surfaced to the portal" },
+    { "name": "ServiceArgoDetail", "edges": 25, "what": "Per-service ArgoCD sync/health detail" },
+    { "name": "TransactionStatusResponse", "edges": 23, "what": "Status of an in-flight platform change" },
+    { "name": "CaseHistoryResponse", "edges": 23, "what": "Audit/history of platform operations" },
+    { "name": "get_case_history()", "edges": 16, "what": "Audit/history query" },
+    { "name": "IDPConfig", "edges": 16, "what": "Parsed platform.yaml + services.yaml model" }
+  ]
+}
