@@ -72,8 +72,8 @@ const PERSONA_META: Record<AssistantPersona, { name: string; accent: string }> =
 
 // Server-only: NOT NEXT_PUBLIC, so robot URLs never reach the browser (it always
 // hits the same-origin /api/assistant proxy). Defaults point at the live robot
-// services through the public gateway — CASE → case.calavelas.net, TARS →
-// tars.calavelas.net (same `<service>.calavelas.net` host the scaffold renders),
+// services through the public gateway — CASE → case.endr.calavelas.net, TARS →
+// tars.endr.calavelas.net (same `<service>.endr.calavelas.net` host the scaffold renders),
 // so the widget talks to the running pods out of the box. For local dev against a
 // robot on your machine, set ASSISTANT_CASE_URL / ASSISTANT_TARS_URL (e.g.
 // http://127.0.0.1:8091). If the service is unreachable the proxy falls back to
@@ -81,8 +81,8 @@ const PERSONA_META: Record<AssistantPersona, { name: string; accent: string }> =
 export function resolveAssistantBase(persona: AssistantPersona): string {
   const url =
     persona === "case"
-      ? process.env.ASSISTANT_CASE_URL || "https://case.calavelas.net"
-      : process.env.ASSISTANT_TARS_URL || "https://tars.calavelas.net";
+      ? process.env.ASSISTANT_CASE_URL || "https://case.endr.calavelas.net"
+      : process.env.ASSISTANT_TARS_URL || "https://tars.endr.calavelas.net";
   return url.replace(/\/+$/, "");
 }
 
@@ -174,8 +174,8 @@ const STEPS: Record<string, FallbackStep> = {
   // ── Create-wizard sub-steps (the dialog tracks the form) ──────────────────
   "create-basics": {
     text: {
-      idp: "Step 1 — the basics. Give your service a DNS-safe name (lowercase letters, numbers, dashes) and pick a namespace. That name becomes its address: <name>.calavelas.net.",
-      interstellar: "Step 1 — robot basics. Give your robot a call-sign (lowercase, numbers, dashes) and pick a planet to land on. The call-sign becomes its address: <name>.calavelas.net.",
+      idp: "Step 1 — the basics. Give your service a DNS-safe name (lowercase letters, numbers, dashes) and pick a namespace. That name becomes its address: <name>.endr.calavelas.net.",
+      interstellar: "Step 1 — robot basics. Give your robot a call-sign (lowercase, numbers, dashes) and pick a planet to land on. The call-sign becomes its address: <name>.endr.calavelas.net.",
     },
     cta: null,
     replies: [],

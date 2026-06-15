@@ -36,7 +36,7 @@ export function ConfigEditor({
           <span>Expose publicly (Gateway)</span>
         </label>
         <p className="wiz-hint">
-          Serve at <code>https://{host}.calavelas.net</code>.
+          Serve at <code>https://{host}.endr.calavelas.net</code>.
         </p>
       </div>
 

@@ -27,7 +27,7 @@ DEFAULT_ARGOCD_SERVER = "https://argocd.k8s.local"
 DEFAULT_SERVICES_CONFIG_BLOB_URL = "https://github.com/calavelas/ENDR/blob/main/services.yaml"
 DEFAULT_SERVICES_CONFIG_RAW_URL = "https://raw.githubusercontent.com/calavelas/ENDR/main/services.yaml"
 DEFAULT_SERVICE_GATEWAY_SCHEME = "https"
-DEFAULT_SERVICE_GATEWAY_DOMAIN = "calavelas.net"
+DEFAULT_SERVICE_GATEWAY_DOMAIN = "endr.calavelas.net"
 MISSING_SERVICE_WARNING_PREFIX = "Service app '"
 MISSING_SERVICE_WARNING_SUFFIX = "' not found in ArgoCD response."
 

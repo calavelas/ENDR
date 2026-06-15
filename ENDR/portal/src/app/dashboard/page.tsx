@@ -71,7 +71,7 @@ function hostFromUrl(url: string, fallbackName: string): string {
   try {
     return new URL(url).host;
   } catch {
-    return `${fallbackName}.calavelas.net`;
+    return `${fallbackName}.endr.calavelas.net`;
   }
 }
 
@@ -87,7 +87,7 @@ function isWithinDays(iso: string | null, days: number): boolean {
 }
 
 function toMissionRow(service: ServiceNode): MissionRow {
-  const endpoint = service.serviceUrl?.trim() || `https://${service.name}.calavelas.net`;
+  const endpoint = service.serviceUrl?.trim() || `https://${service.name}.endr.calavelas.net`;
   return {
     name: service.name,
     status: service.healthStatus,

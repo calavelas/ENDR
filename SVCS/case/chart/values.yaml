@@ -33,4 +33,4 @@ httpRoute:
       name: gateway-cloudflare
       namespace: gateway
   hostnames:
-    - case.calavelas.net
+    - case.endr.calavelas.net

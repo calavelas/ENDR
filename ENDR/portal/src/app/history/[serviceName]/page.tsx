@@ -41,7 +41,7 @@ export default async function ServiceHistoryPage({ params, searchParams }: Servi
   // is pruned by syncing THIS parent — so that's where the user needs to look.
   const argoAppsUrl = buildArgoApplicationUrl(argoEmbedUrl, "services");
   const servicePath = `/application-services/${encodeURIComponent(decodedServiceName)}`;
-  const accessHost = `${decodedServiceName}.calavelas.net`;
+  const accessHost = `${decodedServiceName}.endr.calavelas.net`;
   const accessUrl = `https://${accessHost}`;
 
   return (

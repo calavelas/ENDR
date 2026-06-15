@@ -262,14 +262,14 @@ STEPS = {
                 "request adding one line to services.yaml. CI checks it and it auto-merges. A "
                 "reconcile job then renders your Helm chart and an ArgoCD application and pushes "
                 "them to main. ArgoCD's app-of-apps syncs that, and your service comes online at "
-                "<name>.calavelas.net. Every stage posts its progress back on the pull request."
+                "<name>.endr.calavelas.net. Every stage posts its progress back on the pull request."
             ),
             "interstellar": (
                 "Here's the whole loop. You design a robot on the bridge — that opens a pull "
                 "request adding one line to services.yaml. Inspection clears it and it auto-merges. "
                 "A reconcile job renders the robot's chart and an autopilot app and pushes them. "
                 "The autopilot's app-of-apps launches it, and the robot comes online at "
-                "<name>.calavelas.net. Every stage reports back on the pull request."
+                "<name>.endr.calavelas.net. Every stage reports back on the pull request."
             ),
         },
         "cta": None,
@@ -502,12 +502,12 @@ STEPS = {
             "idp": (
                 "Step 1 — the basics. Give your service a DNS-safe name (lowercase "
                 "letters, numbers, dashes) and pick a namespace. That name becomes "
-                "its address: <name>.calavelas.net."
+                "its address: <name>.endr.calavelas.net."
             ),
             "interstellar": (
                 "Step 1 — robot basics. Give your robot a call-sign (lowercase, "
                 "numbers, dashes) and pick a planet to land on. The call-sign "
-                "becomes its address: <name>.calavelas.net."
+                "becomes its address: <name>.endr.calavelas.net."
             ),
         },
         "cta": None,

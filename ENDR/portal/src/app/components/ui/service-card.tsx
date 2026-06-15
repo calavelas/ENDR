@@ -13,7 +13,7 @@ export function ServiceCard({
   showGateway?: boolean;
 }) {
   const gatewayEnabled = service.gatewayEnabled === true;
-  const serviceUrl = service.serviceUrl?.trim() || `https://${service.name}.calavelas.net`;
+  const serviceUrl = service.serviceUrl?.trim() || `https://${service.name}.endr.calavelas.net`;
 
   return (
     <div className="service-card">
