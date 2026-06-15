@@ -146,6 +146,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Validate
           status: success
           title: Checks passed — clearing this for merge
@@ -159,6 +160,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Validate
           status: failure
           title: Checks failed — merge is blocked
@@ -372,6 +374,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Auto-merge
           status: success
           title: Merged — handing off to Reconcile
@@ -386,6 +389,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Auto-merge
           status: info
           title: Queued — will merge once checks finish
@@ -399,6 +403,7 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_ACTION: ${{ contains(github.event.pull_request.title, 'Decommission') && 'decommission' || 'create' }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -410,6 +415,7 @@ jobs:
               inputs: {
                 pr_number: process.env.PR_NUMBER || "",
                 pr_action: process.env.PR_ACTION || "",
+                pr_title: process.env.PR_TITLE || "",
               },
             });
             core.notice("Triggered reconcile.yml dispatch on main.");

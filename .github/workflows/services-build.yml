@@ -11,6 +11,10 @@ on:
         description: PR number to comment on when an image is published (optional).
         required: false
         default: ''
+      pr_title:
+        description: PR title (for the status-page link in the PR comment).
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -305,6 +309,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.inputs.pr_number }}
+          pr-title: ${{ github.event.inputs.pr_title }}
           stage: Build
           status: success
           title: Service image built & published

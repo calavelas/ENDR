@@ -127,6 +127,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Validate
           status: success
           title: Config change verified — clearing this for merge
@@ -141,6 +142,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Validate
           status: failure
           title: Config change rejected — merge is blocked
@@ -260,6 +262,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Auto-merge
           status: success
           title: Merged — rolling out the new config now
@@ -274,6 +277,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
           stage: Auto-merge
           status: info
           title: Queued — will merge once checks finish
