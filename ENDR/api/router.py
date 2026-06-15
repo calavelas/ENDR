@@ -287,6 +287,19 @@ def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> Creat
         for key in ("ROBOT_NAME", "CATCHPHRASE"):
             if not str(env.get(key, "")).strip():
                 raise HTTPException(status_code=400, detail=f"{key} is required for a robot")
+    # Namespace must be one declared in platform.yaml — the same allowlist CI enforces.
+    # Without this a crafted request (or a typo) could target an arbitrary namespace,
+    # which ArgoCD would create (CreateNamespace=true) and deploy into.
+    try:
+        _idp_cfg, _svcs_cfg, _cfg_paths, _cfg_url = load_platform_configs()
+        allowed_namespaces = {ns.name for ns in _idp_cfg.config.namespace}
+    except Exception:  # noqa: BLE001
+        allowed_namespaces = set()
+    if allowed_namespaces and payload.namespace.strip() not in allowed_namespaces:
+        raise HTTPException(
+            status_code=400,
+            detail=f"namespace '{payload.namespace.strip()}' is not allowed; choose one of: {', '.join(sorted(allowed_namespaces))}",
+        )
     request = CreateServiceRequest(
         name=payload.serviceName.strip(),
         namespace=payload.namespace.strip(),
