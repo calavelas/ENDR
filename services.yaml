@@ -39,18 +39,3 @@ services:
       TRUST: '90'
       CATCHPHRASE: See you on the other side.
       ENDR_ALLOW_SELF_DESTRUCT: 'false'
-- name: mann
-  namespace: mann
-  environments:
-  - gargantua
-  generator:
-    service:
-      template: endr-robot
-    gitops:
-      template: helm-service
-  overrides:
-    gateway:
-      enabled: true
-    env:
-      ROBOT_NAME: mann
-      CATCHPHRASE: "\u2026"
