@@ -92,7 +92,7 @@ const COPY: Record<NarrativeMode, LandingCopy> = {
 
 function ModeToggle({ mode, setMode }: { mode: NarrativeMode; setMode: (m: NarrativeMode) => void }) {
   return (
-    <div className="lp-seg" role="group" aria-label="Narrative mode">
+    <div className="lp-seg" role="group" aria-label="Narrative wording — IDP or Interstellar" title="Switch wording: IDP (plain DevOps terms) or Interstellar (themed)">
       <button
         type="button"
         className={`lp-seg-opt${mode === "idp" ? " on" : ""}`}

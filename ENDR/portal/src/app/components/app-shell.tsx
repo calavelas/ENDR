@@ -76,7 +76,7 @@ function NarrativeToggle({
   setMode: (mode: NarrativeMode) => void;
 }) {
   return (
-    <div className="nrt-toggle" role="group" aria-label="Narrative mode">
+    <div className="nrt-toggle" role="group" aria-label="Narrative wording — IDP or Interstellar" title="Switch wording: IDP (plain DevOps terms) or Interstellar (themed)">
       <button
         type="button"
         className={`nrt-opt${mode === "idp" ? " on" : ""}`}

@@ -2965,7 +2965,7 @@ html[data-theme="light"] body { background: #f4f5f8; }
   .mc-panel { padding: 1.05rem 1.1rem; }
   .app-header { gap: 0.55rem; padding: 0 1rem; }
   .app-icon-btn { display: none; }
-  .app-title { font-size: 1.25rem; letter-spacing: 0.1em; }
+  .app-title { font-size: 1.1rem; letter-spacing: 0.05em; white-space: normal; overflow: visible; text-overflow: clip; }
   .nrt-opt { padding: 0.38rem 0.55rem; font-size: 0.6rem; }
   .mc-welcome { min-height: auto; padding: 1.35rem 1.25rem; }
   .mc-welcome-title { font-size: 1.95rem; }
