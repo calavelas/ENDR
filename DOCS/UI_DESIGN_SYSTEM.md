@@ -26,6 +26,31 @@ The Definition-of-Done checklist in §9 is the gate. A feature that fails any it
 
 ---
 
+## 0.5 Reference page — match this
+
+**The canonical layout standard is the service detail page** (`/application-services/<name>`,
+e.g. `/application-services/case`). New feature pages should match its structure, density, and
+component usage — it is the bar for hierarchy and polish. Its anatomy:
+
+1. **Back link** — `‹ Back to <parent>` above the content.
+2. **Hero panel** (`mc-panel mc-detail-hero`): eyebrow label (mono, muted) → large mono title →
+   one-paragraph body copy (sans) with inline `code` chips → a row of **status badges**
+   (health/sync) + **meta chips** (namespace, image) on the left, **primary actions**
+   right-aligned (GitHub / ArgoCD / Decommission).
+3. **Segmented tab bar** (Overview / Readme / Files / ArgoCD) — mono.
+4. **Two-column info panels** (`mc-panel` + `mc-kv` definition lists): grouped + labelled,
+   values mono for IDs/paths, collapse to one column on mobile.
+5. **Secondary panels** below (Deployed Commit + status badges, Live Resources) — same
+   `mc-panel` shell.
+6. Renders correctly in **both themes**, stacks cleanly to a single column on mobile,
+   one `<h1>`, per-page `<title>`.
+
+**Patterns to replicate:** `mc-panel` cards · `mc-kv` key/value lists · health/sync **badges** ·
+eyebrow→title→copy hero · right-aligned action buttons · mono for labels/IDs, sans for prose.
+Don't ship a page looser or noisier than this.
+
+---
+
 ## 1. Tokens (from `globals.css`)
 
 **Always reference these. Never hardcode the underlying values** — hardcoding breaks theming.
