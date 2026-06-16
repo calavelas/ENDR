@@ -24,3 +24,9 @@ build/
 # References
 REFS/
 backups/
+# graphify Obsidian export + local state (regenerable)
+graph-vault/
+.graphify/
+
+# Build artifacts
+*.tsbuildinfo
