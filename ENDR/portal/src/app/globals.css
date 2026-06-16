@@ -2803,7 +2803,7 @@ html[data-theme="light"] body { background: #f4f5f8; }
 .mc-help p { margin: 0 0 1.1rem; font-size: 0.95rem; color: var(--mc-muted); line-height: 1.55; }
 
 /* KPI cards (icon-less, colour-accented) */
-.mc-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
+.mc-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; margin-bottom: 1.2rem; }
 .mc-kpi {
   position: relative;
   overflow: hidden;
