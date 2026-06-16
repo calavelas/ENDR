@@ -292,10 +292,22 @@ def create_service_from_portal(payload: CreateServiceFromPortalRequest) -> Creat
     # which ArgoCD would create (CreateNamespace=true) and deploy into.
     try:
         _idp_cfg, _svcs_cfg, _cfg_paths, _cfg_url = load_platform_configs()
-        allowed_namespaces = {ns.name for ns in _idp_cfg.config.namespace}
-    except Exception:  # noqa: BLE001
-        allowed_namespaces = set()
-    if allowed_namespaces and payload.namespace.strip() not in allowed_namespaces:
+    except Exception as exc:  # noqa: BLE001
+        # Fail closed: if we can't load the allowlist we cannot authorize any
+        # namespace, so refuse rather than silently skipping the guard (a stale
+        # empty set used to let any namespace through during a transient load
+        # failure — e.g. the remote services.yaml fetch blipping).
+        raise HTTPException(
+            status_code=503,
+            detail="namespace allowlist unavailable (platform config failed to load); try again",
+        ) from exc
+    allowed_namespaces = {ns.name for ns in _idp_cfg.config.namespace}
+    if not allowed_namespaces:
+        raise HTTPException(
+            status_code=503,
+            detail="no namespaces are configured in platform.yaml",
+        )
+    if payload.namespace.strip() not in allowed_namespaces:
         raise HTTPException(
             status_code=400,
             detail=f"namespace '{payload.namespace.strip()}' is not allowed; choose one of: {', '.join(sorted(allowed_namespaces))}",

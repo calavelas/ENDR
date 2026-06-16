@@ -162,6 +162,11 @@ def validate_consistency(
 
     cluster_aliases = set(idp_config.config.clusters.keys())
     namespace_names = {ns.name for ns in idp_config.config.namespace}
+    if not namespace_names:
+        # No declared namespaces means the allowlist below would otherwise be a
+        # no-op — every service would pass unchecked. Treat it as a config error
+        # (fail closed) rather than implicitly allowing any namespace.
+        errors.append("platform.yaml declares no namespaces (config.namespace is empty)")
     service_names: set[str] = set()
 
     for service in services_config.services:
@@ -173,7 +178,7 @@ def validate_consistency(
         # Namespace must be one declared in platform.yaml — a service cannot invent
         # its own namespace (a typo, or a crafted PR targeting a sensitive namespace,
         # would otherwise be created via CreateNamespace=true on a broad-access ArgoCD).
-        if namespace_names and service.namespace not in namespace_names:
+        if service.namespace not in namespace_names:
             errors.append(
                 f"service '{service.name}' uses unknown namespace '{service.namespace}' "
                 f"(allowed: {', '.join(sorted(namespace_names))})"
