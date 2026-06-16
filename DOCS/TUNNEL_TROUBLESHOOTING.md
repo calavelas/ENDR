@@ -16,16 +16,16 @@ connector (its log fills with `context canceled` on those stream URLs). The clus
 healthy (CPU ~0%, no OOM) — the failure is the always-on embedded streaming UI, not server load.
 
 Fix (frontend): make the embed **load on demand**. `ArgoEmbedPanel`
-(`ENDR/CASE/src/app/components/argo-embed-panel.tsx`) now renders a placeholder with a
+(`ENDR/portal/src/app/components/argo-embed-panel.tsx`) now renders a placeholder with a
 **"Load embedded ArgoCD"** button + **"Open in new tab"** link, and only mounts the `<iframe>`
 after an explicit click (with an "Unload" button to stop it). Live sync/health per service is
 already shown natively in the catalog (`dataSource: argocd`), so the iframe is optional. Also
-restored a bounded fetch timeout in `loadSnapshot` (`lib/plex.ts`) so a slow backend can't hang a
+restored a bounded fetch timeout in `loadSnapshot` (`lib/platform.ts`) so a slow backend can't hang a
 render. Verified: new image renders 0 `<iframe>` on `/argocd` vs 1 on the old image.
 
-Deploy via GitOps (commit → `endr-build.yml` builds `case` image + bumps `ENDR/CASE/chart/values.yaml`
-→ ArgoCD syncs). A local `kubectl set image` does NOT stick — the `platform`→`case` app-of-apps
-self-heal reverts it.
+Deploy via GitOps (commit → `platform-build.yml` builds the `portal` image + bumps
+`ENDR/portal/chart/values.yaml` → ArgoCD syncs). A local `kubectl set image` does NOT stick — the
+`platform`→`portal` app-of-apps self-heal reverts it.
 
 ## ✅ Confirmed root cause + fix (verified live 2026-06-13)
 
@@ -38,9 +38,10 @@ On a fresh `make bootstrap` of the full platform, the in-cluster Cloudflare cont
    controller` and the controller logged `Secret "cloudflare" not found`.
 2. **The controller does not watch the Secret.** After repeated errors it backed off, so simply
    *creating* the Secret afterward did **not** wake it up. **Fix: restart the controller** once the
-   Secret exists: `kubectl -n cloudflare-gateway rollout restart deploy/cloudflare-controller-manager`.
+   Secret exists: `kubectl -n cloudflare rollout restart deploy/<controller-deploy>`.
+   <!-- TODO: confirm controller deploy name/ns against live cluster (ArgoCD app `cloudflare` → ns `cloudflare`; deploy name from upstream pl4nty/cloudflare-kubernetes-gateway config/default) -->
 
-After that, the controller programmed the tunnel, created DNS for `case`/`endr`/`argocd`/`<svc>`
+After that, the controller programmed the tunnel, created DNS for `portal`/`endr`/`argocd`/`<svc>`
 `.calavelas.net`, and all hosts returned HTTP 200 (with `dataSource: argocd` live data).
 
 **Operational rule:** create the `cloudflare` Secret *before* the controller starts, or restart the
@@ -54,8 +55,15 @@ CNAME for the public hostnames — but a hostname can point at only **one** tunn
 
 | # | Mechanism | Defined in | Routes | Origin |
 |---|---|---|---|---|
-| 1 | **In-cluster gateway** (`pl4nty/cloudflare-kubernetes-gateway` v0.8.1, an ArgoCD app) | `KUBE/clusters/mac/lab/platform/cloudflare.yaml`, `gateway/gateway-cloudflare.yaml`, `gateway/route-cloudflare-{case,argocd}.yaml`, Secret `cloudflare` in ns `gateway` | `case.calavelas.net`, `endr.calavelas.net`, **`argocd.calavelas.net`** | in-cluster Services (`case:80`, `argocd-server:80`) directly |
-| 2 | **Local script** (manual `cloudflared`, tunnel `endr-case`) | `ENDR/SCPT/cloudflare-tunnel.sh` (`make tunnel-*`) | only **one** host (`CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME`) | `https://case.k8s.local` (via Traefik `*.k8s.local`) |
+| 1 | **In-cluster gateway** (`pl4nty/cloudflare-kubernetes-gateway` v0.8.1, an ArgoCD app) | `KUBE/clusters/gargantua/platform/cloudflare.yaml`, `gateway/gateway-cloudflare.yaml`, `gateway/route-cloudflare-{portal,argocd}.yaml`, Secret `cloudflare` in ns `gateway` | `portal.calavelas.net`, `endr.calavelas.net`, **`argocd.calavelas.net`** | in-cluster Services (`portal:80`, `argocd-server:80`) directly |
+| 2 | **Local script** (manual `cloudflared`, tunnel `endr-case`) | `ENDR/scripts/cloudflare-tunnel.sh` (`make tunnel-*`) | only **one** host (`CLOUDFLARE_TUNNEL_PUBLIC_HOSTNAME`) | `https://case.k8s.local` (via Traefik `*.k8s.local`) |
+
+> **Note:** the script in mechanism 2 (`cloudflare-tunnel.sh`) was **not** refactored — its internal
+> defaults still use the old `case` naming (tunnel `endr-case`, origin `case.k8s.local`). The portal's
+> public host and in-cluster Service are now `portal` (`portal.calavelas.net` / svc `portal`).
+> Separately, `case` is now a **live robot service** in namespace `edmunds` (`services.yaml`), so any
+> lingering `case.calavelas.net` / `svc case` / `route-cloudflare-case` reference both is stale **and**
+> collides with that unrelated object — don't reach for it during portal triage.
 
 **Why it manifests:**
 - `cloudflared tunnel route dns` (mechanism 2) and the in-cluster controller (mechanism 1) both
@@ -63,7 +71,7 @@ CNAME for the public hostnames — but a hostname can point at only **one** tunn
 - If DNS points at a tunnel whose connector is **not running/healthy** (local `cloudflared` stopped,
   or the in-cluster controller's `cloudflare` Secret is missing/invalid so its tunnel never
   connects), Cloudflare returns **error 1033 / 530 → the page won't load at all**.
-- Only mechanism 1 routes `argocd.calavelas.net`. If mechanism 2 took over `case.*` while `argocd.*`
+- Only mechanism 1 routes `argocd.calavelas.net`. If mechanism 2 took over `portal.*` while `argocd.*`
   is left on a stale/dark record, the **embed is blank** even when the portal partially loads.
 
 ## Decision: run exactly ONE mechanism
@@ -82,25 +90,26 @@ pgrep -fl cloudflared
 
 # 1. In-cluster gateway accepted + programmed?
 kubectl -n gateway get gateway gateway-cloudflare -o jsonpath='{.status.conditions}' | python3 -m json.tool
-kubectl get httproute -A            # case + argocd routes: Accepted, ResolvedRefs=True?
+kubectl get httproute -A            # portal + argocd routes (route-cloudflare-portal in ns endr): Accepted, ResolvedRefs=True?
 
 # 2. Controller + its tunnel connector healthy?
 kubectl -n gateway get secret cloudflare -o jsonpath='{.data}' | python3 -m json.tool   # token/account/tunnel present?
 kubectl -n cloudflare get pods
-kubectl -n cloudflare logs deploy/cloudflare-gateway --tail=80   # connector "Registered tunnel connection"?
+kubectl -n cloudflare logs deploy/<controller-deploy> --tail=80   # connector "Registered tunnel connection"?
+# <!-- TODO: confirm controller deploy name/ns against live cluster (ArgoCD app `cloudflare` → ns `cloudflare`) -->
 
 # 3. Backends exist?
-kubectl -n endr get svc case
+kubectl -n endr get svc portal
 kubectl -n argocd get svc argocd-server
 
-# 4. Cloudflare side (dashboard or API): for case/endr/argocd.calavelas.net,
+# 4. Cloudflare side (dashboard or API): for portal/endr/argocd.calavelas.net,
 #    which tunnel ID does the CNAME target, and is that tunnel HEALTHY (Zero Trust → Tunnels)?
 ```
 
 Localize a 1033/blank with curl:
 
 ```bash
-curl -sSI https://case.calavelas.net      # 1033/530 => DNS points at a dead tunnel
+curl -sSI https://portal.calavelas.net    # 1033/530 => DNS points at a dead tunnel
 curl -sSI https://argocd.calavelas.net    # blank embed => this host unrouted/dark
 ```
 
@@ -109,11 +118,11 @@ curl -sSI https://argocd.calavelas.net    # blank embed => this host unrouted/da
 1. Ensure the `cloudflare` Secret in ns `gateway` holds a valid API token + account/tunnel config
    (per the `pl4nty/cloudflare-kubernetes-gateway` docs). Re-sync the `cloudflare` ArgoCD app.
 2. Confirm the controller connects (step 2 above) and the Gateway is `Programmed=True`.
-3. In Cloudflare, ensure the CNAMEs for `case`/`endr`/`argocd.calavelas.net` target the
+3. In Cloudflare, ensure the CNAMEs for `portal`/`endr`/`argocd.calavelas.net` target the
    controller-managed tunnel (delete stale records from the `endr-case` tunnel).
 4. **Do not** run `make tunnel-start` while this is active. Stop any local `cloudflared`
    (`make tunnel-stop`) and delete the `endr-case` DNS routes if they exist.
-5. ArgoCD CSP already allows framing from `case`/`endr.calavelas.net`
+5. ArgoCD CSP already allows framing from `portal`/`endr.calavelas.net`
    (`KUBE/platforms/argocd/helm/values.yaml`, `server.content.security.policy`) — verify it matches
    the exact origin you serve.
 
@@ -127,6 +136,6 @@ If you deliberately prefer the manual tunnel:
 
 ## Note on the cluster-free demo
 
-The portal frontend was hardened so that with no `CASE_ARGOCD_EMBED_URL` set, `/argocd` shows a
+The portal frontend was hardened so that with no `PORTAL_ARGOCD_EMBED_URL` set, `/argocd` shows a
 graceful placeholder instead of a blank iframe. The cluster-free demo (`DOCS/DEMO_DEPLOY.md`)
 sidesteps this whole tunnel/ingress problem — use it for the always-on portfolio link.

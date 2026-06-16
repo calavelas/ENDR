@@ -1,10 +1,10 @@
-# Phase 1 - TARS SVCS Check Automation (Single-PR GitOps Flow)
+# Phase 1 - Services Check Automation (Single-PR GitOps Flow)
 
 This phase implements the config-driven GitOps automation path without UI/API input forms.
 
 ## Goal
 
-When `ENDR.yaml` or `SVCS.yaml` changes:
+When `platform.yaml` or `services.yaml` changes:
 1. Read desired state from config.
 2. Render expected service + GitOps files from templates.
 3. Compare against repository files.
@@ -13,8 +13,8 @@ When `ENDR.yaml` or `SVCS.yaml` changes:
 
 ## Script
 
-- Path: `ENDR/TARS/TARS.py` (subcommand: `svcs-check`)
-- State output: `.idp/runtime/tars-svcs-state.yaml`
+- Path: `ENDR/engine/engine.py` (subcommand: `services-check`)
+- State output: `.idp/runtime/reconcile-state.yaml`
 
 State file format (Genesis-style):
 
@@ -28,39 +28,43 @@ state:
 `true` means service files are already in sync with config/templates.
 `false` means reconciliation changes are required.
 
-## What `svcs-check` checks
+## What `services-check` checks
 
-For each service in `SVCS.yaml`, it renders expected outputs from:
-- service template (`templates.service[*]` from `ENDR.yaml`)
-- gitops template (`templates.gitops[*]` from `ENDR.yaml`)
+For each service in `services.yaml`, it renders expected outputs from:
+- service template (`templates.service[*]` from `platform.yaml`)
+- gitops template (`templates.gitops[*]` from `platform.yaml`)
 
 Then it compares expected content with repo files:
 - `SVCS/<name>/**`
-- `KUBE/clusters/mac/lab/services/<name>.yaml`
+- `KUBE/clusters/gargantua/services/<name>.yaml`
 
 If file is missing or content differs, it is marked for reconcile and included in PR changes.
 
 Service removal handling:
-- If a service exists in repo-managed paths but is removed from `SVCS.yaml`, `ENDR/TARS/TARS.py svcs-check` marks it as removed and stages file deletions.
+- If a service exists in repo-managed paths but is removed from `services.yaml`, `ENDR/engine/engine.py services-check` marks it as removed and stages file deletions.
 - Deletions include:
-  - `KUBE/clusters/mac/lab/services/<service>.yaml`
+  - `KUBE/clusters/gargantua/services/<service>.yaml`
   - `SVCS/<service>/**`
 - The generated PR will remove these files so ArgoCD prunes the app in GitOps flow.
 
 ## GitHub Actions flow
 
-Workflow: `.github/workflows/tars-init.yml`
+Workflows:
+- `.github/workflows/reconcile-pr.yml` (PR validation)
+- `.github/workflows/reconcile.yml` (post-merge reconcile)
 
-Trigger:
+`reconcile-pr.yml` trigger:
 - `pull_request` (opened/synchronize/reopened) when changed paths include:
-  - `ENDR.yaml`
-  - `SVCS.yaml`
+  - `platform.yaml`
+  - `services.yaml`
+
+`reconcile.yml` trigger:
+- `push` to `main` when changed paths include `platform.yaml` / `services.yaml`
 - manual `workflow_dispatch`
 
 Behavior:
-- Detects changed service source paths in the PR and auto-updates `SVCS.yaml` image tags to immutable `git-<sha>` tags.
-- Runs `ENDR/TARS/TARS.py svcs-check --write-worktree`
-- If drift exists, commits generated changes back to the same PR branch.
+- On PR: validates the reconcile is clean for the catalog change.
+- On push to `main`: runs `ENDR/engine/engine.py services-check --write-worktree`, renders expected GitOps assets, and pushes any drift back to the repo, then triggers `services-build` to publish changed service images.
 - PR merge is then a single source-of-truth merge (no second reconcile PR).
 - Emits GitHub job annotations and job summary with added/updated/removed service details.
 
@@ -71,25 +75,25 @@ Prerequisite: backend venv available at `ENDR/.venv`.
 Validate config:
 
 ```bash
-make -f ENDR/SCPT/Makefile validate-config
+make -f ENDR/scripts/Makefile validate-config
 ```
 
 Dry-run reconcile (no writes, no PR):
 
 ```bash
-make -f ENDR/SCPT/Makefile svcs-check
+make -f ENDR/scripts/Makefile services-check
 ```
 
 Write generated files to local worktree (still no PR):
 
 ```bash
-make -f ENDR/SCPT/Makefile svcs-sync
+make -f ENDR/scripts/Makefile services-sync
 ```
 
 Open PR manually from local machine (optional):
 
 ```bash
-GITHUB_TOKEN=<your_token> ENDR/.venv/bin/python ENDR/TARS/TARS.py svcs-check --repo-root . --open-pr
+GITHUB_TOKEN=<your_token> ENDR/.venv/bin/python ENDR/engine/engine.py services-check --repo-root . --open-pr
 ```
 
 ## Portfolio framing

@@ -1,5 +1,7 @@
 # IDP Demo (Python Backend) - Adjusted Instructions and Phased Plan
 
+> **STATUS — historical (V1 design plan).** This is the original phased build plan. It has been superseded by the ~2026-06-14 naming refactor (`TARS`→`engine`, `CASE`→`portal`, `PLEX`→`api`, `SCPT`→`scripts`, `ENDR.yaml`→`platform.yaml`, `SVCS.yaml`→`services.yaml`) and the robot-fleet service model. Paths/names below reflect the original plan, not the current repo. For current docs see `DOCS/README.md` and the top-level `README.md`.
+
 This plan adapts your original IDP idea to match the way Genesis was structured:
 - config-driven
 - template registry with named templates
@@ -7,7 +9,7 @@ This plan adapts your original IDP idea to match the way Genesis was structured:
 - validate first, then generate, then raise PR
 
 Current implementation status:
-- Phase 1 (config-driven reconcile + PR automation) is now implemented via `ENDR/TARS/TARS.py svcs-check` and `.github/workflows/tars-init.yml`.
+- Phase 1 (config-driven reconcile + PR automation) is now implemented via `ENDR/engine/engine.py services-check` and `.github/workflows/reconcile-pr.yml` (+ post-merge `.github/workflows/reconcile.yml`).
 
 Related:
 - portfolio narrative: `DOCS/PORTFOLIO_BUILD_GUIDE.md`

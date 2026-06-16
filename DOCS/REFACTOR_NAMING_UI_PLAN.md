@@ -1,5 +1,7 @@
 # Plan: Functional renaming + UI modernization
 
+> **STATUS — COMPLETED ~2026-06-14 (with 2 deviations).** The renames described below were executed: `ENDR/engine`, `ENDR/api`, `ENDR/portal`, `ENDR/scripts` exist; configs are `platform.yaml`/`services.yaml`; workflows renamed to `platform-build.yml`/`services-build.yml`/`reconcile.yml`/`reconcile-pr.yml`. TWO items did NOT land as written: (1) the top-level **`SVCS/` directory was NOT renamed to `services/`** — only the config file `SVCS.yaml`→`services.yaml` landed; the dir is still `SVCS/` on disk and `reconcile.yml` still keys on `SVCS`. (2) The **`BSTG`→`bstg` Backstage track is absent** (never created; was flagged optional). The future/imperative tense below ("confirm before I execute") refers to work now done.
+
 ## CONFIRMED DECISIONS (2026-06-14) — executing on `main` directly
 
 - **Dirs:** `ENDR/CASE→portal`, `ENDR/PLEX(+ENDR/TARS/api)→api`, `ENDR/TARS→engine`,
