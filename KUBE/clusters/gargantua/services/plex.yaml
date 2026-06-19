@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plex
+  namespace: argocd
+  # Cascade-delete the workload when this Application is pruned (decommission).
+  # Without it, the app-of-apps removes the Application CR but its pod/service/route
+  # are orphaned and keep serving for minutes. The finalizer makes prune tear the
+  # running resources down promptly.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/calavelas/ENDR.git
+    targetRevision: main
+    path: SVCS/plex/chart
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: miller
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
